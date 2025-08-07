@@ -1,0 +1,55 @@
+# Claude Code Configuration Switcher
+# 此文件用于管理不同的Claude Code API配置
+
+# 默认配置名称
+default_config = "anyrouter"
+
+# anyrouter配置
+[anyrouter]
+name = "anyrouter"
+description = "AnyRouter API服务"
+base_url = "https://anyrouter.top"
+auth_token = "***"
+
+# 智谱GLM配置
+[glm]
+name = "glm"
+description = "智谱GLM API服务"
+base_url = "https://open.bigmodel.cn/api/anthropic"
+auth_token = "***"
+
+# aicodemirror配置
+[aicodemirror]
+name = "aicodemirror"
+description = "AICodeMirror API服务"
+base_url = "https://api.aicodemirror.com/api/claudecode"
+auth_token = "***"
+
+# wenwen-ai配置
+[wenwen]
+name = "wenwen"
+description = "文文AI API服务"
+base_url = "https://code.wenwen-ai.com"
+auth_token = "***"
+
+# moonshot配置
+[moonshot]
+name = "moonshot"
+description = "月之暗面API服务"
+base_url = "https://api.moonshot.cn/anthropic"
+auth_token = "***"
+
+# siliconflow配置
+[siliconflow]
+name = "siliconflow"
+description = "SiliconFlow API服务"
+base_url = "https://api.siliconflow.cn/"
+model = "moonshotai/Kimi-K2-Instruct"
+auth_token = "***"
+
+# 备用anyrouter配置（第二个API密钥）
+[anyrouter2]
+name = "anyrouter2"
+description = "AnyRouter API服务 (备用密钥)"
+base_url = "https://anyrouter.top"
+auth_token = "***"
