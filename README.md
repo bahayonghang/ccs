@@ -1,6 +1,8 @@
 # Claude Code Configuration Switcher (CCS)
 
 一个用于快速切换不同Claude Code API配置的工具，支持多种Shell环境（Bash、Zsh、Fish）。
+![实际效果](./imgs/PixPin_2025-08-07_17-23-44.png)
+> Attention: 暂时只支持bash，zsh，fish，其他shell环境未测试通过，可能会出现问题。
 
 ## 🚀 一键安装
 
