@@ -133,12 +133,12 @@ configure_shell_for_type() {
         cat >> "$config_file" << 'EOF'
 
 # Claude Code Configuration Switcher (ccs)
-if [ -f "$HOME/.ccs/ccs.fish" ]
+if test -f "$HOME/.ccs/ccs.fish"
     source "$HOME/.ccs/ccs.fish"
     # 初始化ccs函数
     if type -q ccs
         # 设置默认配置
-        ccs >/dev/null 2>&1; or true
+        ccs >/dev/null 2>&1; and true
     end
 end
 EOF
@@ -172,22 +172,67 @@ create_directories() {
     fi
 }
 
+# 检查是否已安装
+check_installed() {
+    if [ -f "$CCS_SCRIPT_PATH" ] || [ -f "$HOME/.ccs/ccs.fish" ]; then
+        return 0
+    fi
+    return 1
+}
+
 # 复制脚本文件
 copy_script() {
-    print_message "$BLUE" "复制ccs脚本..."
+    local reinstall=false
+    
+    # 检查是否为重新安装
+    if check_installed; then
+        print_message "$YELLOW" "检测到ccs已安装，将更新所有shell脚本..."
+        reinstall=true
+    else
+        print_message "$BLUE" "复制ccs脚本..."
+    fi
     
     # 获取当前脚本所在目录
     local script_dir="$(cd "$(dirname "$0")" && pwd)"
-    local source_script="$script_dir/ccs.sh"
+    local source_sh="$script_dir/ccs.sh"
+    local source_fish="$script_dir/ccs.fish"
     
-    if [ ! -f "$source_script" ]; then
-        print_error "找不到源脚本文件: $source_script"
+    if [ ! -f "$source_sh" ]; then
+        print_error "找不到源脚本文件: $source_sh"
         exit 1
     fi
     
-    cp "$source_script" "$CCS_SCRIPT_PATH"
+    # 复制bash脚本
+    if [ -f "$CCS_SCRIPT_PATH" ] && [ "$reinstall" = true ]; then
+        print_message "$BLUE" "更新bash脚本..."
+    fi
+    cp "$source_sh" "$CCS_SCRIPT_PATH"
     chmod +x "$CCS_SCRIPT_PATH"
-    print_success "复制脚本到 $CCS_SCRIPT_PATH"
+    if [ "$reinstall" = true ]; then
+        print_success "更新bash脚本到 $CCS_SCRIPT_PATH"
+    else
+        print_success "复制bash脚本到 $CCS_SCRIPT_PATH"
+    fi
+    
+    # 复制fish脚本（如果存在）
+    if [ -f "$source_fish" ]; then
+        local fish_path="$HOME/.ccs/ccs.fish"
+        if [ -f "$fish_path" ] && [ "$reinstall" = true ]; then
+            print_message "$BLUE" "更新fish脚本..."
+        fi
+        cp "$source_fish" "$fish_path"
+        chmod +x "$fish_path"
+        if [ "$reinstall" = true ]; then
+            print_success "更新fish脚本到 $fish_path"
+        else
+            print_success "复制fish脚本到 $fish_path"
+        fi
+    fi
+    
+    # 如果是重新安装，提供额外提示
+    if [ "$reinstall" = true ]; then
+        print_warning "已更新所有shell脚本，配置文件保持不变"
+    fi
 }
 
 # 创建配置文件
@@ -247,7 +292,17 @@ configure_shell() {
 
 # 安装完成
 install_complete() {
-    print_success "安装完成！"
+    local is_reinstall=false
+    if check_installed; then
+        is_reinstall=true
+    fi
+    
+    if [ "$is_reinstall" = true ]; then
+        print_success "重新安装完成！"
+    else
+        print_success "安装完成！"
+    fi
+    
     echo ""
     print_message "$BLUE" "使用方法:"
     echo "  ccs list              - 列出所有可用配置"
@@ -255,13 +310,22 @@ install_complete() {
     echo "  ccs current          - 显示当前配置"
     echo "  ccs help             - 显示帮助信息"
     echo ""
-    print_warning "请重新启动终端或运行 'source ~/.bashrc' (或 ~/.zshrc) 来使配置生效"
+    
+    if [ "$is_reinstall" = true ]; then
+        print_warning "脚本已更新，请重新启动终端或运行 'source ~/.bashrc' (或 ~/.zshrc/~/.config/fish/config.fish) 来使新版本生效"
+    else
+        print_warning "请重新启动终端或运行 'source ~/.bashrc' (或 ~/.zshrc/~/.config/fish/config.fish) 来使配置生效"
+    fi
     
     # 检查配置文件是否存在
     if [ -f "$CONFIG_FILE" ]; then
         echo ""
         print_message "$BLUE" "配置文件位置: $CONFIG_FILE"
-        print_warning "请编辑配置文件，确保您的API密钥正确"
+        if [ "$is_reinstall" = true ]; then
+            print_success "现有配置文件已保留，无需重新配置"
+        else
+            print_warning "请编辑配置文件，确保您的API密钥正确"
+        fi
     fi
 }
 
@@ -319,17 +383,22 @@ show_help() {
     echo "Claude Code Configuration Switcher 安装脚本"
     echo ""
     echo "用法:"
-    echo "  $0                    - 安装ccs"
+    echo "  $0                    - 安装ccs（如果已安装则更新脚本文件）"
     echo "  $0 --uninstall        - 卸载ccs"
     echo "  $0 --help             - 显示此帮助"
     echo ""
     echo "此脚本将:"
     echo "  1. 创建 $HOME/.ccs 目录"
-    echo "  2. 复制ccs.sh脚本到 $HOME/.ccs/"
-    echo "  3. 创建配置文件 $HOME/.ccs_config.toml"
+    echo "  2. 复制/更新ccs.sh和ccs.fish脚本到 $HOME/.ccs/"
+    echo "  3. 创建配置文件 $HOME/.ccs_config.toml（如果不存在）"
     echo "  4. 配置shell环境"
     echo ""
-    echo "注意: 如果配置文件已存在，则不会覆盖"
+    echo "重新安装行为:"
+    echo "  - 强制更新所有shell脚本文件"
+    echo "  - 保留现有配置文件不变"
+    echo "  - 不重复添加shell配置"
+    echo ""
+    echo "注意: 配置文件一旦存在就不会被覆盖"
 }
 
 # 主函数
@@ -342,8 +411,14 @@ main() {
             show_help
             ;;
         *)
-            print_message "$BLUE" "开始安装Claude Code Configuration Switcher..."
-            echo ""
+            # 检查是否为重新安装
+            if check_installed; then
+                print_message "$YELLOW" "检测到ccs已安装，开始更新..."
+                echo ""
+            else
+                print_message "$BLUE" "开始安装Claude Code Configuration Switcher..."
+                echo ""
+            fi
             
             create_directories
             copy_script

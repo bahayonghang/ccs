@@ -1,55 +1,52 @@
-# Claude Code Configuration Switcher
-# 此文件用于管理不同的Claude Code API配置
+# Claude Code Configuration Switcher 配置文件
+# 请根据您的需要修改以下配置
 
-# 默认配置名称
 default_config = "anyrouter"
 
-# anyrouter配置
 [anyrouter]
-name = "anyrouter"
 description = "AnyRouter API服务"
 base_url = "https://anyrouter.top"
-auth_token = "***"
+auth_token = "sk-your-anyrouter-api-key-here"
+model = "claude-3-5-sonnet-20241022"
 
-# 智谱GLM配置
 [glm]
-name = "glm"
 description = "智谱GLM API服务"
-base_url = "https://open.bigmodel.cn/api/anthropic"
-auth_token = "***"
+base_url = "https://open.bigmodel.cn/api/paas/v4"
+auth_token = "your-glm-api-key-here"
+model = "glm-4"
 
-# aicodemirror配置
+[anthropic]
+description = "Anthropic官方API"
+base_url = "https://api.anthropic.com"
+auth_token = "sk-ant-your-api-key-here"
+model = "claude-3-5-sonnet-20241022"
+
+[openai]
+description = "OpenAI API配置"
+base_url = "https://api.openai.com/v1"
+auth_token = "sk-your-openai-api-key-here"
+model = "gpt-4"
+
 [aicodemirror]
-name = "aicodemirror"
 description = "AICodeMirror API服务"
-base_url = "https://api.aicodemirror.com/api/claudecode"
-auth_token = "***"
+base_url = "https://aicodemirror.com/api"
+auth_token = "your-aicodemirror-api-key-here"
+model = "claude-3-5-sonnet-20241022"
 
-# wenwen-ai配置
 [wenwen]
-name = "wenwen"
 description = "文文AI API服务"
-base_url = "https://code.wenwen-ai.com"
-auth_token = "***"
+base_url = "https://api.wenwen.ai"
+auth_token = "your-wenwen-api-key-here"
+model = "claude-3-5-sonnet-20241022"
 
-# moonshot配置
 [moonshot]
-name = "moonshot"
 description = "月之暗面API服务"
-base_url = "https://api.moonshot.cn/anthropic"
-auth_token = "***"
+base_url = "https://api.moonshot.cn/v1"
+auth_token = "sk-your-moonshot-api-key-here"
+model = "moonshot-v1-8k"
 
-# siliconflow配置
 [siliconflow]
-name = "siliconflow"
 description = "SiliconFlow API服务"
-base_url = "https://api.siliconflow.cn/"
-model = "moonshotai/Kimi-K2-Instruct"
-auth_token = "***"
-
-# 备用anyrouter配置（第二个API密钥）
-[anyrouter2]
-name = "anyrouter2"
-description = "AnyRouter API服务 (备用密钥)"
-base_url = "https://anyrouter.top"
-auth_token = "***"
+base_url = "https://api.siliconflow.cn/v1"
+auth_token = "sk-your-siliconflow-api-key-here"
+model = "anthropic/claude-3-5-sonnet-20241022"

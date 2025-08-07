@@ -2,6 +2,45 @@
 
 一个用于快速切换不同Claude Code API配置的工具，支持多种Shell环境（Bash、Zsh、Fish）。
 
+## 🚀 一键安装
+
+```bash
+curl -L https://github.com/bahayonghang/ccs/raw/main/quick_install.sh | bash
+```
+
+**或者使用 wget：**
+
+```bash
+wget -qO- https://github.com/bahayonghang/ccs/raw/main/quick_install.sh | bash
+```
+
+> 💡 一键安装会自动下载所有必要文件并完成配置，无需手动克隆仓库
+
+## 📋 安装后配置
+
+安装完成后，请按照以下步骤配置：
+
+1. **重新加载Shell环境**（选择对应的命令）：
+   ```bash
+   source ~/.bashrc      # Bash用户
+   source ~/.zshrc       # Zsh用户  
+   source ~/.config/fish/config.fish  # Fish用户
+   ```
+
+2. **编辑配置文件**：
+   ```bash
+   nano ~/.ccs_config.toml   # 或使用 vim
+   ```
+
+3. **填入您的API密钥**，然后开始使用：
+   ```bash
+   ccs list              # 查看所有配置
+   ccs [配置名称]        # 切换到指定配置
+   ccs current          # 显示当前配置
+   ```
+
+---
+
 ## 功能特性
 
 - 🔄 **快速切换配置**：一键切换不同的Claude Code API配置
@@ -10,13 +49,29 @@
 - 📝 **TOML配置**：使用易读的TOML格式管理配置
 - 🎨 **彩色输出**：带颜色的友好提示信息
 
-## 安装
+## 📦 安装方式
 
-### 自动安装
-
-运行安装脚本：
+### 方式一：一键安装（推荐）
 
 ```bash
+curl -L https://github.com/bahayonghang/ccs/raw/main/quick_install.sh | bash
+```
+
+**或者使用 wget：**
+
+```bash
+wget -qO- https://github.com/bahayonghang/ccs/raw/main/quick_install.sh | bash
+```
+
+### 方式二：手动安装
+
+#### 自动安装
+
+克隆仓库并运行安装脚本：
+
+```bash
+git clone https://github.com/bahayonghang/ccs.git
+cd ccs
 ./install.sh
 ```
 
@@ -26,7 +81,7 @@
 3. 创建配置文件
 4. 配置Shell环境
 
-### 手动安装
+#### 完全手动安装
 
 1. 创建配置目录：
 ```bash
