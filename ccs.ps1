@@ -19,12 +19,14 @@ function Show-Help {
     Write-Host "  ccs [配置名称]    - 切换到指定配置"
     Write-Host "  ccs list          - 列出所有可用配置"
     Write-Host "  ccs current       - 显示当前配置"
+    Write-Host "  ccs uninstall     - 卸载ccs工具"
     Write-Host "  ccs help          - 显示此帮助信息"
     Write-Host ""
     Write-Host "示例:"
     Write-Host "  ccs anyrouter     - 切换到anyrouter配置"
     Write-Host "  ccs glm           - 切换到智谱GLM配置"
     Write-Host "  ccs list          - 查看所有可用配置"
+    Write-Host "  ccs uninstall     - 完全卸载ccs工具"
 }
 
 # 解析TOML配置文件
@@ -203,6 +205,83 @@ function Show-Current {
     }
 }
 
+# 卸载ccs工具
+function Uninstall-CCS {
+    Write-Host "正在卸载Claude Code Configuration Switcher..." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "[*] 开始卸载ccs..." -ForegroundColor Cyan
+    
+    # 删除整个.ccs目录（除了配置文件）
+    $ccsDir = "$env:USERPROFILE\.ccs"
+    if (Test-Path $ccsDir) {
+        # 删除脚本文件
+        $batFile = "$ccsDir\ccs.bat"
+        if (Test-Path $batFile) {
+            Remove-Item $batFile -Force
+            Write-Host "[✓] 删除bat脚本文件" -ForegroundColor Green
+        }
+        
+        $ps1File = "$ccsDir\ccs.ps1"
+        if (Test-Path $ps1File) {
+            Remove-Item $ps1File -Force
+            Write-Host "[✓] 删除PowerShell脚本文件" -ForegroundColor Green
+        }
+        
+        # 删除web文件
+        $webDir = "$ccsDir\web"
+        if (Test-Path $webDir) {
+            Remove-Item $webDir -Recurse -Force
+            Write-Host "[✓] 删除web文件" -ForegroundColor Green
+        }
+        
+        # 检查.ccs目录是否为空（除了配置文件）
+        $remainingFiles = Get-ChildItem $ccsDir | Where-Object { $_.Name -ne ".ccs_config.toml" }
+        
+        if ($remainingFiles.Count -eq 0) {
+            # 如果没有配置文件，删除整个目录
+            if (-not (Test-Path $CONFIG_FILE)) {
+                Remove-Item $ccsDir -Recurse -Force
+                Write-Host "[✓] 删除.ccs目录" -ForegroundColor Green
+            } else {
+                Write-Host "[!] 保留.ccs目录（包含配置文件）" -ForegroundColor Yellow
+            }
+        }
+    }
+    
+    # 删除配置文件（询问用户）
+    if (Test-Path $CONFIG_FILE) {
+        $reply = Read-Host "是否要删除配置文件 $CONFIG_FILE? (y/N)"
+        if ($reply -eq "y" -or $reply -eq "Y") {
+            Remove-Item $CONFIG_FILE -Force
+            Write-Host "[✓] 删除配置文件" -ForegroundColor Green
+            # 如果删除了配置文件且.ccs目录为空，删除目录
+            if (Test-Path $ccsDir) {
+                $remainingItems = Get-ChildItem $ccsDir
+                if ($remainingItems.Count -eq 0) {
+                    Remove-Item $ccsDir -Force
+                    Write-Host "[✓] 删除空的.ccs目录" -ForegroundColor Green
+                }
+            }
+        }
+    }
+    
+    # 从PATH环境变量中移除ccs目录
+    $currentPath = [Environment]::GetEnvironmentVariable("PATH", "User")
+    if ($currentPath -and $currentPath.Contains($ccsDir)) {
+        $newPath = $currentPath -replace [regex]::Escape($ccsDir + ";"), ""
+        $newPath = $newPath -replace [regex]::Escape(";" + $ccsDir), ""
+        $newPath = $newPath -replace [regex]::Escape($ccsDir), ""
+        [Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
+        Write-Host "[✓] 从PATH环境变量中移除ccs目录" -ForegroundColor Green
+    } else {
+        Write-Host "[!] 未在PATH环境变量中找到ccs目录" -ForegroundColor Yellow
+    }
+    
+    Write-Host "[✓] 卸载完成！请重新打开PowerShell" -ForegroundColor Green
+    Write-Host ""
+    Write-Host "[!] 注意：当前PowerShell会话中的ccs命令仍然可用，直到重新打开" -ForegroundColor Yellow
+}
+
 # 主函数
 function ccs {
     param([string]$command = "")
@@ -238,6 +317,9 @@ function ccs {
         }
         "current" {
             Show-Current
+        }
+        "uninstall" {
+            Uninstall-CCS
         }
         "help" {
             Show-Help

@@ -22,6 +22,7 @@ ccs_help() {
     echo "  ccs list          - 列出所有可用配置"
     echo "  ccs current       - 显示当前配置"
     echo "  ccs web           - 打开web配置界面"
+    echo "  ccs uninstall     - 卸载ccs工具"
     echo "  ccs help          - 显示此帮助信息"
     echo ""
     echo "示例:"
@@ -29,6 +30,7 @@ ccs_help() {
     echo "  ccs glm           - 切换到智谱GLM配置"
     echo "  ccs list          - 查看所有可用配置"
     echo "  ccs web           - 打开web配置界面"
+    echo "  ccs uninstall     - 完全卸载ccs工具"
 }
 
 # 解析TOML配置文件
@@ -154,6 +156,163 @@ show_current() {
     fi
 }
 
+# 卸载ccs工具
+ccs_uninstall() {
+    echo "正在卸载Claude Code Configuration Switcher..."
+    echo ""
+    
+    # 颜色输出
+    local RED='\033[0;31m'
+    local GREEN='\033[0;32m'
+    local YELLOW='\033[1;33m'
+    local BLUE='\033[0;34m'
+    local NC='\033[0m' # No Color
+    
+    # 打印带颜色的消息
+    print_message() {
+        local color=$1
+        local message=$2
+        printf "%b[*]%b %s\n" "$color" "$NC" "$message"
+    }
+    
+    print_success() {
+        printf "%b[✓]%b %s\n" "$GREEN" "$NC" "$1"
+    }
+    
+    print_warning() {
+        printf "%b[!]%b %s\n" "$YELLOW" "$NC" "$1"
+    }
+    
+    print_error() {
+        printf "%b[✗]%b %s\n" "$RED" "$NC" "$1"
+    }
+    
+    print_message "$BLUE" "开始卸载ccs..."
+    
+    # 删除整个.ccs目录（除了配置文件）
+    if [ -d "$HOME/.ccs" ]; then
+        # 删除脚本文件
+        if [ -f "$HOME/.ccs/ccs.sh" ]; then
+            rm -f "$HOME/.ccs/ccs.sh"
+            print_success "删除bash脚本文件"
+        fi
+        
+        if [ -f "$HOME/.ccs/ccs.fish" ]; then
+            rm -f "$HOME/.ccs/ccs.fish"
+            print_success "删除fish脚本文件"
+        fi
+        
+        # 删除web文件
+        if [ -d "$HOME/.ccs/web" ]; then
+            rm -rf "$HOME/.ccs/web"
+            print_success "删除web文件"
+        fi
+        
+        # 检查.ccs目录是否为空（除了配置文件）
+        local remaining_files=$(find "$HOME/.ccs" -type f ! -name "*.toml" | wc -l)
+        if [ "$remaining_files" -eq 0 ]; then
+            # 如果没有配置文件，删除整个目录
+            if [ ! -f "$CONFIG_FILE" ]; then
+                rm -rf "$HOME/.ccs"
+                print_success "删除.ccs目录"
+            else
+                print_warning "保留.ccs目录（包含配置文件）"
+            fi
+        fi
+    fi
+    
+    # 删除配置文件（询问用户）
+    if [ -f "$CONFIG_FILE" ]; then
+        printf "是否要删除配置文件 $CONFIG_FILE? (y/N): "
+        read -r REPLY
+        echo
+        if [ "$REPLY" = "y" ] || [ "$REPLY" = "Y" ]; then
+            rm -f "$CONFIG_FILE"
+            print_success "删除配置文件"
+            # 如果删除了配置文件且.ccs目录为空，删除目录
+            if [ -d "$HOME/.ccs" ] && [ -z "$(ls -A "$HOME/.ccs" 2>/dev/null)" ]; then
+                rm -rf "$HOME/.ccs"
+                print_success "删除空的.ccs目录"
+            fi
+        fi
+    fi
+    
+    # 从所有shell配置文件中移除配置
+    local removed_count=0
+    local BASHRC_FILE="$HOME/.bashrc"
+    local ZSHRC_FILE="$HOME/.zshrc"
+    
+    # 处理bash配置
+    if [ -f "$BASHRC_FILE" ]; then
+        local temp_file=$(mktemp)
+        # 移除ccs相关的配置块（从注释开始到EOF结束的整个块）
+        awk '
+        /^# Claude Code Configuration Switcher/ { skip=1; next }
+        /^if \[ -f "\$HOME\/\.ccs\/ccs\.sh" \]/ { skip=1; next }
+        /^fi$/ && skip { skip=0; next }
+        !skip { print }
+        ' "$BASHRC_FILE" > "$temp_file"
+        
+        # 检查是否有变化
+        if ! cmp -s "$BASHRC_FILE" "$temp_file"; then
+            mv "$temp_file" "$BASHRC_FILE"
+            print_success "从 $BASHRC_FILE 中移除配置"
+            removed_count=$((removed_count + 1))
+        else
+            rm -f "$temp_file"
+        fi
+    fi
+    
+    # 处理zsh配置
+    if [ -f "$ZSHRC_FILE" ]; then
+        local temp_file=$(mktemp)
+        awk '
+        /^# Claude Code Configuration Switcher/ { skip=1; next }
+        /^if \[ -f "\$HOME\/\.ccs\/ccs\.sh" \]/ { skip=1; next }
+        /^fi$/ && skip { skip=0; next }
+        !skip { print }
+        ' "$ZSHRC_FILE" > "$temp_file"
+        
+        if ! cmp -s "$ZSHRC_FILE" "$temp_file"; then
+            mv "$temp_file" "$ZSHRC_FILE"
+            print_success "从 $ZSHRC_FILE 中移除配置"
+            removed_count=$((removed_count + 1))
+        else
+            rm -f "$temp_file"
+        fi
+    fi
+    
+    # 处理fish配置
+    local fish_config="$HOME/.config/fish/config.fish"
+    if [ -f "$fish_config" ]; then
+        local temp_file=$(mktemp)
+        awk '
+        /^# Claude Code Configuration Switcher/ { skip=1; next }
+        /^if test -f "\$HOME\/\.ccs\/ccs\.fish"/ { skip=1; next }
+        /^end$/ && skip { skip=0; next }
+        !skip { print }
+        ' "$fish_config" > "$temp_file"
+        
+        if ! cmp -s "$fish_config" "$temp_file"; then
+            mv "$temp_file" "$fish_config"
+            print_success "从 $fish_config 中移除配置"
+            removed_count=$((removed_count + 1))
+        else
+            rm -f "$temp_file"
+        fi
+    fi
+    
+    if [ "$removed_count" -gt 0 ]; then
+        print_success "已从 $removed_count 个shell配置文件中移除ccs配置"
+    else
+        print_warning "未在shell配置文件中找到ccs配置"
+    fi
+    
+    print_success "卸载完成！请重新启动终端或重新加载shell配置"
+    echo ""
+    print_warning "注意：当前终端会话中的ccs函数仍然可用，直到重新启动终端"
+}
+
 # 打开web配置界面
 open_web() {
     local web_dir="$HOME/.ccs/web"
@@ -229,6 +388,9 @@ ccs() {
             ;;
         "web")
             open_web
+            ;;
+        "uninstall")
+            ccs_uninstall
             ;;
         "help"|"-h"|"--help")
             ccs_help

@@ -23,6 +23,7 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell"
         echo "  ccs list          - 列出所有可用配置"
         echo "  ccs current       - 显示当前配置"
         echo "  ccs web           - 打开web配置界面"
+        echo "  ccs uninstall     - 卸载ccs工具"
         echo "  ccs help          - 显示此帮助信息"
         echo ""
         echo "示例:"
@@ -30,6 +31,7 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell"
         echo "  ccs glm           - 切换到智谱GLM配置"
         echo "  ccs list          - 查看所有可用配置"
         echo "  ccs web           - 打开web配置界面"
+        echo "  ccs uninstall     - 完全卸载ccs工具"
         return 0
     end
     
@@ -144,6 +146,137 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell"
             end
             echo "✅ 正在打开web配置界面..."
         end
+        return 0
+    end
+    
+    # 处理uninstall子命令
+    if test "$profile_name" = "uninstall"
+        echo "正在卸载Claude Code Configuration Switcher..."
+        echo ""
+        
+        echo "🔄 开始卸载ccs..."
+        
+        # 删除整个.ccs目录（除了配置文件）
+        if test -d "$HOME/.ccs"
+            # 删除脚本文件
+            if test -f "$HOME/.ccs/ccs.sh"
+                rm -f "$HOME/.ccs/ccs.sh"
+                echo "✅ 删除bash脚本文件"
+            end
+            
+            if test -f "$HOME/.ccs/ccs.fish"
+                rm -f "$HOME/.ccs/ccs.fish"
+                echo "✅ 删除fish脚本文件"
+            end
+            
+            # 删除web文件
+            if test -d "$HOME/.ccs/web"
+                rm -rf "$HOME/.ccs/web"
+                echo "✅ 删除web文件"
+            end
+            
+            # 检查.ccs目录是否为空（除了配置文件）
+            set remaining_files (find "$HOME/.ccs" -type f ! -name "*.toml" | wc -l)
+            if test "$remaining_files" -eq 0
+                # 如果没有配置文件，删除整个目录
+                if not test -f "$config_file"
+                    rm -rf "$HOME/.ccs"
+                    echo "✅ 删除.ccs目录"
+                else
+                    echo "⚠️ 保留.ccs目录（包含配置文件）"
+                end
+            end
+        end
+        
+        # 删除配置文件（询问用户）
+        if test -f "$config_file"
+            echo -n "是否要删除配置文件 $config_file? (y/N): "
+            read -l reply
+            if test "$reply" = "y" -o "$reply" = "Y"
+                rm -f "$config_file"
+                echo "✅ 删除配置文件"
+                # 如果删除了配置文件且.ccs目录为空，删除目录
+                if test -d "$HOME/.ccs" -a -z "(ls -A "$HOME/.ccs" 2>/dev/null)"
+                    rm -rf "$HOME/.ccs"
+                    echo "✅ 删除空的.ccs目录"
+                end
+            end
+        end
+        
+        # 从所有shell配置文件中移除配置
+        set removed_count 0
+        set bashrc_file "$HOME/.bashrc"
+        set zshrc_file "$HOME/.zshrc"
+        
+        # 处理bash配置
+        if test -f "$bashrc_file"
+            set temp_file (mktemp)
+            # 移除ccs相关的配置块
+            awk '
+            /^# Claude Code Configuration Switcher/ { skip=1; next }
+            /^if \[ -f "\$HOME\/\.ccs\/ccs\.sh" \]/ { skip=1; next }
+            /^fi$/ && skip { skip=0; next }
+            !skip { print }
+            ' "$bashrc_file" > "$temp_file"
+            
+            # 检查是否有变化
+            if not cmp -s "$bashrc_file" "$temp_file"
+                mv "$temp_file" "$bashrc_file"
+                echo "✅ 从 $bashrc_file 中移除配置"
+                set removed_count (math $removed_count + 1)
+            else
+                rm -f "$temp_file"
+            end
+        end
+        
+        # 处理zsh配置
+        if test -f "$zshrc_file"
+            set temp_file (mktemp)
+            awk '
+            /^# Claude Code Configuration Switcher/ { skip=1; next }
+            /^if \[ -f "\$HOME\/\.ccs\/ccs\.sh" \]/ { skip=1; next }
+            /^fi$/ && skip { skip=0; next }
+            !skip { print }
+            ' "$zshrc_file" > "$temp_file"
+            
+            if not cmp -s "$zshrc_file" "$temp_file"
+                mv "$temp_file" "$zshrc_file"
+                echo "✅ 从 $zshrc_file 中移除配置"
+                set removed_count (math $removed_count + 1)
+            else
+                rm -f "$temp_file"
+            end
+        end
+        
+        # 处理fish配置
+        set fish_config "$HOME/.config/fish/config.fish"
+        if test -f "$fish_config"
+            set temp_file (mktemp)
+            awk '
+            /^# Claude Code Configuration Switcher/ { skip=1; next }
+            /^if test -f "\$HOME\/\.ccs\/ccs\.fish"/ { skip=1; next }
+            /^end$/ && skip { skip=0; next }
+            !skip { print }
+            ' "$fish_config" > "$temp_file"
+            
+            if not cmp -s "$fish_config" "$temp_file"
+                mv "$temp_file" "$fish_config"
+                echo "✅ 从 $fish_config 中移除配置"
+                set removed_count (math $removed_count + 1)
+            else
+                rm -f "$temp_file"
+            end
+        end
+        
+        if test "$removed_count" -gt 0
+            echo "✅ 已从 $removed_count 个shell配置文件中移除ccs配置"
+        else
+            echo "⚠️ 未在shell配置文件中找到ccs配置"
+        end
+        
+        echo "✅ 卸载完成！请重新启动终端或重新加载shell配置"
+        echo ""
+        echo "⚠️ 注意：当前终端会话中的ccs函数仍然可用，直到重新启动终端"
         return 0
     end
     
