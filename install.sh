@@ -30,19 +30,19 @@ ZSHRC_FILE="$HOME/.zshrc"
 print_message() {
     local color=$1
     local message=$2
-    echo -e "${color}[*]${NC} $message"
+    printf "%b[*]%b %s\n" "$color" "$NC" "$message"
 }
 
 print_success() {
-    echo -e "${GREEN}[✓]${NC} $1"
+    printf "%b[✓]%b %s\n" "$GREEN" "$NC" "$1"
 }
 
 print_warning() {
-    echo -e "${YELLOW}[!]${NC} $1"
+    printf "%b[!]%b %s\n" "$YELLOW" "$NC" "$1"
 }
 
 print_error() {
-    echo -e "${RED}[✗]${NC} $1"
+    printf "%b[✗]%b %s\n" "$RED" "$NC" "$1"
 }
 
 # 检查命令是否存在
@@ -61,9 +61,9 @@ detect_shell() {
             *bash) echo "bash" ;;
             *zsh) echo "zsh" ;;
         esac
-    elif [ "$0" = "bash" ] || [ "$0" = "-bash" ] || [[ "$0" == *bash ]]; then
+    elif [ "$0" = "bash" ] || [ "$0" = "-bash" ] || echo "$0" | grep -q "bash"; then
         echo "bash"
-    elif [ "$0" = "zsh" ] || [ "$0" = "-zsh" ] || [[ "$0" == *zsh ]]; then
+    elif [ "$0" = "zsh" ] || [ "$0" = "-zsh" ] || echo "$0" | grep -q "zsh"; then
         echo "zsh"
     elif echo "$0" | grep -q "fish"; then
         echo "fish"
@@ -196,6 +196,7 @@ copy_script() {
     local script_dir="$(cd "$(dirname "$0")" && pwd)"
     local source_sh="$script_dir/ccs.sh"
     local source_fish="$script_dir/ccs.fish"
+    local source_web="$script_dir/web"
     
     if [ ! -f "$source_sh" ]; then
         print_error "找不到源脚本文件: $source_sh"
@@ -227,6 +228,23 @@ copy_script() {
         else
             print_success "复制fish脚本到 $fish_path"
         fi
+    fi
+    
+    # 复制web文件
+    if [ -d "$source_web" ]; then
+        local web_path="$HOME/.ccs/web"
+        if [ -d "$web_path" ] && [ "$reinstall" = true ]; then
+            print_message "$BLUE" "更新web文件..."
+            rm -rf "$web_path"
+        fi
+        cp -r "$source_web" "$web_path"
+        if [ "$reinstall" = true ]; then
+            print_success "更新web文件到 $web_path"
+        else
+            print_success "复制web文件到 $web_path"
+        fi
+    else
+        print_warning "未找到web文件夹，跳过复制web文件"
     fi
     
     # 如果是重新安装，提供额外提示
@@ -308,6 +326,7 @@ install_complete() {
     echo "  ccs list              - 列出所有可用配置"
     echo "  ccs [配置名称]       - 切换到指定配置"
     echo "  ccs current          - 显示当前配置"
+    echo "  ccs web              - 打开web配置界面"
     echo "  ccs help             - 显示帮助信息"
     echo ""
     
@@ -333,46 +352,121 @@ install_complete() {
 uninstall() {
     print_message "$BLUE" "开始卸载ccs..."
     
-    # 删除脚本文件
-    if [[ -f "$CCS_SCRIPT_PATH" ]]; then
-        rm -f "$CCS_SCRIPT_PATH"
-        print_success "删除脚本文件"
+    # 删除整个.ccs目录（除了配置文件）
+    if [ -d "$HOME/.ccs" ]; then
+        # 删除脚本文件
+        if [ -f "$HOME/.ccs/ccs.sh" ]; then
+            rm -f "$HOME/.ccs/ccs.sh"
+            print_success "删除bash脚本文件"
+        fi
+        
+        if [ -f "$HOME/.ccs/ccs.fish" ]; then
+            rm -f "$HOME/.ccs/ccs.fish"
+            print_success "删除fish脚本文件"
+        fi
+        
+        # 删除web文件
+        if [ -d "$HOME/.ccs/web" ]; then
+            rm -rf "$HOME/.ccs/web"
+            print_success "删除web文件"
+        fi
+        
+        # 检查.ccs目录是否为空（除了配置文件）
+        local remaining_files=$(find "$HOME/.ccs" -type f ! -name "*.toml" | wc -l)
+        if [ "$remaining_files" -eq 0 ]; then
+            # 如果没有配置文件，删除整个目录
+            if [ ! -f "$CONFIG_FILE" ]; then
+                rm -rf "$HOME/.ccs"
+                print_success "删除.ccs目录"
+            else
+                print_warning "保留.ccs目录（包含配置文件）"
+            fi
+        fi
     fi
     
     # 删除配置文件（询问用户）
     if [ -f "$CONFIG_FILE" ]; then
-        read -p "是否要删除配置文件 $CONFIG_FILE? (y/N): " -n 1 -r
+        printf "是否要删除配置文件 $CONFIG_FILE? (y/N): "
+        read -r REPLY
         echo
         if [ "$REPLY" = "y" ] || [ "$REPLY" = "Y" ]; then
             rm -f "$CONFIG_FILE"
             print_success "删除配置文件"
+            # 如果删除了配置文件且.ccs目录为空，删除目录
+            if [ -d "$HOME/.ccs" ] && [ -z "$(ls -A "$HOME/.ccs" 2>/dev/null)" ]; then
+                rm -rf "$HOME/.ccs"
+                print_success "删除空的.ccs目录"
+            fi
         fi
     fi
     
-    # 从shell配置文件中移除配置
-    local shell_type=$(detect_shell)
-    local config_file=""
+    # 从所有shell配置文件中移除配置
+    local removed_count=0
     
-    case $shell_type in
-        "zsh")
-            config_file="$ZSHRC_FILE"
-            ;;
-        "bash")
-            config_file="$BASHRC_FILE"
-            ;;
-    esac
-    
-    if [ -f "$config_file" ]; then
-        # 创建临时文件
+    # 处理bash配置
+    if [ -f "$BASHRC_FILE" ]; then
         local temp_file=$(mktemp)
+        # 移除ccs相关的配置块（从注释开始到EOF结束的整个块）
+        awk '
+        /^# Claude Code Configuration Switcher/ { skip=1; next }
+        /^if \[ -f "\$HOME\/\.ccs\/ccs\.sh" \]/ { skip=1; next }
+        /^fi$/ && skip { skip=0; next }
+        !skip { print }
+        ' "$BASHRC_FILE" > "$temp_file"
         
-        # 移除ccs相关的配置行
-        grep -v "Claude Code Configuration Switcher" "$config_file" | \
-        grep -v "source.*ccs.sh" > "$temp_file"
+        # 检查是否有变化
+        if ! cmp -s "$BASHRC_FILE" "$temp_file"; then
+            mv "$temp_file" "$BASHRC_FILE"
+            print_success "从 $BASHRC_FILE 中移除配置"
+            removed_count=$((removed_count + 1))
+        else
+            rm -f "$temp_file"
+        fi
+    fi
+    
+    # 处理zsh配置
+    if [ -f "$ZSHRC_FILE" ]; then
+        local temp_file=$(mktemp)
+        awk '
+        /^# Claude Code Configuration Switcher/ { skip=1; next }
+        /^if \[ -f "\$HOME\/\.ccs\/ccs\.sh" \]/ { skip=1; next }
+        /^fi$/ && skip { skip=0; next }
+        !skip { print }
+        ' "$ZSHRC_FILE" > "$temp_file"
         
-        # 替换原文件
-        mv "$temp_file" "$config_file"
-        print_success "从 $config_file 中移除配置"
+        if ! cmp -s "$ZSHRC_FILE" "$temp_file"; then
+            mv "$temp_file" "$ZSHRC_FILE"
+            print_success "从 $ZSHRC_FILE 中移除配置"
+            removed_count=$((removed_count + 1))
+        else
+            rm -f "$temp_file"
+        fi
+    fi
+    
+    # 处理fish配置
+    local fish_config="$HOME/.config/fish/config.fish"
+    if [ -f "$fish_config" ]; then
+        local temp_file=$(mktemp)
+        awk '
+        /^# Claude Code Configuration Switcher/ { skip=1; next }
+        /^if test -f "\$HOME\/\.ccs\/ccs\.fish"/ { skip=1; next }
+        /^end$/ && skip { skip=0; next }
+        !skip { print }
+        ' "$fish_config" > "$temp_file"
+        
+        if ! cmp -s "$fish_config" "$temp_file"; then
+            mv "$temp_file" "$fish_config"
+            print_success "从 $fish_config 中移除配置"
+            removed_count=$((removed_count + 1))
+        else
+            rm -f "$temp_file"
+        fi
+    fi
+    
+    if [ "$removed_count" -gt 0 ]; then
+        print_success "已从 $removed_count 个shell配置文件中移除ccs配置"
+    else
+        print_warning "未在shell配置文件中找到ccs配置"
     fi
     
     print_success "卸载完成！请重新启动终端或重新加载shell配置"
@@ -390,8 +484,9 @@ show_help() {
     echo "此脚本将:"
     echo "  1. 创建 $HOME/.ccs 目录"
     echo "  2. 复制/更新ccs.sh和ccs.fish脚本到 $HOME/.ccs/"
-    echo "  3. 创建配置文件 $HOME/.ccs_config.toml（如果不存在）"
-    echo "  4. 配置shell环境"
+    echo "  3. 复制web文件到 $HOME/.ccs/web/"
+    echo "  4. 创建配置文件 $HOME/.ccs_config.toml（如果不存在）"
+    echo "  5. 配置shell环境"
     echo ""
     echo "重新安装行为:"
     echo "  - 强制更新所有shell脚本文件"

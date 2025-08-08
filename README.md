@@ -1,7 +1,7 @@
 # Claude Code Configuration Switcher (CCS)
 
 一个用于快速切换不同Claude Code API配置的工具，支持多种Shell环境（Bash、Zsh、Fish）和Windows环境（CMD、PowerShell）。
-![实际效果](./imgs/PixPin_2025-08-07_17-23-44.png)
+![实际效果](./imgs/screenshot1.png)
 
 ## 🚀 一键安装
 
@@ -82,6 +82,7 @@ wget -qO- https://github.com/bahayonghang/ccs/raw/main/quick_install.sh | bash
 
 - 🔄 **快速切换配置**：一键切换不同的Claude Code API配置
 - 📋 **配置管理**：列出所有可用配置，显示当前配置状态
+- 🌐 **Web界面管理**：提供直观的Web界面进行配置管理和编辑
 - 🔧 **多平台支持**：支持Linux、macOS、Windows系统
 - 🔧 **多Shell支持**：支持Bash、Zsh、Fish Shell、CMD、PowerShell
 - 📝 **TOML配置**：使用易读的TOML格式管理配置
@@ -189,6 +190,9 @@ ccs glm
 # 显示当前配置
 ccs current
 
+# 启动Web界面管理
+ccs web
+
 # 显示帮助信息
 ccs help
 ```
@@ -200,6 +204,7 @@ ccs help
 ccs list
 ccs [配置名称]
 ccs current
+ccs web
 ccs help
 ```
 
@@ -211,6 +216,54 @@ ccs help
 # 使用默认配置
 ccs
 ```
+
+## 🌐 Web界面管理
+
+CCS提供了一个直观的Web界面，让您可以通过浏览器轻松管理和编辑配置。
+
+![Web界面预览](./imgs/screenshot2.png)
+
+### 启动Web界面
+
+```bash
+# 启动Web管理界面
+ccs web
+```
+
+执行命令后，系统会自动启动HTTP服务器，并显示访问地址（通常是 `http://localhost:8888` 或 `http://localhost:8889`）。
+
+### Web界面功能
+
+#### 📋 配置概览
+- **配置列表**：以卡片形式展示所有配置项
+- **侧边栏导航**：快速跳转到指定配置
+- **当前状态**：清晰显示当前激活的配置
+- **配置详情**：显示每个配置的完整信息（Base URL、Auth Token、Model等）
+
+#### ✏️ 配置编辑
+- **在线编辑**：直接在Web界面中编辑配置参数
+- **实时保存**：修改后自动保存到配置文件
+- **表单验证**：确保输入的配置信息格式正确
+- **安全显示**：Auth Token完整显示，便于复制和验证
+
+#### 🎨 用户体验
+- **响应式设计**：支持桌面和移动设备访问
+- **两列布局**：左侧导航，右侧内容，信息展示更清晰
+- **平滑滚动**：点击导航自动滚动到对应配置
+- **活动状态**：导航栏自动高亮当前查看的配置
+
+### 使用场景
+
+1. **批量配置管理**：当您有多个API配置需要管理时
+2. **团队协作**：通过Web界面更容易向团队成员展示配置
+3. **远程管理**：在远程服务器上通过Web界面管理配置
+4. **可视化编辑**：相比命令行，Web界面提供更直观的编辑体验
+
+### 安全说明
+
+- Web服务器仅监听本地地址，外部无法直接访问
+- 建议仅在可信环境中使用Web界面
+- 使用完毕后可通过 `Ctrl+C` 停止Web服务器
 
 ## 支持的环境
 
@@ -230,7 +283,9 @@ ccs
 ```
 ~/.ccs/                    # 配置目录
 ├── ccs.sh                 # Bash/Zsh脚本
-└── ccs.fish               # Fish Shell脚本
+├── ccs.fish               # Fish Shell脚本
+└── web/                   # Web界面文件目录
+    └── index.html         # Web管理界面
 
 ~/.ccs_config.toml         # 配置文件
 ```
@@ -239,7 +294,9 @@ ccs
 ```
 %USERPROFILE%\.ccs\        # 配置目录
 ├── ccs.bat                # CMD批处理脚本
-└── ccs.ps1                # PowerShell脚本
+├── ccs.ps1                # PowerShell脚本
+└── web\                   # Web界面文件目录
+    └── index.html         # Web管理界面
 
 %USERPROFILE%\.ccs_config.toml  # 配置文件
 ```

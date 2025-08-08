@@ -25,19 +25,19 @@ fi
 print_message() {
     local color=$1
     local message=$2
-    echo -e "${color}[*]${NC} $message"
+    printf "%b[*]%b %s\n" "$color" "$NC" "$message"
 }
 
 print_success() {
-    echo -e "${GREEN}[✓]${NC} $1"
+    printf "%b[✓]%b %s\n" "$GREEN" "$NC" "$1"
 }
 
 print_warning() {
-    echo -e "${YELLOW}[!]${NC} $1"
+    printf "%b[!]%b %s\n" "$YELLOW" "$NC" "$1"
 }
 
 print_error() {
-    echo -e "${RED}[✗]${NC} $1"
+    printf "%b[✗]%b %s\n" "$RED" "$NC" "$1"
 }
 
 # 检查命令是否存在

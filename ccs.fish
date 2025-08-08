@@ -22,12 +22,14 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell"
         echo "  ccs [配置名称]    - 切换到指定配置"
         echo "  ccs list          - 列出所有可用配置"
         echo "  ccs current       - 显示当前配置"
+        echo "  ccs web           - 打开web配置界面"
         echo "  ccs help          - 显示此帮助信息"
         echo ""
         echo "示例:"
         echo "  ccs anyrouter     - 切换到anyrouter配置"
         echo "  ccs glm           - 切换到智谱GLM配置"
         echo "  ccs list          - 查看所有可用配置"
+        echo "  ccs web           - 打开web配置界面"
         return 0
     end
     
@@ -76,6 +78,71 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell"
         set default_config (grep 'default_config.*=' "$config_file" | cut -d'"' -f2 | head -1)
         if test -n "$default_config"
             echo "默认配置: $default_config"
+        end
+        return 0
+    end
+    
+    # 处理web子命令
+    if test "$profile_name" = "web"
+        set web_dir "$HOME/.ccs/web"
+        set web_path "$web_dir/index.html"
+        
+        if not test -f "$web_path"
+            echo "❌ web界面文件不存在，请重新运行安装脚本"
+            return 1
+        end
+        
+        # 检查是否在远程环境（WSL/SSH）
+        if test -n "$WSL_DISTRO_NAME" -o -n "$SSH_CLIENT" -o -n "$SSH_TTY"
+            # 远程环境，启动HTTP服务器
+             set port 8888
+             echo "检测到远程环境，启动HTTP服务器..."
+             
+             # 检查端口是否被占用
+             while netstat -ln 2>/dev/null | grep -q ":$port "
+                 set port (math $port + 1)
+             end
+             
+             # 复制用户配置文件到web目录，确保web页面能读取到正确的配置
+             set user_config "$HOME/.ccs_config.toml"
+             if test -f "$user_config"
+                 cp "$user_config" "$web_dir/.ccs_config.toml"
+                 echo "已复制用户配置文件到web目录"
+             else
+                 echo "⚠️ 未找到用户配置文件 $user_config"
+             end
+             
+             echo "启动web服务器在端口 $port"
+             echo "请在浏览器中访问: http://localhost:$port"
+             
+             # 启动Python HTTP服务器
+             if command -v python3 >/dev/null 2>&1
+                 cd "$web_dir" && python3 -m http.server $port
+             else if command -v python >/dev/null 2>&1
+                 cd "$web_dir" && python -m SimpleHTTPServer $port
+             else
+                 echo "❌ 需要Python来启动HTTP服务器"
+                 echo "请手动打开 $web_path"
+                 return 1
+             end
+        else
+            # 本地环境，直接打开浏览器
+            if command -v xdg-open >/dev/null 2>&1
+                xdg-open "$web_path"
+            else if command -v open >/dev/null 2>&1
+                open "$web_path"
+            else if command -v google-chrome >/dev/null 2>&1
+                google-chrome "$web_path"
+            else if command -v firefox >/dev/null 2>&1
+                firefox "$web_path"
+            else if command -v safari >/dev/null 2>&1
+                safari "$web_path"
+            else
+                echo "❌ 无法找到可用的浏览器"
+                echo "请手动打开 $web_path"
+                return 1
+            end
+            echo "✅ 正在打开web配置界面..."
         end
         return 0
     end

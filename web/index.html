@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code Configuration Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .content {
+            padding: 0;
+            display: flex;
+            min-height: 600px;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #f8f9fa;
+            border-right: 1px solid #e9ecef;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+        }
+
+        .sidebar-nav li {
+            margin-bottom: 8px;
+        }
+
+        .sidebar-nav a {
+            display: block;
+            padding: 8px 12px;
+            color: #666;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .sidebar-nav a:hover {
+            background: #e9ecef;
+            color: #333;
+        }
+
+        .sidebar-nav a.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .config-list {
+            margin-top: 0;
+        }
+
+        .config-item {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .config-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .config-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .config-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .config-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .config-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .config-list {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .field label {
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        .field input, .field textarea {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .field input:focus, .field textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .field textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .close {
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #aaa;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .status-bar {
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-text {
+            color: #666;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .default-config-badge {
+            background: #28a745;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+                padding: 15px 20px;
+            }
+            
+            .sidebar h3 {
+                margin-bottom: 10px;
+            }
+            
+            .sidebar-nav {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+            
+            .sidebar-nav li {
+                margin-bottom: 0;
+            }
+            
+            .sidebar-nav a {
+                padding: 6px 10px;
+                font-size: 0.8rem;
+            }
+            
+            .config-fields {
+                grid-template-columns: 1fr;
+            }
+            
+            .config-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .config-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .config-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Claude Code Configuration Manager</h1>
+            <p>管理您的 Claude Code API 配置文件</p>
+        </div>
+        
+        <div class="content">
+            <div class="sidebar">
+                <h3>📋 配置目录</h3>
+                <ul class="sidebar-nav" id="sidebarNav">
+                    <li><a href="#overview" onclick="scrollToSection('overview')">📊 概览</a></li>
+                </ul>
+            </div>
+            <div class="main-content">
+                <div class="config-list" id="configList">
+                    <div id="overview" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2>配置列表</h2>
+                        <div>
+                            <button class="btn btn-primary" onclick="openAddModal()">添加配置</button>
+                            <button class="btn btn-success" onclick="saveFile()">保存文件</button>
+                        </div>
+                    </div>
+                    <div id="configsContainer"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-text" id="statusText">正在加载本地配置...</div>
+            <div>
+                <button class="btn btn-secondary" onclick="reloadConfig()">重新加载</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑配置模态框 -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">编辑配置</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <form id="configForm">
+                <div class="config-fields">
+                    <div class="field">
+                        <label for="configName">配置名称</label>
+                        <input type="text" id="configName" required>
+                    </div>
+                    <div class="field">
+                        <label for="configDescription">描述</label>
+                        <input type="text" id="configDescription">
+                    </div>
+                    <div class="field">
+                        <label for="configBaseUrl">Base URL</label>
+                        <input type="url" id="configBaseUrl" required>
+                    </div>
+                    <div class="field">
+                        <label for="configAuthToken">Auth Token</label>
+                        <input type="text" id="configAuthToken" required>
+                    </div>
+                    <div class="field">
+                        <label for="configModel">Model (可选)</label>
+                        <input type="text" id="configModel">
+                    </div>
+                    <div class="field">
+                        <label for="configSmallModel">Small Fast Model (可选)</label>
+                        <input type="text" id="configSmallModel">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // TOML 解析和序列化
+        class TomlParser {
+            static parse(tomlString) {
+                const result = {};
+                const lines = tomlString.split('\n');
+                let currentSection = null;
+                
+                for (let line of lines) {
+                    line = line.trim();
+                    if (line === '' || line.startsWith('#')) continue;
+                    
+                    // 处理配置节 [section]
+                    if (line.startsWith('[') && line.endsWith(']')) {
+                        currentSection = line.slice(1, -1);
+                        result[currentSection] = {};
+                        continue;
+                    }
+                    
+                    // 处理键值对
+                    const equalIndex = line.indexOf('=');
+                    if (equalIndex > 0) {
+                        const key = line.slice(0, equalIndex).trim();
+                        let value = line.slice(equalIndex + 1).trim();
+                        
+                        // 移除引号
+                        if (value.startsWith('"') && value.endsWith('"')) {
+                            value = value.slice(1, -1);
+                        }
+                        
+                        if (currentSection) {
+                            result[currentSection][key] = value;
+                        } else {
+                            result[key] = value;
+                        }
+                    }
+                }
+                
+                return result;
+            }
+            
+            static stringify(obj) {
+                let result = '';
+                
+                // 首先处理顶级键值对
+                for (let key in obj) {
+                    if (typeof obj[key] === 'object' && obj[key] !== null) {
+                        continue; // 跳过配置节
+                    }
+                    result += `${key} = "${obj[key]}"\n`;
+                }
+                
+                // 处理配置节
+                for (let section in obj) {
+                    if (typeof obj[section] === 'object' && obj[section] !== null) {
+                        result += `\n[${section}]\n`;
+                        for (let key in obj[section]) {
+                            result += `${key} = "${obj[section][key]}"\n`;
+                        }
+                    }
+                }
+                
+                return result;
+            }
+        }
+
+        // 全局变量
+        let currentConfig = null;
+        let editingConfigName = null;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 自动加载本地配置文件
+            loadLocalConfig();
+        });
+
+        function loadLocalConfig() {
+            updateStatus('正在加载本地配置...');
+            
+            // 尝试通过 HTTP 请求加载默认配置文件
+            const configPaths = [
+                '/.ccs_config.toml',
+                '/config.toml',
+                '/ccs_config.toml'
+            ];
+            
+            // 尝试加载配置文件
+            configPaths.forEach(path => {
+                fetch(path)
+                    .then(response => {
+                        if (response.ok) {
+                            return response.text();
+                        }
+                        throw new Error('Config file not found');
+                    })
+                    .then(content => {
+                        try {
+                            currentConfig = TomlParser.parse(content);
+                            displayConfigs();
+                            updateStatus(`已加载配置文件: ${path}`);
+                            // 缓存到 localStorage
+                            localStorage.setItem('ccs_config', JSON.stringify(currentConfig));
+                        } catch (error) {
+                            console.error('Failed to parse config file:', error);
+                            updateStatus('配置文件解析失败');
+                        }
+                    })
+                    .catch(() => {
+                        // 忽略错误，继续尝试下一个路径
+                    });
+            });
+            
+            // 如果通过 HTTP 无法加载，尝试从 localStorage 读取缓存的配置
+            setTimeout(() => {
+                if (!currentConfig) {
+                    const cachedConfig = localStorage.getItem('ccs_config');
+                    if (cachedConfig) {
+                        try {
+                            currentConfig = JSON.parse(cachedConfig);
+                            displayConfigs();
+                            updateStatus('已加载缓存的配置');
+                        } catch (error) {
+                            console.error('Failed to parse cached config:', error);
+                            updateStatus('无法加载配置文件');
+                        }
+                    } else {
+                        updateStatus('无法找到配置文件');
+                    }
+                }
+            }, 1000);
+        }
+
+        function reloadConfig() {
+            currentConfig = null;
+            localStorage.removeItem('ccs_config');
+            loadLocalConfig();
+        }
+
+        function displayConfigs() {
+            const container = document.getElementById('configsContainer');
+            const configList = document.getElementById('configList');
+            const sidebarNav = document.getElementById('sidebarNav');
+            
+            container.innerHTML = '';
+            
+            if (!currentConfig) {
+                container.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">无法加载配置文件，请确保 ~/.ccs_config.toml 文件存在</div>';
+                return;
+            }
+            
+            // 获取默认配置
+            const defaultConfig = currentConfig.default_config;
+            
+            let hasConfigs = false;
+            
+            // 重新生成侧边栏导航
+            sidebarNav.innerHTML = '<li><a href="#overview" onclick="scrollToSection(\'overview\')">📊 概览</a></li>';
+            
+            // 显示所有配置节（除了 default_config）
+            for (let section in currentConfig) {
+                if (section === 'default_config') continue;
+                
+                hasConfigs = true;
+                const config = currentConfig[section];
+                const isDefault = section === defaultConfig;
+                const configId = `config-${section.replace(/[^a-zA-Z0-9]/g, '-')}`;
+                
+                // 添加到侧边栏导航
+                const navItem = document.createElement('li');
+                navItem.innerHTML = `<a href="#${configId}" onclick="scrollToSection('${configId}')">${isDefault ? '⭐' : '🔧'} ${section}</a>`;
+                sidebarNav.appendChild(navItem);
+                
+                const configDiv = document.createElement('div');
+                configDiv.className = 'config-item';
+                configDiv.id = configId;
+                configDiv.innerHTML = `
+                    <div class="config-header">
+                        <div>
+                            <div class="config-name">
+                                ${section}
+                                ${isDefault ? '<span class="default-config-badge">默认</span>' : ''}
+                            </div>
+                            <div style="color: #666; margin-top: 5px;">${config.description || '无描述'}</div>
+                        </div>
+                        <div class="config-actions">
+                            ${!isDefault ? `<button class="btn btn-primary" onclick="setDefaultConfig('${section}')">设为默认</button>` : ''}
+                            <button class="btn btn-secondary" onclick="editConfig('${section}')">编辑</button>
+                            <button class="btn btn-danger" onclick="deleteConfig('${section}')">删除</button>
+                        </div>
+                    </div>
+                    <div class="config-fields">
+                        <div class="field">
+                            <label>Base URL</label>
+                            <input type="url" value="${config.base_url || ''}" readonly>
+                        </div>
+                        <div class="field">
+                            <label>Auth Token</label>
+                            <input type="text" value="${config.auth_token || ''}" readonly>
+                        </div>
+                        <div class="field">
+                            <label>Model</label>
+                            <input type="text" value="${config.model || ''}" readonly>
+                        </div>
+                        <div class="field">
+                            <label>Small Fast Model</label>
+                            <input type="text" value="${config.small_fast_model || ''}" readonly>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(configDiv);
+            }
+            
+            if (!hasConfigs) {
+                container.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">没有找到任何配置，请点击"添加配置"来创建新的配置</div>';
+            }
+            
+            configList.style.display = 'block';
+        }
+
+        function setDefaultConfig(configName) {
+            currentConfig.default_config = configName;
+            displayConfigs();
+            updateStatus(`已设置默认配置: ${configName}`);
+        }
+
+        function editConfig(configName) {
+            editingConfigName = configName;
+            const config = currentConfig[configName];
+            
+            document.getElementById('modalTitle').textContent = '编辑配置';
+            document.getElementById('configName').value = configName;
+            document.getElementById('configDescription').value = config.description || '';
+            document.getElementById('configBaseUrl').value = config.base_url || '';
+            document.getElementById('configAuthToken').value = config.auth_token || '';
+            document.getElementById('configModel').value = config.model || '';
+            document.getElementById('configSmallModel').value = config.small_fast_model || '';
+            
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function openAddModal() {
+            editingConfigName = null;
+            
+            document.getElementById('modalTitle').textContent = '添加配置';
+            document.getElementById('configForm').reset();
+            
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        function deleteConfig(configName) {
+            if (confirm(`确定要删除配置 "${configName}" 吗？`)) {
+                delete currentConfig[configName];
+                
+                // 如果删除的是默认配置，清除默认配置
+                if (currentConfig.default_config === configName) {
+                    delete currentConfig.default_config;
+                }
+                
+                displayConfigs();
+                updateStatus(`已删除配置: ${configName}`);
+            }
+        }
+
+        function saveFile() {
+            if (!currentConfig) {
+                alert('没有配置可保存');
+                return;
+            }
+            
+            const tomlContent = TomlParser.stringify(currentConfig);
+            const blob = new Blob([tomlContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = '.ccs_config.toml';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            // 同时保存到 localStorage
+            localStorage.setItem('ccs_config', JSON.stringify(currentConfig));
+            
+            updateStatus('配置文件已保存，请将下载的文件替换 ~/.ccs_config.toml');
+        }
+
+        function updateStatus(message) {
+            document.getElementById('statusText').textContent = message;
+        }
+
+  
+        // 表单提交处理
+        document.getElementById('configForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const configName = document.getElementById('configName').value;
+            const config = {
+                description: document.getElementById('configDescription').value,
+                base_url: document.getElementById('configBaseUrl').value,
+                auth_token: document.getElementById('configAuthToken').value,
+                model: document.getElementById('configModel').value,
+                small_fast_model: document.getElementById('configSmallModel').value
+            };
+            
+            // 清理空值
+            for (let key in config) {
+                if (config[key] === '') {
+                    delete config[key];
+                }
+            }
+            
+            // 如果是编辑模式，先删除旧配置
+            if (editingConfigName && editingConfigName !== configName) {
+                delete currentConfig[editingConfigName];
+                
+                // 如果修改的是默认配置，更新默认配置名称
+                if (currentConfig.default_config === editingConfigName) {
+                    currentConfig.default_config = configName;
+                }
+            }
+            
+            currentConfig[configName] = config;
+            displayConfigs();
+            closeModal();
+            updateStatus(`配置 "${configName}" 已保存`);
+        });
+
+        // 滚动到指定区域的函数
+        function scrollToSection(sectionId) {
+            const element = document.getElementById(sectionId);
+            if (element) {
+                // 平滑滚动到目标元素
+                element.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+                
+                // 更新侧边栏导航的活动状态
+                updateActiveNavItem(sectionId);
+            }
+        }
+
+        // 更新侧边栏导航的活动状态
+        function updateActiveNavItem(activeId) {
+            const navLinks = document.querySelectorAll('.sidebar-nav a');
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${activeId}`) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        // 监听滚动事件，自动更新导航状态
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('[id^="config-"], #overview');
+            let currentSection = 'overview';
+            
+            sections.forEach(section => {
+                const rect = section.getBoundingClientRect();
+                if (rect.top <= 100 && rect.bottom >= 100) {
+                    currentSection = section.id;
+                }
+            });
+            
+            updateActiveNavItem(currentSection);
+        });
+
+        // 页面加载完成后设置默认活动导航
+         document.addEventListener('DOMContentLoaded', function() {
+             updateActiveNavItem('overview');
+         });
+
+        // 点击模态框外部关闭
+        window.addEventListener('click', function(e) {
+            const modal = document.getElementById('editModal');
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>
