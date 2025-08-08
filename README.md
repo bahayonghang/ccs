@@ -1,10 +1,11 @@
 # Claude Code Configuration Switcher (CCS)
 
-一个用于快速切换不同Claude Code API配置的工具，支持多种Shell环境（Bash、Zsh、Fish）。
+一个用于快速切换不同Claude Code API配置的工具，支持多种Shell环境（Bash、Zsh、Fish）和Windows环境（CMD、PowerShell）。
 ![实际效果](./imgs/PixPin_2025-08-07_17-23-44.png)
-> Attention: 暂时只支持bash，zsh，fish，其他shell环境未测试通过，可能会出现问题。
 
 ## 🚀 一键安装
+
+### Linux/macOS 系统
 
 ```bash
 curl -L https://github.com/bahayonghang/ccs/raw/main/quick_install.sh | bash
@@ -16,11 +17,23 @@ curl -L https://github.com/bahayonghang/ccs/raw/main/quick_install.sh | bash
 wget -qO- https://github.com/bahayonghang/ccs/raw/main/quick_install.sh | bash
 ```
 
+### Windows 系统
+
+1. **下载并运行一键安装脚本**：
+   - 下载：https://github.com/bahayonghang/ccs/raw/main/quick_install.bat
+   - 双击运行或在命令提示符中运行
+
+2. **或者使用PowerShell安装**：
+   ```powershell
+   irm https://github.com/bahayonghang/ccs/raw/main/quick_install.bat | Out-File -FilePath quick_install.bat
+   .\quick_install.bat
+   ```
+
 > 💡 一键安装会自动下载所有必要文件并完成配置，无需手动克隆仓库
 
 ## 📋 安装后配置
 
-安装完成后，请按照以下步骤配置：
+### Linux/macOS 系统
 
 1. **重新加载Shell环境**（选择对应的命令）：
    ```bash
@@ -41,15 +54,39 @@ wget -qO- https://github.com/bahayonghang/ccs/raw/main/quick_install.sh | bash
    ccs current          # 显示当前配置
    ```
 
+### Windows 系统
+
+1. **重新打开命令提示符或PowerShell**：
+   - 关闭并重新打开命令提示符/PowerShell窗口
+   - 或者重新启动Windows终端
+
+2. **编辑配置文件**：
+   ```cmd
+   notepad %USERPROFILE%\.ccs_config.toml
+   ```
+   或者在PowerShell中：
+   ```powershell
+   notepad $env:USERPROFILE\.ccs_config.toml
+   ```
+
+3. **填入您的API密钥**，然后开始使用：
+   ```cmd
+   ccs list              # 查看所有配置
+   ccs [配置名称]        # 切换到指定配置
+   ccs current          # 显示当前配置
+   ```
+
 ---
 
 ## 功能特性
 
 - 🔄 **快速切换配置**：一键切换不同的Claude Code API配置
 - 📋 **配置管理**：列出所有可用配置，显示当前配置状态
-- 🔧 **多Shell支持**：支持Bash、Zsh、Fish Shell
+- 🔧 **多平台支持**：支持Linux、macOS、Windows系统
+- 🔧 **多Shell支持**：支持Bash、Zsh、Fish Shell、CMD、PowerShell
 - 📝 **TOML配置**：使用易读的TOML格式管理配置
 - 🎨 **彩色输出**：带颜色的友好提示信息
+- 🛡️ **环境变量管理**：自动管理用户级环境变量
 
 ## 📦 安装方式
 
@@ -138,6 +175,8 @@ model = "glm-4"
 
 ### 基本命令
 
+#### Linux/macOS/Windows通用命令
+
 ```bash
 # 列出所有可用配置
 ccs list
@@ -154,6 +193,16 @@ ccs current
 ccs help
 ```
 
+#### Windows PowerShell专用命令
+
+```powershell
+# 如果在PowerShell中使用，也可以这样调用
+ccs list
+ccs [配置名称]
+ccs current
+ccs help
+```
+
 ### 默认配置
 
 如果不指定配置名称，ccs会使用配置文件中的`default_config`值：
@@ -163,23 +212,41 @@ ccs help
 ccs
 ```
 
-## 支持的Shell
+## 支持的环境
 
-- ✅ **Bash**：完全支持
-- ✅ **Zsh**：完全支持
-- ⚠️ **Fish**：正在调试中，部分功能可能不稳定
+### Shell环境
+- ✅ **Bash**：完全支持（Linux/macOS/Windows WSL）
+- ✅ **Zsh**：完全支持（Linux/macOS）
+- ✅ **Fish**：完全支持（Linux/macOS）
+
+### Windows环境
+- ✅ **CMD**：完全支持（Windows 7+）
+- ✅ **PowerShell**：完全支持（Windows PowerShell 5.1+）
+- ✅ **Windows Terminal**：完全支持
 
 ## 文件结构
 
+### Linux/macOS
 ```
 ~/.ccs/                    # 配置目录
-├── ccs.sh                 # 主脚本文件
-└── ccs.fish               # Fish Shell版本（开发中）
+├── ccs.sh                 # Bash/Zsh脚本
+└── ccs.fish               # Fish Shell脚本
 
 ~/.ccs_config.toml         # 配置文件
 ```
 
+### Windows
+```
+%USERPROFILE%\.ccs\        # 配置目录
+├── ccs.bat                # CMD批处理脚本
+└── ccs.ps1                # PowerShell脚本
+
+%USERPROFILE%\.ccs_config.toml  # 配置文件
+```
+
 ## 卸载
+
+### Linux/macOS 系统
 
 运行卸载命令：
 
@@ -200,6 +267,29 @@ rm ~/.ccs_config.toml
 ```
 
 3. 从Shell配置文件中移除相关配置
+
+### Windows 系统
+
+运行卸载命令：
+
+```cmd
+install.bat --uninstall
+```
+
+或手动删除：
+
+1. 删除配置目录：
+```cmd
+rmdir /s /q %USERPROFILE%\.ccs
+```
+
+2. 删除配置文件：
+```cmd
+del %USERPROFILE%\.ccs_config.toml
+```
+
+3. 从PowerShell配置文件中移除相关配置
+4. 从系统PATH环境变量中移除ccs目录
 
 ## 环境变量
 
