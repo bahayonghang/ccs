@@ -8,6 +8,7 @@ description = "AnyRouter API服务"
 base_url = "https://anyrouter.top"
 auth_token = "sk-your-anyrouter-api-key-here"
 model = "claude-3-5-sonnet-20241022"
+small_fast_model = "claude-3-5-haiku-20241022"
 
 [glm]
 description = "智谱GLM API服务"
@@ -20,6 +21,7 @@ description = "Anthropic官方API"
 base_url = "https://api.anthropic.com"
 auth_token = "sk-ant-your-api-key-here"
 model = "claude-3-5-sonnet-20241022"
+small_fast_model = "claude-3-5-haiku-20241022"
 
 [openai]
 description = "OpenAI API配置"
@@ -32,12 +34,14 @@ description = "AICodeMirror API服务"
 base_url = "https://aicodemirror.com/api"
 auth_token = "your-aicodemirror-api-key-here"
 model = "claude-3-5-sonnet-20241022"
+small_fast_model = "claude-3-5-haiku-20241022"
 
 [wenwen]
 description = "文文AI API服务"
 base_url = "https://api.wenwen.ai"
 auth_token = "your-wenwen-api-key-here"
 model = "claude-3-5-sonnet-20241022"
+small_fast_model = "claude-3-5-haiku-20241022"
 
 [moonshot]
 description = "月之暗面API服务"
@@ -50,3 +54,4 @@ description = "SiliconFlow API服务"
 base_url = "https://api.siliconflow.cn/v1"
 auth_token = "sk-your-siliconflow-api-key-here"
 model = "anthropic/claude-3-5-sonnet-20241022"
+small_fast_model = "anthropic/claude-3-5-haiku-20241022"

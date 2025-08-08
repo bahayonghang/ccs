@@ -125,6 +125,7 @@ description = "Anthropic官方API"
 base_url = "https://api.anthropic.com"
 auth_token = "sk-ant-your-api-key-here"
 model = "claude-3-sonnet-20240229"
+small_fast_model = "claude-3-5-haiku-20241022"
 
 [glm]
 description = "智谱GLM API"
@@ -207,6 +208,20 @@ ccs会设置以下环境变量：
 - `ANTHROPIC_BASE_URL`：API基础URL
 - `ANTHROPIC_AUTH_TOKEN`：API认证令牌
 - `ANTHROPIC_MODEL`：使用的模型名称
+- `ANTHROPIC_SMALL_FAST_MODEL`：用于背景任务的快速模型（可选）
+
+## 配置选项说明
+
+### 基本配置项
+- `base_url`: API服务的基础URL
+- `auth_token`: API认证令牌
+- `model`: 主要使用的模型名称
+- `description`: 配置的描述信息
+
+### 可选配置项
+- `small_fast_model`: 用于Claude Code背景任务的快速模型，推荐使用Haiku系列：
+  - `claude-3-5-haiku-20241022`（最新版本）
+  - `claude-3-haiku-20240307`（旧版本）
 
 ## 故障排除
 

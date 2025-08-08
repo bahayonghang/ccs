@@ -100,6 +100,12 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell"
         else
             echo "  ANTHROPIC_MODEL=(未设置)"
         end
+        
+        if test -n "$ANTHROPIC_SMALL_FAST_MODEL"
+            echo "  ANTHROPIC_SMALL_FAST_MODEL=$ANTHROPIC_SMALL_FAST_MODEL"
+        else
+            echo "  ANTHROPIC_SMALL_FAST_MODEL=(未设置)"
+        end
         return 0
     end
     
@@ -125,6 +131,7 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell"
     set base_url (sed -n "/^\[$profile_name\]/,/^\[/p" "$config_file" | sed -n '/^base_url[[:space:]]*=/{s/.*"\([^"]*\)".*/\1/;p;q}')
     set auth_token (sed -n "/^\[$profile_name\]/,/^\[/p" "$config_file" | sed -n '/^auth_token[[:space:]]*=/{s/.*"\([^"]*\)".*/\1/;p;q}')
     set model (sed -n "/^\[$profile_name\]/,/^\[/p" "$config_file" | sed -n '/^model[[:space:]]*=/{s/.*"\([^"]*\)".*/\1/;p;q}')
+    set small_fast_model (sed -n "/^\[$profile_name\]/,/^\[/p" "$config_file" | sed -n '/^small_fast_model[[:space:]]*=/{s/.*"\([^"]*\)".*/\1/;p;q}')
     
     # 验证必需的配置项
     if test -z "$auth_token"
@@ -142,6 +149,9 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell"
     if set -q ANTHROPIC_MODEL
         set -e ANTHROPIC_MODEL
     end
+    if set -q ANTHROPIC_SMALL_FAST_MODEL
+        set -e ANTHROPIC_SMALL_FAST_MODEL
+    end
     
     # 设置新的环境变量
     set -gx ANTHROPIC_AUTH_TOKEN "$auth_token"
@@ -154,6 +164,10 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell"
         set -gx ANTHROPIC_MODEL "$model"
     end
     
+    if test -n "$small_fast_model"
+        set -gx ANTHROPIC_SMALL_FAST_MODEL "$small_fast_model"
+    end
+    
     echo "✅ 已切换到配置: $profile_name"
     if test -n "$base_url"
         echo "🌐 ANTHROPIC_BASE_URL=$base_url"
@@ -164,6 +178,12 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell"
         echo "🤖 ANTHROPIC_MODEL=$model"
     else
         echo "🤖 模型: 默认"
+    end
+    
+    if test -n "$small_fast_model"
+        echo "⚡ ANTHROPIC_SMALL_FAST_MODEL=$small_fast_model"
+    else
+        echo "⚡ 快速模型: 默认"
     end
     
     return 0

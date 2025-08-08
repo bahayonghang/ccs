@@ -43,6 +43,7 @@ parse_toml() {
     unset ANTHROPIC_BASE_URL
     unset ANTHROPIC_AUTH_TOKEN
     unset ANTHROPIC_MODEL
+    unset ANTHROPIC_SMALL_FAST_MODEL
     
     # 提取base_url
     local base_url_line=$(echo "$config_content" | grep "^base_url")
@@ -72,6 +73,16 @@ parse_toml() {
         if [ -n "$model" ]; then
             export ANTHROPIC_MODEL="$model"
             echo "设置 ANTHROPIC_MODEL=$model"
+        fi
+    fi
+    
+    # 提取small_fast_model
+    local small_fast_model_line=$(echo "$config_content" | grep "^small_fast_model")
+    if [ -n "$small_fast_model_line" ]; then
+        local small_fast_model=$(echo "$small_fast_model_line" | sed 's/.*small_fast_model *= *"\([^"]*\)".*/\1/' | sed "s/.*small_fast_model *= *'\([^']*\)'.*/\1/")
+        if [ -n "$small_fast_model" ]; then
+            export ANTHROPIC_SMALL_FAST_MODEL="$small_fast_model"
+            echo "设置 ANTHROPIC_SMALL_FAST_MODEL=$small_fast_model"
         fi
     fi
     
@@ -132,6 +143,12 @@ show_current() {
         echo "  ANTHROPIC_MODEL=$ANTHROPIC_MODEL"
     else
         echo "  ANTHROPIC_MODEL=(未设置)"
+    fi
+    
+    if [ -n "$ANTHROPIC_SMALL_FAST_MODEL" ]; then
+        echo "  ANTHROPIC_SMALL_FAST_MODEL=$ANTHROPIC_SMALL_FAST_MODEL"
+    else
+        echo "  ANTHROPIC_SMALL_FAST_MODEL=(未设置)"
     fi
 }
 
