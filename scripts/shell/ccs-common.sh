@@ -218,8 +218,15 @@ validate_required_fields() {
             continue
         fi
         
-        # 提取配置节内容
-        local config_content=$(sed -n "/^\\[$config\\]/,/^\\[/p" "$config_file" | tail -n +2 | head -n -1)
+        # 提取配置节内容（处理最后一个配置节的情况）
+        local config_content
+        if [[ "$config" == $(grep "^\\[" "$config_file" | sed 's/\[\(.*\)\]/\1/' | tail -1) ]]; then
+            # 如果是最后一个配置节，读取到文件末尾
+            config_content=$(sed -n "/^\\[$config\\]/,\$p" "$config_file" | tail -n +2)
+        else
+            # 否则读取到下一个配置节
+            config_content=$(sed -n "/^\\[$config\\]/,/^\\[/p" "$config_file" | tail -n +2 | head -n -1)
+        fi
         
         # 检查必需字段
         local missing_fields=()
@@ -232,9 +239,7 @@ validate_required_fields() {
             missing_fields+=("auth_token")
         fi
         
-        if ! echo "$config_content" | grep -q "^model"; then
-            missing_fields+=("model")
-        fi
+        # model字段现在是可选的，如果为空或不存在，则使用默认模型
         
         if [[ ${#missing_fields[@]} -gt 0 ]]; then
             log_error "配置节 '$config' 缺少必需字段: ${missing_fields[*]}"

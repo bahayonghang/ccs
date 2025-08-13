@@ -26,7 +26,81 @@ fi
 # 验证配置文件
 validate_config_file "$CONFIG_FILE"
 
-# 显示帮助信息
+# 更新配置文件中的当前配置
+update_current_config() {
+    local config_name="$1"
+    
+    log_debug "更新当前配置为: $config_name"
+    
+    # 创建临时文件
+    local temp_file
+    temp_file=$(create_temp_file "ccs_config_update")
+    if [[ -z "$temp_file" ]]; then
+        log_error "无法创建临时文件"
+        return 1
+    fi
+    
+    # 使用sed更新current_config字段
+    if sed "s/^current_config *= *\"[^\"]*\"/current_config = \"$config_name\"/" "$CONFIG_FILE" > "$temp_file" && \
+       sed -i "s/^current_config *= *'[^']*'/current_config = \"$config_name\"/" "$temp_file"; then
+        
+        # 验证更新是否成功
+        if grep -q "^current_config = \"$config_name\"" "$temp_file"; then
+            if mv "$temp_file" "$CONFIG_FILE"; then
+                log_debug "配置文件已更新，当前配置: $config_name"
+                return 0
+            else
+                log_error "无法保存配置文件"
+                rm -f "$temp_file"
+                return 1
+            fi
+        else
+            log_error "配置文件更新验证失败"
+            rm -f "$temp_file"
+            return 1
+        fi
+    else
+        log_error "配置文件更新失败"
+        rm -f "$temp_file"
+        return 1
+    fi
+}
+
+# 自动加载当前配置
+load_current_config() {
+    # 检查配置文件是否存在
+    if [[ ! -f "$CONFIG_FILE" ]]; then
+        log_debug "配置文件不存在，跳过自动加载"
+        return 0
+    fi
+    
+    # 获取当前配置
+    local current_config=$(grep "^current_config" "$CONFIG_FILE" | cut -d'"' -f2 | cut -d"'" -f2)
+    
+    # 如果没有当前配置，尝试使用默认配置
+    if [[ -z "$current_config" ]]; then
+        current_config=$(grep "^default_config" "$CONFIG_FILE" | cut -d'"' -f2 | cut -d"'" -f2)
+        log_debug "未找到当前配置，使用默认配置: $current_config"
+    else
+        log_debug "自动加载当前配置: $current_config"
+    fi
+    
+    # 如果找到了配置，则加载它
+    if [[ -n "$current_config" ]]; then
+        # 检查配置是否存在
+        if grep -q "^\[$current_config\]" "$CONFIG_FILE"; then
+            parse_toml "$current_config" "silent"
+        else
+            log_warn "当前配置 '$current_config' 不存在，回退到默认配置"
+            local default_config=$(grep "^default_config" "$CONFIG_FILE" | cut -d'"' -f2 | cut -d"'" -f2)
+            if [[ -n "$default_config" ]] && grep -q "^\[$default_config\]" "$CONFIG_FILE"; then
+                parse_toml "$default_config" "silent"
+                # 更新current_config为默认配置
+                update_current_config "$default_config"
+            fi
+        fi
+    fi
+}
 ccs_help() {
     echo "Claude Code Configuration Switcher (ccs)"
     echo ""
@@ -49,6 +123,7 @@ ccs_help() {
 # 解析TOML配置文件
 parse_toml() {
     local config_name="$1"
+    local silent_mode="$2"  # 如果为"silent"，减少输出
     
     log_debug "解析配置: $config_name"
     
@@ -57,8 +132,16 @@ parse_toml() {
         handle_error $ERROR_CONFIG_INVALID "配置 '$config_name' 不存在"
     fi
     
-    # 获取配置节内容
-    local config_content=$(sed -n "/^\[$config_name\]/,/^\[/p" "$CONFIG_FILE" | tail -n +2 | head -n -1 | grep -v "^#")
+    # 获取配置节内容（处理最后一个配置节的情况）
+    local config_content
+    local last_config=$(grep "^\\[" "$CONFIG_FILE" | sed 's/\[\(.*\)\]/\1/' | tail -1)
+    if [[ "$config_name" == "$last_config" ]]; then
+        # 如果是最后一个配置节，读取到文件末尾
+        config_content=$(sed -n "/^\[$config_name\]/,\$p" "$CONFIG_FILE" | tail -n +2 | grep -v "^#")
+    else
+        # 否则读取到下一个配置节
+        config_content=$(sed -n "/^\[$config_name\]/,/^\[/p" "$CONFIG_FILE" | tail -n +2 | head -n -1 | grep -v "^#")
+    fi
     
     if [[ -z "$config_content" ]]; then
         handle_error $ERROR_CONFIG_INVALID "配置 '$config_name' 内容为空"
@@ -77,7 +160,9 @@ parse_toml() {
     base_url=$(echo "$config_content" | grep "^base_url" | sed 's/.*base_url *= *"\([^"]*\)".*/\1/' | sed "s/.*base_url *= *'\([^']*\)'.*/\1/")
     if [[ -n "$base_url" ]]; then
         export ANTHROPIC_BASE_URL="$base_url"
-        print_success "设置 ANTHROPIC_BASE_URL=$base_url"
+        if [[ "$silent_mode" != "silent" ]]; then
+            print_success "设置 ANTHROPIC_BASE_URL=$base_url"
+        fi
     else
         log_warn "配置 '$config_name' 缺少 base_url"
     fi
@@ -86,28 +171,41 @@ parse_toml() {
     auth_token=$(echo "$config_content" | grep "^auth_token" | sed 's/.*auth_token *= *"\([^"]*\)".*/\1/' | sed "s/.*auth_token *= *'\([^']*\)'.*/\1/")
     if [[ -n "$auth_token" ]]; then
         export ANTHROPIC_AUTH_TOKEN="$auth_token"
-        print_success "设置 ANTHROPIC_AUTH_TOKEN=$(mask_sensitive_info "$auth_token")"
+        if [[ "$silent_mode" != "silent" ]]; then
+            print_success "设置 ANTHROPIC_AUTH_TOKEN=$(mask_sensitive_info "$auth_token")"
+        fi
     else
         log_warn "配置 '$config_name' 缺少 auth_token"
     fi
     
     # 提取model
     model=$(echo "$config_content" | grep "^model" | sed 's/.*model *= *"\([^"]*\)".*/\1/' | sed "s/.*model *= *'\([^']*\)'.*/\1/")
-    if [[ -n "$model" ]]; then
+    if [[ -n "$model" && "$model" != "" ]]; then
         export ANTHROPIC_MODEL="$model"
-        print_success "设置 ANTHROPIC_MODEL=$model"
+        if [[ "$silent_mode" != "silent" ]]; then
+            print_success "设置 ANTHROPIC_MODEL=$model"
+        fi
     else
-        log_warn "配置 '$config_name' 缺少 model"
+        if [[ "$silent_mode" != "silent" ]]; then
+            log_info "配置 '$config_name' 使用默认模型"
+        fi
     fi
     
     # 提取small_fast_model（可选）
     small_fast_model=$(echo "$config_content" | grep "^small_fast_model" | sed 's/.*small_fast_model *= *"\([^"]*\)".*/\1/' | sed "s/.*small_fast_model *= *'\([^']*\)'.*/\1/")
-    if [[ -n "$small_fast_model" ]]; then
+    if [[ -n "$small_fast_model" && "$small_fast_model" != "" ]]; then
         export ANTHROPIC_SMALL_FAST_MODEL="$small_fast_model"
-        print_success "设置 ANTHROPIC_SMALL_FAST_MODEL=$small_fast_model"
+        if [[ "$silent_mode" != "silent" ]]; then
+            print_success "设置 ANTHROPIC_SMALL_FAST_MODEL=$small_fast_model"
+        fi
     fi
     
-    print_success "已切换到配置: $config_name"
+    if [[ "$silent_mode" != "silent" ]]; then
+        print_success "已切换到配置: $config_name"
+        
+        # 更新配置文件中的当前配置（非静默模式下才更新，避免自动加载时的循环）
+        update_current_config "$config_name"
+    fi
 }
 
 # 列出所有可用配置
@@ -457,4 +555,7 @@ ccs() {
 # 如果直接运行此脚本（而不是source），则执行主函数
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     ccs "$@"
+else
+    # 如果是被source的，自动加载当前配置
+    load_current_config
 fi

@@ -1,3 +1,110 @@
+# 更新配置文件中的当前配置
+function update_current_config --argument config_name
+    set config_file "$HOME/.ccs_config.toml"
+    
+    # 创建临时文件
+    set temp_file (mktemp)
+    if test -z "$temp_file"
+        echo "❌ 无法创建临时文件" >&2
+        return 1
+    end
+    
+    # 使用sed更新current_config字段
+    sed "s/^current_config *= *\"[^\"]*\"/current_config = \"$config_name\"/" "$config_file" > "$temp_file"
+    sed -i "s/^current_config *= *'[^']*'/current_config = \"$config_name\"/" "$temp_file"
+    
+    # 验证更新是否成功
+    if grep -q "^current_config = \"$config_name\"" "$temp_file"
+        if mv "$temp_file" "$config_file"
+            return 0
+        else
+            echo "❌ 无法保存配置文件" >&2
+            rm -f "$temp_file"
+            return 1
+        end
+    else
+        echo "❌ 配置文件更新验证失败" >&2
+        rm -f "$temp_file"
+        return 1
+    end
+end
+
+# 自动加载当前配置
+function load_current_config
+    set config_file "$HOME/.ccs_config.toml"
+    
+    # 检查配置文件是否存在
+    if not test -f "$config_file"
+        return 0
+    end
+    
+    # 获取当前配置
+    set current_config (grep "^current_config" "$config_file" | cut -d'"' -f2 | cut -d"'" -f2)
+    
+    # 如果没有当前配置，尝试使用默认配置
+    if test -z "$current_config"
+        set current_config (grep "^default_config" "$config_file" | cut -d'"' -f2 | cut -d"'" -f2)
+    end
+    
+    # 如果找到了配置，则加载它
+    if test -n "$current_config"
+        # 检查配置是否存在
+        if grep -q "^\[$current_config\]" "$config_file"
+            set_config_env "$current_config" true
+        else
+            # 当前配置不存在，回退到默认配置
+            set default_config (grep "^default_config" "$config_file" | cut -d'"' -f2 | cut -d"'" -f2)
+            if test -n "$default_config"; and grep -q "^\[$default_config\]" "$config_file"
+                set_config_env "$default_config" true
+                # 更新current_config为默认配置
+                update_current_config "$default_config"
+            end
+        end
+    end
+end
+
+# 设置配置环境变量（静默模式）
+function set_config_env --argument profile_name silent_mode
+    set config_file "$HOME/.ccs_config.toml"
+    
+    # 解析配置项
+    set base_url (sed -n "/^\[$profile_name\]/,/^\[/p" "$config_file" | sed -n '/^base_url[[:space:]]*=/{s/.*"\([^"]*\)".*/\1/;p;q}')
+    set auth_token (sed -n "/^\[$profile_name\]/,/^\[/p" "$config_file" | sed -n '/^auth_token[[:space:]]*=/{s/.*"\([^"]*\)".*/\1/;p;q}')
+    set model (sed -n "/^\[$profile_name\]/,/^\[/p" "$config_file" | sed -n '/^model[[:space:]]*=/{s/.*"\([^"]*\)".*/\1/;p;q}')
+    set small_fast_model (sed -n "/^\[$profile_name\]/,/^\[/p" "$config_file" | sed -n '/^small_fast_model[[:space:]]*=/{s/.*"\([^"]*\)".*/\1/;p;q}')
+    
+    # 清理现有的环境变量
+    if set -q ANTHROPIC_BASE_URL
+        set -e ANTHROPIC_BASE_URL
+    end
+    if set -q ANTHROPIC_AUTH_TOKEN
+        set -e ANTHROPIC_AUTH_TOKEN
+    end
+    if set -q ANTHROPIC_MODEL
+        set -e ANTHROPIC_MODEL
+    end
+    if set -q ANTHROPIC_SMALL_FAST_MODEL
+        set -e ANTHROPIC_SMALL_FAST_MODEL
+    end
+    
+    # 设置新的环境变量
+    if test -n "$auth_token"
+        set -gx ANTHROPIC_AUTH_TOKEN "$auth_token"
+    end
+    
+    if test -n "$base_url"
+        set -gx ANTHROPIC_BASE_URL "$base_url"
+    end
+    
+    if test -n "$model"; and test "$model" != ""
+        set -gx ANTHROPIC_MODEL "$model"
+    end
+    
+    if test -n "$small_fast_model"; and test "$small_fast_model" != ""
+        set -gx ANTHROPIC_SMALL_FAST_MODEL "$small_fast_model"
+    end
+end
+
 function ccs --description "Claude Code Configuration Switcher for Fish shell"
     set config_file "$HOME/.ccs_config.toml"
     set profile_name $argv[1]
@@ -38,11 +145,15 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell"
     if test -z "$profile_name"
         echo "Claude Code Configuration Switcher (ccs)"
         echo ""
-        # 显示默认配置
-        set default_config (grep 'default_config.*=' "$config_file" | cut -d'"' -f2 | head -1)
-        if test -n "$default_config"
-            echo "使用默认配置: $default_config"
-            set profile_name "$default_config"
+        # 显示当前配置
+        set current_config (grep '^current_config.*=' "$config_file" | cut -d'"' -f2 | head -1)
+        if test -z "$current_config"
+            set current_config (grep '^default_config.*=' "$config_file" | cut -d'"' -f2 | head -1)
+        end
+        if test -n "$current_config"
+            echo "使用当前配置: $current_config"
+            set_config_env "$current_config"
+            update_current_config "$current_config"
         else
             echo "用法:"
             echo "  ccs [配置名称]    - 切换到指定配置"
@@ -360,11 +471,11 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell"
         set -gx ANTHROPIC_BASE_URL "$base_url"
     end
     
-    if test -n "$model"
+    if test -n "$model"; and test "$model" != ""
         set -gx ANTHROPIC_MODEL "$model"
     end
     
-    if test -n "$small_fast_model"
+    if test -n "$small_fast_model"; and test "$small_fast_model" != ""
         set -gx ANTHROPIC_SMALL_FAST_MODEL "$small_fast_model"
     end
     
@@ -386,8 +497,14 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell"
         echo "⚡ 快速模型: 默认"
     end
     
+    # 更新配置文件中的当前配置
+    update_current_config "$profile_name"
+    
     return 0
 end
+
+# 在脚本被source时自动加载当前配置
+load_current_config
 
 # Fish 自动补全
 function __ccs_complete

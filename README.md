@@ -15,7 +15,7 @@ curl -L https://github.com/bahayonghang/ccs/raw/main/scripts/install/quick_insta
 下载并运行：https://github.com/bahayonghang/ccs/raw/main/scripts/install/quick_install/quick_install.bat
 
 ### 安装后配置
-1. 重新打开终端
+1. 重新打开终端（自动加载当前配置）
 2. 编辑配置文件：`~/.ccs_config.toml`
 3. 填入API密钥并开始使用
 
@@ -25,39 +25,89 @@ curl -L https://github.com/bahayonghang/ccs/raw/main/scripts/install/quick_insta
 - 🌐 Web界面管理
 - 🔧 支持多平台和多Shell环境
 - 📝 TOML配置格式
+- 🔗 **全局配置持久化** - 在一个终端切换配置，所有新终端自动继承
+- 🎯 **智能模型选择** - Claude服务可使用默认模型，其他服务指定模型
 
 ## 📝 配置文件
 
-配置文件位于 `~/.ccs_config.toml`，示例配置文件在 `config/ccs_config.toml.example`：
+配置文件位于 `~/.ccs_config.toml`，示例配置文件在 `config/.ccs_config.toml.example`：
 
 ```toml
-default_config = "anthropic"
+default_config = "anyrouter"
+
+# 当前活跃配置（自动管理，请勿手动修改）
+current_config = "anyrouter"
+
+[anyrouter]
+description = "AnyRouter API服务"
+base_url = "https://anyrouter.top"
+auth_token = "sk-your-anyrouter-api-key-here"
+# model = ""  # 留空使用默认Claude模型
+# small_fast_model = ""  # 留空使用默认快速模型
+
+[glm]
+description = "智谱GLM API服务"
+base_url = "https://open.bigmodel.cn/api/paas/v4"
+auth_token = "your-glm-api-key-here"
+model = "glm-4"
 
 [anthropic]
 description = "Anthropic官方API"
 base_url = "https://api.anthropic.com"
 auth_token = "sk-ant-your-api-key-here"
-model = "claude-3-sonnet-20240229"
-small_fast_model = "claude-3-5-haiku-20241022"
+# model = ""  # 留空使用默认Claude模型
+# small_fast_model = ""  # 留空使用默认快速模型
 
 [openai]
 description = "OpenAI API配置"
 base_url = "https://api.openai.com/v1"
-auth_token = "sk-your-api-key-here"
+auth_token = "sk-your-openai-api-key-here"
 model = "gpt-4"
 ```
+
+### 🔧 配置字段说明
+
+- `default_config`: 默认配置名称
+- `current_config`: 当前活跃配置（自动管理，无需手动修改）
+- `base_url`: API端点地址
+- `auth_token`: API认证令牌
+- `model`: 指定模型名称（可选）
+  - 如果留空或注释，Claude API服务将使用默认模型
+  - 对于非Claude服务（如GLM、OpenAI），建议明确指定模型
+- `small_fast_model`: 快速模型名称（可选）
+
+### 🎯 模型配置策略
+
+- **Claude API服务**（anyrouter、anthropic、aicodemirror等）：建议留空`model`字段，使用Claude Code工具的默认模型选择
+- **非Claude服务**（glm、openai、moonshot等）：明确指定`model`字段以确保兼容性
 
 ## 📖 使用方法
 
 ```bash
 ccs list              # 列出所有配置
-ccs [配置名称]        # 切换到指定配置
+ccs [配置名称]        # 切换到指定配置（全局生效）
 ccs current          # 显示当前配置
 ccs web              # 启动Web管理界面
 ccs uninstall        # 卸载工具
 ccs help             # 显示帮助
-ccs                  # 使用默认配置
+ccs                  # 使用当前活跃配置
 ```
+
+### 🔗 全局配置持久化
+
+CCS支持全局配置持久化，解决了传统环境变量作用域限制：
+
+```bash
+# 终端1
+ccs glm              # 切换到GLM配置
+
+# 终端2（新打开）
+echo $ANTHROPIC_MODEL # 自动显示: glm-4.5
+```
+
+- ✅ 在任意终端切换配置，其他新终端自动继承
+- ✅ 重启电脑后配置保持不变
+- ✅ 支持Bash、Zsh、Fish等多种Shell
 
 ## 🌐 Web界面管理
 
@@ -162,9 +212,13 @@ ccs/
 ```
 ~/.ccs/                    # 配置目录
 ├── ccs.sh/.fish/.bat/.ps1 # 各平台脚本
+├── ccs-common.sh          # 通用工具库
 └── web/index.html         # Web界面
 
 ~/.ccs_config.toml         # 配置文件
+├── default_config         # 默认配置名称
+├── current_config         # 当前活跃配置（自动管理）
+└── [配置节]               # 各种API服务配置
 ```
 
 ## 🗑️ 卸载
@@ -181,10 +235,16 @@ ccs uninstall  # 推荐方式
 ## 🔧 环境变量
 
 ccs会自动设置以下环境变量：
-- `ANTHROPIC_BASE_URL`
-- `ANTHROPIC_AUTH_TOKEN` 
-- `ANTHROPIC_MODEL`
-- `ANTHROPIC_SMALL_FAST_MODEL`（可选）
+- `ANTHROPIC_BASE_URL`: API端点地址
+- `ANTHROPIC_AUTH_TOKEN`: API认证令牌
+- `ANTHROPIC_MODEL`: 模型名称（可选，留空使用默认模型）
+- `ANTHROPIC_SMALL_FAST_MODEL`: 快速模型名称（可选）
+
+### 💡 模型设置逻辑
+
+- **有值时**: 设置对应的环境变量
+- **空值时**: 不设置环境变量，由Claude Code工具使用默认模型
+- **建议**: Claude API服务留空model字段，非Claude服务明确指定model
 
 ## 📄 许可证
 
