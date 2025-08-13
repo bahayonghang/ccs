@@ -7,11 +7,24 @@ REM 此脚本用于切换不同的Claude Code API配置
 REM 配置文件路径
 set CONFIG_FILE=%USERPROFILE%\.ccs_config.toml
 
+REM 错误码定义
+set ERROR_SUCCESS=0
+set ERROR_CONFIG_MISSING=1
+set ERROR_CONFIG_INVALID=2
+set ERROR_FILE_NOT_FOUND=5
+
 REM 检查配置文件是否存在
 if not exist "%CONFIG_FILE%" (
-    echo 错误: 配置文件 %CONFIG_FILE% 不存在
-    echo 请先运行安装脚本来创建配置文件
-    exit /b 1
+    echo [错误] 配置文件 %CONFIG_FILE% 不存在
+    echo 解决方案: 请先运行安装脚本来创建配置文件
+    echo 使用 'ccs help' 查看帮助信息
+    exit /b %ERROR_CONFIG_MISSING%
+)
+
+REM 基本的配置文件验证
+call :validate_config_file
+if errorlevel 1 (
+    exit /b %ERROR_CONFIG_INVALID%
 )
 
 REM 显示帮助信息
@@ -42,7 +55,8 @@ for /f "usebackq tokens=*" %%a in (`findstr /n "^" "%CONFIG_FILE%" ^| findstr "^
     set start_line=%%a
 )
 if not defined start_line (
-    echo 错误: 配置 '%config_name%' 不存在
+    echo [错误] 配置 '%config_name%' 不存在
+    echo 解决方案: 使用 'ccs list' 查看所有可用配置
     exit /b 1
 )
 
@@ -320,7 +334,8 @@ if "%~1"=="" (
         if defined default_config (
             call :parse_toml !default_config!
         ) else (
-            echo 错误: 没有指定配置名称且没有默认配置
+            echo [错误] 没有指定配置名称且没有默认配置
+            echo 解决方案: 使用 'ccs help' 查看帮助信息
             call :ccs_help
             exit /b 1
         )
@@ -340,3 +355,56 @@ if "%~1"=="" (
 ) else (
     call :parse_toml %~1
 )
+
+REM 配置文件验证函数
+:validate_config_file
+REM 检查文件是否可读
+type "%CONFIG_FILE%" >nul 2>&1
+if errorlevel 1 (
+    echo [错误] 配置文件不可读: %CONFIG_FILE%
+    exit /b 1
+)
+
+REM 检查基本的TOML语法
+findstr /r "^default_config.*=" "%CONFIG_FILE%" >nul 2>&1
+if errorlevel 1 (
+    echo [警告] 配置文件缺少 default_config 字段
+)
+
+REM 检查是否有配置节
+findstr /r "^\[.*\]" "%CONFIG_FILE%" >nul 2>&1
+if errorlevel 1 (
+    echo [错误] 配置文件中没有找到配置节
+    exit /b 1
+)
+
+REM 检查必需字段
+for /f "usebackq tokens=*" %%a in (`findstr /r "^\[.*\]" "%CONFIG_FILE%"`) do (
+    set line=%%a
+    set line=!line:[=!
+    set line=!line:]=!
+    
+    REM 跳过default_config
+    if not "!line!"=="default_config" (
+        REM 检查必需字段
+        findstr /r "^base_url" "%CONFIG_FILE%" | findstr /n "!line!" >nul 2>&1
+        if errorlevel 1 (
+            echo [错误] 配置节 '!line!' 缺少必需字段: base_url
+            exit /b 1
+        )
+        
+        findstr /r "^auth_token" "%CONFIG_FILE%" | findstr /n "!line!" >nul 2>&1
+        if errorlevel 1 (
+            echo [错误] 配置节 '!line!' 缺少必需字段: auth_token
+            exit /b 1
+        )
+        
+        findstr /r "^model" "%CONFIG_FILE%" | findstr /n "!line!" >nul 2>&1
+        if errorlevel 1 (
+            echo [错误] 配置节 '!line!' 缺少必需字段: model
+            exit /b 1
+        )
+    )
+)
+
+exit /b 0
