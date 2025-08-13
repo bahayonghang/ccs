@@ -194,9 +194,9 @@ copy_script() {
     
     # 获取当前脚本所在目录
     local script_dir="$(cd "$(dirname "$0")" && pwd)"
-    local source_sh="$script_dir/ccs.sh"
-    local source_fish="$script_dir/ccs.fish"
-    local source_web="$script_dir/web"
+    local source_sh="$script_dir/../shell/ccs.sh"
+    local source_fish="$script_dir/../shell/ccs.fish"
+    local source_web="$script_dir/../../web"
     
     if [ ! -f "$source_sh" ]; then
         print_error "找不到源脚本文件: $source_sh"
@@ -264,7 +264,7 @@ create_config_file() {
     
     # 获取示例配置文件路径
     local script_dir="$(cd "$(dirname "$0")" && pwd)"
-    local example_config="$script_dir/.ccs_config.toml.example"
+    local example_config="$script_dir/../../config/.ccs_config.toml.example"
     
     if [ -f "$example_config" ]; then
         cp "$example_config" "$CONFIG_FILE"

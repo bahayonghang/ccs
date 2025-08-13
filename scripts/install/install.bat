@@ -101,8 +101,8 @@ if %errorlevel%==0 (
 
 REM 获取当前脚本所在目录
 set script_dir=%~dp0
-set source_bat="%script_dir%ccs.bat"
-set source_ps1="%script_dir%ccs.ps1"
+set source_bat="%script_dir%..\windows\ccs.bat"
+set source_ps1="%script_dir%..\windows\ccs.ps1"
 
 if not exist %source_bat% (
     call :print_error "找不到源脚本文件: %source_bat%"
@@ -154,7 +154,7 @@ if exist "%CONFIG_FILE%" (
 
 REM 获取示例配置文件路径
 set script_dir=%~dp0
-set example_config="%script_dir%.ccs_config.toml.example"
+set example_config="%script_dir%..\..\config\.ccs_config.toml.example"
 
 if exist %example_config% (
     copy %example_config% "%CONFIG_FILE%" >nul

@@ -79,14 +79,14 @@ main() {
     
     # 下载必要文件
     local files=(
-        "install.sh"
-        "ccs.sh"
-        "ccs.fish"
+        "scripts/install/install.sh"
+        "scripts/shell/ccs.sh"
+        "scripts/shell/ccs.fish"
     )
     
     for file in "${files[@]}"; do
         print_message "$BLUE" "下载 $file..."
-        if ! download_file "$repo_url/$file" "$temp_dir/$file"; then
+        if ! download_file "$repo_url/$file" "$temp_dir/$(basename $file)"; then
             print_error "下载 $file 失败"
             rm -rf "$temp_dir"
             exit 1

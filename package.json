@@ -1,0 +1,55 @@
+{
+  "name": "ccs",
+  "version": "1.0.0",
+  "description": "Claude Code Configuration Switcher - 快速切换不同Claude Code API配置的命令行工具",
+  "main": "scripts/shell/ccs.sh",
+  "scripts": {
+    "install": "cd scripts/install && bash install.sh",
+    "install:windows": "cd scripts/install && cmd.exe /c install.bat",
+    "uninstall": "cd scripts/install && bash install.sh --uninstall",
+    "test": "bash scripts/shell/ccs.sh list",
+    "quick-install": "curl -L https://github.com/bahayonghang/ccs/raw/main/scripts/install/quick_install/quick_install.sh | bash"
+  },
+  "keywords": [
+    "claude",
+    "api",
+    "configuration",
+    "switcher",
+    "bash",
+    "fish",
+    "windows",
+    "powershell"
+  ],
+  "author": "bahayonghang",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bahayonghang/ccs.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bahayonghang/ccs/issues"
+  },
+  "homepage": "https://github.com/bahayonghang/ccs#readme",
+  "directories": {
+    "doc": "docs",
+    "config": "config",
+    "script": "scripts"
+  },
+  "engines": {
+    "bash": ">=4.0",
+    "fish": ">=3.0",
+    "powershell": ">=5.1"
+  },
+  "os": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
+  "files": [
+    "scripts/",
+    "config/",
+    "web/",
+    "docs/",
+    "assets/"
+  ]
+}
