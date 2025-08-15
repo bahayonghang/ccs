@@ -13,7 +13,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 50%, #9333EA 100%);
             min-height: 100vh;
             padding: 20px;
             color: #333;
@@ -29,7 +29,7 @@
         }
 
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 50%, #9333EA 100%);
             color: white;
             padding: 30px;
             text-align: center;
@@ -91,7 +91,7 @@
         }
 
         .sidebar-nav a.active {
-            background: #667eea;
+            background: #8B5CF6;
             color: white;
         }
 
@@ -148,12 +148,12 @@
         }
 
         .btn-primary {
-            background: #667eea;
+            background: #8B5CF6;
             color: white;
         }
 
         .btn-primary:hover {
-            background: #5a6fd8;
+            background: #7C3AED;
         }
 
         .btn-secondary {
@@ -217,8 +217,8 @@
 
         .field input:focus, .field textarea:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #8B5CF6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
         }
 
         .field textarea {
@@ -299,6 +299,118 @@
             font-weight: 500;
         }
 
+        /* 科技风格当前配置展示 - 独立区域 */
+        .current-config-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.15);
+        }
+        
+        .current-config-tech {
+            background: linear-gradient(135deg, #2D1B69 0%, #3730A3 50%, #4C1D95 100%);
+            border: 1px solid #A855F7;
+            border-radius: 12px;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(168, 85, 247, 0.25);
+        }
+
+        .current-config-tech::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #A855F7, transparent);
+            animation: scan 3s infinite;
+        }
+
+        @keyframes scan {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .tech-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .tech-title {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #A855F7;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+        }
+
+        .tech-status {
+            background: rgba(168, 85, 247, 0.2);
+            border: 1px solid #A855F7;
+            color: #A855F7;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .tech-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .config-name-display {
+            font-family: 'Courier New', monospace;
+            font-size: 1.8rem;
+            color: #ffffff;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .tech-grid {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .tech-dot {
+            width: 8px;
+            height: 8px;
+            background: #A855F7;
+            border-radius: 50%;
+            animation: blink 1.5s infinite;
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.8);
+        }
+
+        .tech-dot:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+
+        .tech-dot:nth-child(3) {
+            animation-delay: 1s;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
         @media (max-width: 768px) {
             .content {
                 flex-direction: column;
@@ -338,6 +450,16 @@
                 grid-template-columns: 1fr;
             }
             
+            .current-config-section {
+                margin-bottom: 20px;
+                padding: 20px;
+            }
+            
+            .current-config-section h2 {
+                font-size: 1.1rem;
+                margin-bottom: 15px;
+            }
+            
             .config-header {
                 flex-direction: column;
                 align-items: flex-start;
@@ -366,9 +488,29 @@
                 </ul>
             </div>
             <div class="main-content">
+                <!-- 独立的当前配置展示区域 -->
+                <div class="current-config-section">
+                    <h2 style="margin-bottom: 20px; color: #333; font-size: 1.3rem;">🔧 当前活跃配置</h2>
+                    <div id="current-config-display" class="current-config-tech">
+                        <div class="tech-header">
+                            <div class="tech-title">CURRENT_CONFIG</div>
+                            <div class="tech-status" id="techStatus">ACTIVE</div>
+                        </div>
+                        <div class="tech-content">
+                            <div class="config-name-display" id="currentConfigName">loading...</div>
+                            <div class="tech-grid">
+                                <div class="tech-dot"></div>
+                                <div class="tech-dot"></div>
+                                <div class="tech-dot"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 配置列表区域 -->
                 <div class="config-list" id="configList">
                     <div id="overview" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h2>配置列表</h2>
+                        <h2>📋 配置列表</h2>
                         <div>
                             <button class="btn btn-primary" onclick="openAddModal()">添加配置</button>
                             <button class="btn btn-success" onclick="saveFile()">保存文件</button>
@@ -501,6 +643,8 @@
 
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
+            // 初始化当前配置显示
+            updateCurrentConfigDisplay('LOADING');
             // 自动加载本地配置文件
             loadLocalConfig();
         });
@@ -576,8 +720,13 @@
             
             if (!currentConfig) {
                 container.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">无法加载配置文件，请确保 ~/.ccs_config.toml 文件存在</div>';
+                updateCurrentConfigDisplay('ERROR');
                 return;
             }
+            
+            // 获取当前配置并更新科技风格显示
+            const currentConfigName = currentConfig.current_config || currentConfig.default_config || 'UNKNOWN';
+            updateCurrentConfigDisplay(currentConfigName);
             
             // 获取默认配置
             const defaultConfig = currentConfig.default_config;
@@ -587,9 +736,9 @@
             // 重新生成侧边栏导航
             sidebarNav.innerHTML = '<li><a href="#overview" onclick="scrollToSection(\'overview\')">📊 概览</a></li>';
             
-            // 显示所有配置节（除了 default_config）
+            // 显示所有配置节（除了 default_config 和 current_config）
             for (let section in currentConfig) {
-                if (section === 'default_config') continue;
+                if (section === 'default_config' || section === 'current_config') continue;
                 
                 hasConfigs = true;
                 const config = currentConfig[section];
@@ -651,8 +800,32 @@
 
         function setDefaultConfig(configName) {
             currentConfig.default_config = configName;
+            // 同时更新当前配置
+            currentConfig.current_config = configName;
             displayConfigs();
             updateStatus(`已设置默认配置: ${configName}`);
+        }
+        
+        function updateCurrentConfigDisplay(configName) {
+            const currentConfigNameElement = document.getElementById('currentConfigName');
+            const techStatusElement = document.getElementById('techStatus');
+            
+            if (currentConfigNameElement) {
+                currentConfigNameElement.textContent = configName;
+                
+                // 根据配置状态更新状态显示
+                if (configName === 'ERROR' || configName === 'UNKNOWN') {
+                    techStatusElement.textContent = 'ERROR';
+                    techStatusElement.style.borderColor = '#DC2626';
+                    techStatusElement.style.color = '#DC2626';
+                    techStatusElement.style.backgroundColor = 'rgba(220, 38, 38, 0.2)';
+                } else {
+                    techStatusElement.textContent = 'ACTIVE';
+                    techStatusElement.style.borderColor = '#A855F7';
+                    techStatusElement.style.color = '#A855F7';
+                    techStatusElement.style.backgroundColor = 'rgba(168, 85, 247, 0.2)';
+                }
+            }
         }
 
         function editConfig(configName) {
