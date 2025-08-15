@@ -70,7 +70,7 @@ mkdir "%TEMP_DIR%"
 call :print_message "%BLUE%" "下载安装文件..."
 
 REM 下载必要文件
-set "files=install.bat ccs.bat ccs.ps1"
+set "files=install.bat ccs.bat ccs.ps1 package.json"
 
 for %%f in (%files%) do (
     call :print_message "%BLUE%" "下载 %%f..."

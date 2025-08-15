@@ -83,6 +83,7 @@ main() {
         "scripts/shell/ccs.sh"
         "scripts/shell/ccs.fish"
         "scripts/shell/ccs-common.sh"
+        "package.json"
     )
     
     for file in "${files[@]}"; do

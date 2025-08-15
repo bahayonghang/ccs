@@ -305,6 +305,31 @@ copy_script() {
         print_warning "未找到web文件夹，跳过复制web文件"
     fi
     
+    # 复制package.json文件
+    local source_package="$script_dir/../../package.json"
+    if [[ ! -f "$source_package" ]]; then
+        source_package="$script_dir/package.json"
+    fi
+    
+    if [[ -f "$source_package" ]]; then
+        local package_path="$HOME/.ccs/package.json"
+        if [[ -f "$package_path" ]] && [[ "$reinstall" == true ]]; then
+            print_step "更新package.json..."
+        fi
+        if cp "$source_package" "$package_path"; then
+            set_file_permissions "$package_path" "644"
+            if [[ "$reinstall" == true ]]; then
+                print_success "更新package.json到 $package_path"
+            else
+                print_success "复制package.json到 $package_path"
+            fi
+        else
+            log_warn "无法复制package.json文件"
+        fi
+    else
+        print_warning "未找到package.json文件，跳过复制"
+    fi
+    
     # 如果是重新安装，提供额外提示
     if [[ "$reinstall" == true ]]; then
         print_warning "已更新所有shell脚本，配置文件保持不变"
@@ -462,6 +487,12 @@ uninstall() {
         if [[ -d "$HOME/.ccs/web" ]]; then
             rm -rf "$HOME/.ccs/web"
             print_success "删除web文件"
+        fi
+        
+        # 删除package.json文件
+        if [[ -f "$HOME/.ccs/package.json" ]]; then
+            rm -f "$HOME/.ccs/package.json"
+            print_success "删除package.json文件"
         fi
         
         # 删除备份目录

@@ -142,6 +142,35 @@ if exist "!source_ps1!" (
      call :print_warning "!warning_msg!"
 )
 
+REM Copy package.json file
+set source_package=%SCRIPT_DIR%..\..\package.json
+if not exist "!source_package!" (
+    set source_package=%SCRIPT_DIR%package.json
+)
+
+if exist "!source_package!" (
+    set package_path=%USERPROFILE%\.ccs\package.json
+    if "%REINSTALL%"=="1" (
+        call :print_message "Updating package.json..."
+        copy /Y "!source_package!" "!package_path!" >nul
+    ) else (
+        call :print_message "Installing package.json..."
+        copy "!source_package!" "!package_path!" >nul
+    )
+    
+    if errorlevel 1 (
+        call :print_warning "Failed to copy package.json"
+    ) else (
+        if "%REINSTALL%"=="1" (
+            call :print_success "Updated package.json to !package_path!"
+        ) else (
+            call :print_success "Copied package.json to !package_path!"
+        )
+    )
+) else (
+    call :print_warning "package.json not found, skipping"
+)
+
 if "%REINSTALL%"=="1" (
     call :print_warning "Scripts updated, config files unchanged"
 )

@@ -110,6 +110,7 @@ ccs_help() {
     echo "  ccs list          - 列出所有可用配置"
     echo "  ccs current       - 显示当前配置"
     echo "  ccs web           - 打开web配置界面"
+    echo "  ccs version       - 显示版本信息"
     echo "  ccs uninstall     - 卸载ccs工具"
     echo "  ccs help          - 显示此帮助信息"
     echo ""
@@ -118,7 +119,92 @@ ccs_help() {
     echo "  ccs glm           - 切换到智谱GLM配置"
     echo "  ccs list          - 查看所有可用配置"
     echo "  ccs web           - 打开web配置界面"
+    echo "  ccs version       - 查看当前版本"
     echo "  ccs uninstall     - 完全卸载ccs工具"
+}
+
+# 显示版本信息
+show_version() {
+    local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    local project_root="$(cd "$script_dir/../.." && pwd)"
+    
+    # 优先查找.ccs目录中的package.json，然后查找项目根目录
+    local package_json="$HOME/.ccs/package.json"
+    if [[ ! -f "$package_json" ]]; then
+        package_json="$project_root/package.json"
+    fi
+    
+    echo "🔄 Claude Code Configuration Switcher (CCS)"
+    echo "═══════════════════════════════════════════════════════════════════════════════════"
+    echo ""
+    
+    # 尝试从package.json读取版本信息
+    if [[ -f "$package_json" ]]; then
+        local version=$(grep '"version"' "$package_json" | sed 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+        local description=$(grep '"description"' "$package_json" | sed 's/.*"description"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+        local author=$(grep '"author"' "$package_json" | sed 's/.*"author"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+        local homepage=$(grep '"homepage"' "$package_json" | sed 's/.*"homepage"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+        local license=$(grep '"license"' "$package_json" | sed 's/.*"license"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+        
+        echo "📦 基本信息:"
+        if [[ -n "$version" ]]; then
+            echo "   📌 版本: $version"
+        else
+            echo "   ⚠️  版本: 未知 (建议在package.json中补充version字段)"
+        fi
+        
+        if [[ -n "$author" ]]; then
+            echo "   👤 作者: $author"
+        else
+            echo "   ⚠️  作者: 未知 (建议在package.json中补充author字段)"
+        fi
+        
+        echo ""
+        echo "📝 项目描述:"
+        if [[ -n "$description" ]]; then
+            # 处理长描述，进行换行显示
+            echo "$description" | fold -w 75 -s | sed 's/^/   /'
+        else
+            echo "   ⚠️  描述: 未知 (建议在package.json中补充description字段)"
+        fi
+        
+        echo ""
+        echo "🔗 项目链接:"
+        if [[ -n "$homepage" ]]; then
+            echo "   🌐 项目主页: $homepage"
+        else
+            echo "   🌐 项目主页: https://github.com/bahayonghang/ccs (默认)"
+        fi
+        
+        if [[ -n "$license" ]]; then
+            echo "   📄 许可证: $license"
+        else
+            echo "   📄 许可证: MIT (默认)"
+        fi
+        
+        echo ""
+        echo "📁 文件信息:"
+        echo "   📍 配置文件路径: $package_json"
+        echo "   ✅ 文件复制操作: 无需执行 (直接读取源文件)"
+        
+    else
+        echo "⚠️  警告: 未找到package.json文件"
+        echo "📍 预期路径: $package_json"
+        echo ""
+        echo "📦 使用默认信息:"
+        echo "   📌 版本: 1.0.0"
+        echo "   👤 作者: 未知"
+        echo "   📝 描述: Claude Code Configuration Switcher - 多平台配置管理工具"
+        echo "   🌐 项目主页: https://github.com/bahayonghang/ccs"
+        echo "   📄 许可证: MIT"
+        echo ""
+        echo "💡 建议: 请确保package.json文件存在并包含完整的项目信息"
+        echo "📁 文件复制操作: 未执行 (源文件不存在)"
+    fi
+    
+    echo ""
+    echo "═══════════════════════════════════════════════════════════════════════════════════"
+    echo "🚀 感谢使用 CCS！如有问题请访问项目主页获取帮助。"
 }
 
 # 解析TOML配置文件
@@ -531,6 +617,9 @@ ccs() {
             ;;
         "web")
             open_web
+            ;;
+        "version"|"-v"|"--version")
+            show_version
             ;;
         "uninstall")
             ccs_uninstall

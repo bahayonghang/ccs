@@ -130,6 +130,7 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell"
         echo "  ccs list          - 列出所有可用配置"
         echo "  ccs current       - 显示当前配置"
         echo "  ccs web           - 打开web配置界面"
+        echo "  ccs version       - 显示版本信息"
         echo "  ccs uninstall     - 卸载ccs工具"
         echo "  ccs help          - 显示此帮助信息"
         echo ""
@@ -138,6 +139,7 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell"
         echo "  ccs glm           - 切换到智谱GLM配置"
         echo "  ccs list          - 查看所有可用配置"
         echo "  ccs web           - 打开web配置界面"
+        echo "  ccs version       - 查看版本信息"
         echo "  ccs uninstall     - 完全卸载ccs工具"
         return 0
     end
@@ -420,6 +422,12 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell"
         return 0
     end
     
+    # 处理version子命令
+    if test "$profile_name" = "version" -o "$profile_name" = "-v" -o "$profile_name" = "--version"
+        show_version
+        return 0
+    end
+    
     # 验证配置是否存在（但不针对特殊命令）
     if not grep -q "^\[$profile_name\]" "$config_file"
         echo "❌ 未找到配置文件: $profile_name"
@@ -505,6 +513,89 @@ end
 
 # 在脚本被source时自动加载当前配置
 load_current_config
+
+# 显示版本信息
+function show_version
+    set script_dir (dirname (status --current-filename))
+    set project_root (realpath "$script_dir/../..")
+    
+    # 优先查找.ccs目录中的package.json，然后查找项目根目录
+    set package_json "$HOME/.ccs/package.json"
+    if not test -f "$package_json"
+        set package_json "$project_root/package.json"
+    end
+    
+    echo "🔄 Claude Code Configuration Switcher (CCS)"
+    echo "═══════════════════════════════════════════════════════════════════════════════════"
+    echo ""
+    
+    if test -f "$package_json"
+        set app_version (grep '"version"' "$package_json" | sed 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+        set app_description (grep '"description"' "$package_json" | sed 's/.*"description"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+        set app_author (grep '"author"' "$package_json" | sed 's/.*"author"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+        set app_homepage (grep '"homepage"' "$package_json" | sed 's/.*"homepage"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+        set app_license (grep '"license"' "$package_json" | sed 's/.*"license"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+        
+        echo "📦 基本信息:"
+        if test -n "$app_version"
+            echo "   📌 版本: $app_version"
+        else
+            echo "   ⚠️  版本: 未知 (建议在package.json中补充version字段)"
+        end
+        
+        if test -n "$app_author"
+            echo "   👤 作者: $app_author"
+        else
+            echo "   ⚠️  作者: 未知 (建议在package.json中补充author字段)"
+        end
+        
+        echo ""
+        echo "📝 项目描述:"
+        if test -n "$app_description"
+            # 处理长描述，进行换行显示
+            echo "$app_description" | fold -w 75 -s | sed 's/^/   /'
+        else
+            echo "   ⚠️  描述: 未知 (建议在package.json中补充description字段)"
+        end
+        
+        echo ""
+        echo "🔗 项目链接:"
+        if test -n "$app_homepage"
+            echo "   🌐 项目主页: $app_homepage"
+        else
+            echo "   🌐 项目主页: https://github.com/bahayonghang/ccs (默认)"
+        end
+        
+        if test -n "$app_license"
+            echo "   📄 许可证: $app_license"
+        else
+            echo "   📄 许可证: MIT (默认)"
+        end
+        
+        echo ""
+        echo "📁 文件信息:"
+        echo "   📍 配置文件路径: $package_json_path"
+        echo "   ✅ 文件复制操作: 无需执行 (直接读取源文件)"
+        
+    else
+        echo "⚠️  警告: 未找到package.json文件"
+        echo "📍 预期路径: $package_json_path"
+        echo ""
+        echo "📦 使用默认信息:"
+        echo "   📌 版本: 1.0.0"
+        echo "   👤 作者: 未知"
+        echo "   📝 描述: Claude Code Configuration Switcher - 多平台配置管理工具"
+        echo "   🌐 项目主页: https://github.com/bahayonghang/ccs"
+        echo "   📄 许可证: MIT"
+        echo ""
+        echo "💡 建议: 请确保package.json文件存在并包含完整的项目信息"
+        echo "📁 文件复制操作: 未执行 (源文件不存在)"
+    end
+    
+    echo ""
+    echo "═══════════════════════════════════════════════════════════════════════════════════"
+    echo "🚀 感谢使用 CCS！如有问题请访问项目主页获取帮助。"
+end
 
 # Fish 自动补全
 function __ccs_complete
