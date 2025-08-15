@@ -9,23 +9,59 @@ function update_current_config --argument config_name
         return 1
     end
     
-    # 使用sed更新current_config字段
-    sed "s/^current_config *= *\"[^\"]*\"/current_config = \"$config_name\"/" "$config_file" > "$temp_file"
-    sed -i "s/^current_config *= *'[^']*'/current_config = \"$config_name\"/" "$temp_file"
-    
-    # 验证更新是否成功
-    if grep -q "^current_config = \"$config_name\"" "$temp_file"
-        if mv "$temp_file" "$config_file"
-            return 0
+    # 检查current_config字段是否存在
+    if grep -q "^current_config" "$config_file"
+        # 字段存在，执行替换
+        echo "🔄 current_config字段存在，执行更新" >&2
+        sed "s/^current_config *= *\"[^\"]*\"/current_config = \"$config_name\"/" "$config_file" > "$temp_file"
+        sed -i "s/^current_config *= *'[^']*'/current_config = \"$config_name\"/" "$temp_file"
+        
+        # 验证更新是否成功
+        if grep -q "^current_config = \"$config_name\"" "$temp_file"
+            if mv "$temp_file" "$config_file"
+                echo "✅ 配置文件已更新，当前配置: $config_name" >&2
+                return 0
+            else
+                echo "❌ 无法保存配置文件" >&2
+                rm -f "$temp_file"
+                return 1
+            end
         else
-            echo "❌ 无法保存配置文件" >&2
+            echo "❌ 配置文件更新验证失败" >&2
             rm -f "$temp_file"
             return 1
         end
     else
-        echo "❌ 配置文件更新验证失败" >&2
-        rm -f "$temp_file"
-        return 1
+        # 字段不存在，自动修复：在文件开头添加current_config字段
+        echo "🔧 current_config字段不存在，执行自动修复" >&2
+        
+        # 获取默认配置名称作为初始值
+        set default_config (grep "^default_config" "$config_file" | cut -d'"' -f2 | cut -d"'" -f2)
+        if test -z "$default_config"
+            set default_config "anyrouter"  # 回退到硬编码默认值
+        end
+        
+        # 创建修复后的配置文件
+        echo "# 当前使用的配置（自动添加）" > "$temp_file"
+        echo "current_config = \"$config_name\"" >> "$temp_file"
+        echo "" >> "$temp_file"
+        cat "$config_file" >> "$temp_file"
+        
+        # 验证修复结果
+        if grep -q "^current_config = \"$config_name\"" "$temp_file"
+            if mv "$temp_file" "$config_file"
+                echo "✅ 配置文件已自动修复并更新，当前配置: $config_name" >&2
+                return 0
+            else
+                echo "❌ 无法保存修复后的配置文件" >&2
+                rm -f "$temp_file"
+                return 1
+            end
+        else
+            echo "❌ 配置文件自动修复验证失败" >&2
+            rm -f "$temp_file"
+            return 1
+        end
     end
 end
 

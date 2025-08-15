@@ -40,30 +40,68 @@ update_current_config() {
         return 1
     fi
     
-    # 使用sed更新current_config字段
-    if sed "s/^current_config *= *\"[^\"]*\"/current_config = \"$config_name\"/" "$CONFIG_FILE" > "$temp_file" && \
-       sed -i "s/^current_config *= *'[^']*'/current_config = \"$config_name\"/" "$temp_file"; then
-        
-        # 验证更新是否成功 - 使用更健壮的验证方法
-        local updated_config=$(grep "^current_config" "$temp_file" | cut -d'"' -f2 | cut -d"'" -f2)
-        if [[ "$updated_config" == "$config_name" ]]; then
-            if mv "$temp_file" "$CONFIG_FILE"; then
-                log_debug "配置文件已更新，当前配置: $config_name"
-                return 0
+    # 检查current_config字段是否存在
+    if grep -q "^current_config" "$CONFIG_FILE"; then
+        # 字段存在，执行替换
+        log_debug "current_config字段存在，执行更新"
+        if sed "s/^current_config *= *\"[^\"]*\"/current_config = \"$config_name\"/" "$CONFIG_FILE" > "$temp_file" && \
+           sed -i "s/^current_config *= *'[^']*'/current_config = \"$config_name\"/" "$temp_file"; then
+            
+            # 验证更新是否成功
+            local updated_config=$(grep "^current_config" "$temp_file" | cut -d'"' -f2 | cut -d"'" -f2)
+            if [[ "$updated_config" == "$config_name" ]]; then
+                if mv "$temp_file" "$CONFIG_FILE"; then
+                    log_debug "配置文件已更新，当前配置: $config_name"
+                    return 0
+                else
+                    log_error "无法保存配置文件"
+                    rm -f "$temp_file"
+                    return 1
+                fi
             else
-                log_error "无法保存配置文件"
+                log_error "配置文件更新验证失败"
                 rm -f "$temp_file"
                 return 1
             fi
         else
-            log_error "配置文件更新验证失败"
+            log_error "配置文件更新失败"
             rm -f "$temp_file"
             return 1
         fi
     else
-        log_error "配置文件更新失败"
-        rm -f "$temp_file"
-        return 1
+        # 字段不存在，自动修复：在文件开头添加current_config字段
+        log_debug "current_config字段不存在，执行自动修复"
+        
+        # 获取默认配置名称作为初始值
+        local default_config=$(grep "^default_config" "$CONFIG_FILE" | cut -d'"' -f2 | cut -d"'" -f2)
+        if [[ -z "$default_config" ]]; then
+            default_config="anyrouter"  # 回退到硬编码默认值
+        fi
+        
+        # 创建修复后的配置文件
+        {
+            echo "# 当前使用的配置（自动添加）"
+            echo "current_config = \"$config_name\""
+            echo ""
+            cat "$CONFIG_FILE"
+        } > "$temp_file"
+        
+        # 验证修复结果
+        local updated_config=$(grep "^current_config" "$temp_file" | cut -d'"' -f2 | cut -d"'" -f2)
+        if [[ "$updated_config" == "$config_name" ]]; then
+            if mv "$temp_file" "$CONFIG_FILE"; then
+                log_info "配置文件已自动修复并更新，当前配置: $config_name"
+                return 0
+            else
+                log_error "无法保存修复后的配置文件"
+                rm -f "$temp_file"
+                return 1
+            fi
+        else
+            log_error "配置文件自动修复验证失败"
+            rm -f "$temp_file"
+            return 1
+        fi
     fi
 }
 
