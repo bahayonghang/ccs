@@ -9,6 +9,8 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 if [[ -f "$SCRIPT_DIR/../shell/ccs-common.sh" ]]; then
     source "$SCRIPT_DIR/../shell/ccs-common.sh"
+elif [[ -f "$SCRIPT_DIR/ccs-common.sh" ]]; then
+    source "$SCRIPT_DIR/ccs-common.sh"
 else
     # 简单的错误处理，如果工具库不存在
     handle_error() {
@@ -48,6 +50,10 @@ else
     
     print_error() {
         printf "%b[✗]%b %s\n" "$RED" "$NC" "$1"
+    }
+    
+    print_step() {
+        printf "%b[→]%b %s\n" "$BLUE" "$NC" "$1"
     }
     
     command_exists() {
@@ -216,9 +222,16 @@ copy_script() {
     local source_common="$script_dir/../shell/ccs-common.sh"
     local source_web="$script_dir/../../web"
     
-    # 检查源文件是否存在
+    # 检查源文件是否存在，如果不存在则检查当前目录
     if [[ ! -f "$source_sh" ]]; then
-        handle_error $ERROR_FILE_NOT_FOUND "找不到源脚本文件: $source_sh"
+        source_sh="$script_dir/ccs.sh"
+        source_fish="$script_dir/ccs.fish"
+        source_common="$script_dir/ccs-common.sh"
+        source_web="$script_dir/web"
+        
+        if [[ ! -f "$source_sh" ]]; then
+            handle_error $ERROR_FILE_NOT_FOUND "找不到源脚本文件: $source_sh"
+        fi
     fi
     
     # 复制通用工具库

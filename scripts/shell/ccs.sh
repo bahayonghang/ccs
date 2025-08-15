@@ -471,8 +471,8 @@ open_web() {
             log_warn "未找到用户配置文件 $user_config"
         fi
         
-        print_info "启动web服务器在端口 $port"
-        print_info "请在浏览器中访问: http://localhost:$port"
+        log_info "启动web服务器在端口 $port"
+        log_info "请在浏览器中访问: http://localhost:$port"
         
         # 启动Python HTTP服务器
         if command_exists python3; then

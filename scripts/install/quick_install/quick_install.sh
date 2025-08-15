@@ -82,6 +82,7 @@ main() {
         "scripts/install/install.sh"
         "scripts/shell/ccs.sh"
         "scripts/shell/ccs.fish"
+        "scripts/shell/ccs-common.sh"
     )
     
     for file in "${files[@]}"; do
@@ -156,6 +157,7 @@ EOF
     chmod +x "$temp_dir/install.sh"
     chmod +x "$temp_dir/ccs.sh" 
     chmod +x "$temp_dir/ccs.fish"
+    chmod +x "$temp_dir/ccs-common.sh"
     
     # 切换到临时目录并运行安装脚本
     print_message "$BLUE" "运行安装脚本..."
