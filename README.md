@@ -465,6 +465,25 @@ Unexpected token 'PATH", $newPath, "User")' in expression or statement.
 
 详细信息请参考：[POWERSHELL_FIX.md](POWERSHELL_FIX.md)
 
+### 配置文件更新验证失败
+
+**问题**: 切换配置时显示"❌ 配置文件更新验证失败"但功能正常。
+
+**原因**: 早期版本的配置验证逻辑在某些情况下可能误报失败。
+
+**解决方案**: 此问题已在最新版本中修复，使用了更健壮的验证方法。如果仍遇到问题：
+
+1. **更新脚本**：
+   ```bash
+   cp scripts/shell/ccs.sh ~/.ccs/
+   ```
+
+2. **重新测试配置切换**：
+   ```bash
+   ccs list
+   ccs [配置名称]
+   ```
+
 ### 其他常见问题
 
 - **配置文件不存在**: 运行安装脚本重新创建配置文件

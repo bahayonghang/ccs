@@ -44,8 +44,9 @@ update_current_config() {
     if sed "s/^current_config *= *\"[^\"]*\"/current_config = \"$config_name\"/" "$CONFIG_FILE" > "$temp_file" && \
        sed -i "s/^current_config *= *'[^']*'/current_config = \"$config_name\"/" "$temp_file"; then
         
-        # 验证更新是否成功
-        if grep -q "^current_config = \"$config_name\"" "$temp_file"; then
+        # 验证更新是否成功 - 使用更健壮的验证方法
+        local updated_config=$(grep "^current_config" "$temp_file" | cut -d'"' -f2 | cut -d"'" -f2)
+        if [[ "$updated_config" == "$config_name" ]]; then
             if mv "$temp_file" "$CONFIG_FILE"; then
                 log_debug "配置文件已更新，当前配置: $config_name"
                 return 0
