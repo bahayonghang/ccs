@@ -435,6 +435,42 @@ ccs会自动设置以下环境变量：
 - **空值时**: 不设置环境变量，由Claude Code工具使用默认模型
 - **建议**: Claude API服务留空model字段，非Claude服务明确指定model
 
+## 🛠️ 故障排除
+
+### Windows PowerShell 语法错误
+
+**问题**: 在Windows中运行PowerShell时出现语法错误：
+```
+Missing closing ')' in expression.
+Unexpected token 'PATH", $newPath, "User")' in expression or statement.
+```
+
+**解决方案**: 此问题已在最新版本中修复。如果仍遇到问题：
+
+1. **重新安装**：
+   ```powershell
+   ccs uninstall
+   # 然后重新运行安装脚本
+   ```
+
+2. **检查PowerShell版本**：
+   ```powershell
+   $PSVersionTable.PSVersion
+   ```
+
+3. **设置执行策略**（如需要）：
+   ```powershell
+   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+   ```
+
+详细信息请参考：[POWERSHELL_FIX.md](POWERSHELL_FIX.md)
+
+### 其他常见问题
+
+- **配置文件不存在**: 运行安装脚本重新创建配置文件
+- **命令未找到**: 重新打开终端或检查PATH环境变量
+- **API连接失败**: 检查网络连接和API密钥是否正确
+
 ## 📄 许可证
 
 MIT License

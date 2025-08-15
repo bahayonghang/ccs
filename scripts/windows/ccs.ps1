@@ -218,20 +218,20 @@ function Uninstall-CCS {
         $batFile = "$ccsDir\ccs.bat"
         if (Test-Path $batFile) {
             Remove-Item $batFile -Force
-            Write-Host "[✓] 删除bat脚本文件" -ForegroundColor Green
+            Write-Host "[OK] 删除bat脚本文件" -ForegroundColor Green
         }
         
         $ps1File = "$ccsDir\ccs.ps1"
         if (Test-Path $ps1File) {
             Remove-Item $ps1File -Force
-            Write-Host "[✓] 删除PowerShell脚本文件" -ForegroundColor Green
+            Write-Host "[OK] 删除PowerShell脚本文件" -ForegroundColor Green
         }
         
         # 删除web文件
         $webDir = "$ccsDir\web"
         if (Test-Path $webDir) {
             Remove-Item $webDir -Recurse -Force
-            Write-Host "[✓] 删除web文件" -ForegroundColor Green
+            Write-Host "[OK] 删除web文件" -ForegroundColor Green
         }
         
         # 检查.ccs目录是否为空（除了配置文件）
@@ -241,7 +241,7 @@ function Uninstall-CCS {
             # 如果没有配置文件，删除整个目录
             if (-not (Test-Path $CONFIG_FILE)) {
                 Remove-Item $ccsDir -Recurse -Force
-                Write-Host "[✓] 删除.ccs目录" -ForegroundColor Green
+                Write-Host "[OK] 删除.ccs目录" -ForegroundColor Green
             } else {
                 Write-Host "[!] 保留.ccs目录（包含配置文件）" -ForegroundColor Yellow
             }
@@ -253,13 +253,13 @@ function Uninstall-CCS {
         $reply = Read-Host "是否要删除配置文件 $CONFIG_FILE? (y/N)"
         if ($reply -eq "y" -or $reply -eq "Y") {
             Remove-Item $CONFIG_FILE -Force
-            Write-Host "[✓] 删除配置文件" -ForegroundColor Green
+            Write-Host "[OK] 删除配置文件" -ForegroundColor Green
             # 如果删除了配置文件且.ccs目录为空，删除目录
             if (Test-Path $ccsDir) {
                 $remainingItems = Get-ChildItem $ccsDir
                 if ($remainingItems.Count -eq 0) {
                     Remove-Item $ccsDir -Force
-                    Write-Host "[✓] 删除空的.ccs目录" -ForegroundColor Green
+                    Write-Host "[OK] 删除空的.ccs目录" -ForegroundColor Green
                 }
             }
         }
@@ -272,12 +272,12 @@ function Uninstall-CCS {
         $newPath = $newPath -replace [regex]::Escape(";" + $ccsDir), ""
         $newPath = $newPath -replace [regex]::Escape($ccsDir), ""
         [Environment]::SetEnvironmentVariable("PATH", $newPath, "User")
-        Write-Host "[✓] 从PATH环境变量中移除ccs目录" -ForegroundColor Green
+        Write-Host "[OK] 从PATH环境变量中移除ccs目录" -ForegroundColor Green
     } else {
         Write-Host "[!] 未在PATH环境变量中找到ccs目录" -ForegroundColor Yellow
     }
     
-    Write-Host "[✓] 卸载完成！请重新打开PowerShell" -ForegroundColor Green
+    Write-Host "[OK] 卸载完成！请重新打开PowerShell" -ForegroundColor Green
     Write-Host ""
     Write-Host "[!] 注意：当前PowerShell会话中的ccs命令仍然可用，直到重新打开" -ForegroundColor Yellow
 }

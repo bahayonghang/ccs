@@ -1,4 +1,8 @@
 .claude/
 debug.log
-CLAUDE.md
-QWEN.md
+
+
+# YoYo AI version control directory
+.yoyo/
+.vscode
+.git/
