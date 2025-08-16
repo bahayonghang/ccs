@@ -11,7 +11,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [[ -f "$SCRIPT_DIR/ccs-common.sh" ]]; then
     source "$SCRIPT_DIR/ccs-common.sh"
 else
-    # 简单的错误处理，如果工具库不存在
+    # 简单的错误处理,如果工具库不存在
     handle_error() {
         echo "错误: $1" >&2
         return "${2:-1}"
@@ -20,7 +20,7 @@ fi
 
 # 检查配置文件是否存在
 if [[ ! -f "$CONFIG_FILE" ]]; then
-    handle_error $ERROR_CONFIG_MISSING "配置文件 $CONFIG_FILE 不存在，请先运行安装脚本来创建配置文件" "true"
+    handle_error $ERROR_CONFIG_MISSING "配置文件 $CONFIG_FILE 不存在,请先运行安装脚本来创建配置文件" "true"
 fi
 
 # 验证配置文件
@@ -42,8 +42,8 @@ update_current_config() {
     
     # 检查current_config字段是否存在
     if grep -q "^current_config" "$CONFIG_FILE"; then
-        # 字段存在，执行替换
-        log_debug "current_config字段存在，执行更新"
+        # 字段存在,执行替换
+        log_debug "current_config字段存在,执行更新"
         if sed "s/^current_config *= *\"[^\"]*\"/current_config = \"$config_name\"/" "$CONFIG_FILE" > "$temp_file" && \
            sed -i "s/^current_config *= *'[^']*'/current_config = \"$config_name\"/" "$temp_file"; then
             
@@ -51,7 +51,7 @@ update_current_config() {
             local updated_config=$(grep "^current_config" "$temp_file" | cut -d'"' -f2 | cut -d"'" -f2)
             if [[ "$updated_config" == "$config_name" ]]; then
                 if mv "$temp_file" "$CONFIG_FILE"; then
-                    log_debug "配置文件已更新，当前配置: $config_name"
+                    log_debug "配置文件已更新,当前配置: $config_name"
                     return 0
                 else
                     log_error "无法保存配置文件"
@@ -69,8 +69,8 @@ update_current_config() {
             return 1
         fi
     else
-        # 字段不存在，自动修复：在文件开头添加current_config字段
-        log_debug "current_config字段不存在，执行自动修复"
+        # 字段不存在,自动修复：在文件开头添加current_config字段
+        log_debug "current_config字段不存在,执行自动修复"
         
         # 获取默认配置名称作为初始值
         local default_config=$(grep "^default_config" "$CONFIG_FILE" | cut -d'"' -f2 | cut -d"'" -f2)
@@ -90,7 +90,7 @@ update_current_config() {
         local updated_config=$(grep "^current_config" "$temp_file" | cut -d'"' -f2 | cut -d"'" -f2)
         if [[ "$updated_config" == "$config_name" ]]; then
             if mv "$temp_file" "$CONFIG_FILE"; then
-                log_info "配置文件已自动修复并更新，当前配置: $config_name"
+                log_info "配置文件已自动修复并更新,当前配置: $config_name"
                 return 0
             else
                 log_error "无法保存修复后的配置文件"
@@ -109,28 +109,28 @@ update_current_config() {
 load_current_config() {
     # 检查配置文件是否存在
     if [[ ! -f "$CONFIG_FILE" ]]; then
-        log_debug "配置文件不存在，跳过自动加载"
+        log_debug "配置文件不存在,跳过自动加载"
         return 0
     fi
     
     # 获取当前配置
     local current_config=$(grep "^current_config" "$CONFIG_FILE" | cut -d'"' -f2 | cut -d"'" -f2)
     
-    # 如果没有当前配置，尝试使用默认配置
+    # 如果没有当前配置,尝试使用默认配置
     if [[ -z "$current_config" ]]; then
         current_config=$(grep "^default_config" "$CONFIG_FILE" | cut -d'"' -f2 | cut -d"'" -f2)
-        log_debug "未找到当前配置，使用默认配置: $current_config"
+        log_debug "未找到当前配置,使用默认配置: $current_config"
     else
         log_debug "自动加载当前配置: $current_config"
     fi
     
-    # 如果找到了配置，则加载它
+    # 如果找到了配置,则加载它
     if [[ -n "$current_config" ]]; then
         # 检查配置是否存在
         if grep -q "^\[$current_config\]" "$CONFIG_FILE"; then
             parse_toml "$current_config" "silent"
         else
-            log_warn "当前配置 '$current_config' 不存在，回退到默认配置"
+            log_warn "当前配置 '$current_config' 不存在,回退到默认配置"
             local default_config=$(grep "^default_config" "$CONFIG_FILE" | cut -d'"' -f2 | cut -d"'" -f2)
             if [[ -n "$default_config" ]] && grep -q "^\[$default_config\]" "$CONFIG_FILE"; then
                 parse_toml "$default_config" "silent"
@@ -166,7 +166,7 @@ show_version() {
     local script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     local project_root="$(cd "$script_dir/../.." && pwd)"
     
-    # 优先查找.ccs目录中的package.json，然后查找项目根目录
+    # 优先查找.ccs目录中的package.json,然后查找项目根目录
     local package_json="$HOME/.ccs/package.json"
     if [[ ! -f "$package_json" ]]; then
         package_json="$project_root/package.json"
@@ -200,7 +200,7 @@ show_version() {
         echo ""
         echo "📝 项目描述:"
         if [[ -n "$description" ]]; then
-            # 处理长描述，进行换行显示
+            # 处理长描述,进行换行显示
             echo "$description" | fold -w 75 -s | sed 's/^/   /'
         else
             echo "   ⚠️  描述: 未知 (建议在package.json中补充description字段)"
@@ -248,7 +248,7 @@ show_version() {
 # 解析TOML配置文件
 parse_toml() {
     local config_name="$1"
-    local silent_mode="$2"  # 如果为"silent"，减少输出
+    local silent_mode="$2"  # 如果为"silent",减少输出
     
     log_debug "解析配置: $config_name"
     
@@ -261,7 +261,7 @@ parse_toml() {
     local config_content
     local last_config=$(grep "^\\[" "$CONFIG_FILE" | sed 's/\[\(.*\)\]/\1/' | tail -1)
     if [[ "$config_name" == "$last_config" ]]; then
-        # 如果是最后一个配置节，读取到文件末尾
+        # 如果是最后一个配置节,读取到文件末尾
         config_content=$(sed -n "/^\[$config_name\]/,\$p" "$CONFIG_FILE" | tail -n +2 | grep -v "^#")
     else
         # 否则读取到下一个配置节
@@ -328,7 +328,7 @@ parse_toml() {
     if [[ "$silent_mode" != "silent" ]]; then
         print_success "已切换到配置: $config_name"
         
-        # 更新配置文件中的当前配置（非静默模式下才更新，避免自动加载时的循环）
+        # 更新配置文件中的当前配置（非静默模式下才更新,避免自动加载时的循环）
         update_current_config "$config_name"
     fi
 }
@@ -444,7 +444,7 @@ ccs_uninstall() {
         # 检查.ccs目录是否为空（除了配置文件）
         local remaining_files=$(find "$HOME/.ccs" -type f ! -name "*.toml" 2>/dev/null | wc -l)
         if [[ "$remaining_files" -eq 0 ]]; then
-            # 如果没有配置文件，删除整个目录
+            # 如果没有配置文件,删除整个目录
             if [[ ! -f "$CONFIG_FILE" ]]; then
                 rm -rf "$HOME/.ccs"
                 print_success "删除.ccs目录"
@@ -459,7 +459,7 @@ ccs_uninstall() {
         if ask_confirmation "是否要删除配置文件 $CONFIG_FILE" "N"; then
             rm -f "$CONFIG_FILE"
             print_success "删除配置文件"
-            # 如果删除了配置文件且.ccs目录为空，删除目录
+            # 如果删除了配置文件且.ccs目录为空,删除目录
             if [[ -d "$HOME/.ccs" ]] && [[ -z "$(ls -A "$HOME/.ccs" 2>/dev/null)" ]]; then
                 rm -rf "$HOME/.ccs"
                 print_success "删除空的.ccs目录"
@@ -561,7 +561,7 @@ ccs_uninstall() {
     
     print_success "卸载完成！请重新启动终端或重新加载shell配置"
     echo ""
-    print_warning "注意：当前终端会话中的ccs函数仍然可用，直到重新启动终端"
+    print_warning "注意：当前终端会话中的ccs函数仍然可用,直到重新启动终端"
 }
 
 # 打开web配置界面
@@ -570,21 +570,21 @@ open_web() {
     local web_path="$web_dir/index.html"
     
     if [[ ! -f "$web_path" ]]; then
-        handle_error $ERROR_FILE_NOT_FOUND "web界面文件不存在，请重新运行安装脚本"
+        handle_error $ERROR_FILE_NOT_FOUND "web界面文件不存在,请重新运行安装脚本"
     fi
     
     # 检查是否在远程环境（WSL/SSH）
     if [[ -n "$WSL_DISTRO_NAME" ]] || [[ -n "$SSH_CLIENT" ]] || [[ -n "$SSH_TTY" ]]; then
-        # 远程环境，启动HTTP服务器
+        # 远程环境,启动HTTP服务器
         local port=8888
-        print_step "检测到远程环境，启动HTTP服务器..."
+        print_step "检测到远程环境,启动HTTP服务器..."
         
         # 检查端口是否被占用
         while netstat -ln 2>/dev/null | grep -q ":$port "; do
             port=$((port + 1))
         done
         
-        # 复制用户配置文件到web目录，确保web页面能读取到正确的配置
+        # 复制用户配置文件到web目录,确保web页面能读取到正确的配置
         local user_config="$HOME/.ccs_config.toml"
         if [[ -f "$user_config" ]]; then
             if cp "$user_config" "$web_dir/.ccs_config.toml"; then
@@ -605,10 +605,10 @@ open_web() {
         elif command_exists python; then
             cd "$web_dir" && python -m SimpleHTTPServer "$port"
         else
-            handle_error $ERROR_FILE_NOT_FOUND "需要Python来启动HTTP服务器，请手动打开 $web_path"
+            handle_error $ERROR_FILE_NOT_FOUND "需要Python来启动HTTP服务器,请手动打开 $web_path"
         fi
     else
-        # 本地环境，直接打开浏览器
+        # 本地环境,直接打开浏览器
         local browser_found=false
         
         if command_exists xdg-open; then
@@ -631,7 +631,7 @@ open_web() {
         if [[ "$browser_found" == "true" ]]; then
             print_success "正在打开web配置界面..."
         else
-            handle_error $ERROR_FILE_NOT_FOUND "无法找到可用的浏览器，请手动打开 $web_path"
+            handle_error $ERROR_FILE_NOT_FOUND "无法找到可用的浏览器,请手动打开 $web_path"
         fi
     fi
 }
@@ -640,7 +640,7 @@ open_web() {
 ccs() {
     # 验证配置文件是否存在
     if [[ ! -f "$CONFIG_FILE" ]]; then
-        handle_error $ERROR_CONFIG_MISSING "配置文件 $CONFIG_FILE 不存在，请先运行安装脚本来创建配置文件" "true"
+        handle_error $ERROR_CONFIG_MISSING "配置文件 $CONFIG_FILE 不存在,请先运行安装脚本来创建配置文件" "true"
     fi
     
     # 验证配置文件
@@ -666,7 +666,7 @@ ccs() {
             ccs_help
             ;;
         "")
-            # 如果没有参数，使用默认配置
+            # 如果没有参数,使用默认配置
             local default_config=$(grep "default_config" "$CONFIG_FILE" | cut -d'"' -f2 | cut -d"'" -f2)
             if [[ -n "$default_config" ]]; then
                 parse_toml "$default_config"
@@ -680,10 +680,10 @@ ccs() {
     esac
 }
 
-# 如果直接运行此脚本（而不是source），则执行主函数
+# 如果直接运行此脚本（而不是source）,则执行主函数
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     ccs "$@"
 else
-    # 如果是被source的，自动加载当前配置
+    # 如果是被source的,自动加载当前配置
     load_current_config
 fi

@@ -261,14 +261,14 @@ flowchart TD
     I -->|是| K["使用current_config"]
     
     J --> L{"default_config有值？"}
-    L -->|否| M["无可用配置，跳过"]
+    L -->|否| M["无可用配置,跳过"]
     L -->|是| N["使用default_config"]
     
     K --> O["验证配置有效性"]
     N --> O
     
     O --> P{"配置有效？"}
-    P -->|否| Q["记录警告，跳过"]
+    P -->|否| Q["记录警告,跳过"]
     P -->|是| R["静默设置环境变量"]
     
     R --> S["自动加载完成"]
@@ -690,7 +690,7 @@ recover_missing_file() {
     echo "   3. 检查文件路径是否正确"
     echo ""
     
-    # 如果是配置文件，提供创建选项
+    # 如果是配置文件,提供创建选项
     if [[ "$file_path" == *".ccs_config.toml" ]]; then
         if [[ -t 0 ]]; then  # 交互式终端
             echo "🤔 是否要创建默认配置文件？ (y/N)"
@@ -976,7 +976,7 @@ validate_config_business() {
     
     # 验证认证有效性
     if ! test_api_authentication "$base_url" "$auth_token"; then
-        echo "API认证失败，请检查auth_token"
+        echo "API认证失败,请检查auth_token"
         return 1
     fi
     
@@ -1066,7 +1066,7 @@ class EnvVarSyncManager {
         
         # 检查环境变量是否与配置一致
         if ! verify_env_vars_consistency "$current_config"; then
-            log_warn "检测到环境变量不一致，正在重新同步"
+            log_warn "检测到环境变量不一致,正在重新同步"
             
             # 重新设置环境变量
             if set_config_env_vars "$current_config" "$CONFIG_FILE"; then

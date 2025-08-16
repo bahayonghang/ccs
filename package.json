@@ -1,7 +1,7 @@
 {
   "name": "ccs",
   "version": "1.0.0",
-  "description": "🔄 Claude Code Configuration Switcher - 一个强大的多平台命令行工具，支持快速切换Claude Code API配置，提供全局配置持久化、Web界面管理、智能模型选择等功能，完美支持Bash/Zsh/Fish/PowerShell等多种Shell环境",
+  "description": "🔄 Claude Code Configuration Switcher - 一个强大的多平台命令行工具,支持快速切换Claude Code API配置,提供全局配置持久化、Web界面管理、智能模型选择等功能,完美支持Bash/Zsh/Fish/PowerShell等多种Shell环境",
   "main": "scripts/shell/ccs.sh",
   "scripts": {
     "install": "cd scripts/install && bash install.sh",

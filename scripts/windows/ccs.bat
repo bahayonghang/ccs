@@ -273,7 +273,7 @@ if exist "%USERPROFILE%\.ccs" (
     )
     
     if !remaining_files! equ 0 (
-        REM 如果没有配置文件，删除整个目录
+        REM 如果没有配置文件,删除整个目录
         if not exist "%CONFIG_FILE%" (
             rmdir /s /q "%USERPROFILE%\.ccs"
             echo [✓] 删除.ccs目录
@@ -289,7 +289,7 @@ if exist "%CONFIG_FILE%" (
     if /i "!reply!"=="y" (
         del /f "%CONFIG_FILE%"
         echo [✓] 删除配置文件
-        REM 如果删除了配置文件且.ccs目录为空，删除目录
+        REM 如果删除了配置文件且.ccs目录为空,删除目录
         if exist "%USERPROFILE%\.ccs" (
             dir /b "%USERPROFILE%\.ccs" | findstr /r "^" >nul
             if errorlevel 1 (
@@ -320,12 +320,12 @@ if defined current_path (
 
 echo [✓] 卸载完成！请重新打开命令提示符或PowerShell
 echo.
-echo [!] 注意：当前命令提示符会话中的ccs命令仍然可用，直到重新打开
+echo [!] 注意：当前命令提示符会话中的ccs命令仍然可用,直到重新打开
 exit /b 0
 
 REM 主函数
 if "%~1"=="" (
-    REM 如果没有参数，使用默认配置
+    REM 如果没有参数,使用默认配置
     for /f "usebackq tokens=2 delims==" %%a in (`findstr "default_config" "%CONFIG_FILE%"`) do (
         set default_config=%%a
         set default_config=!default_config: =!

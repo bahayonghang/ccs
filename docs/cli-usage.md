@@ -825,7 +825,7 @@ $ ccs list
 ❌ 错误: 配置文件格式无效
 📁 文件: ~/.ccs_config.toml
 📍 行号: 15
-💡 建议: 检查TOML语法，特别是引号和括号
+💡 建议: 检查TOML语法,特别是引号和括号
 
 # 解决方案
 $ ccs validate --format
@@ -989,7 +989,7 @@ chmod 700 ~/.ccs/             # 仅所有者可访问
 
 # 避免在共享环境中使用
 if [ "$USER" != "$(whoami)" ]; then
-    echo "⚠️  警告: 检测到共享环境，请谨慎使用CCS"
+    echo "⚠️  警告: 检测到共享环境,请谨慎使用CCS"
 fi
 ```
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # CCS (Claude Code Configuration Switcher) 通用工具函数库
-# 此文件包含跨平台的共享功能，用于减少代码重复并提高一致性
+# 此文件包含跨平台的共享功能,用于减少代码重复并提高一致性
 
 # 颜色输出定义
 if [[ -n "$TERM" && "$TERM" != "dumb" ]]; then
@@ -221,7 +221,7 @@ validate_required_fields() {
         # 提取配置节内容（处理最后一个配置节的情况）
         local config_content
         if [[ "$config" == $(grep "^\\[" "$config_file" | sed 's/\[\(.*\)\]/\1/' | tail -1) ]]; then
-            # 如果是最后一个配置节，读取到文件末尾
+            # 如果是最后一个配置节,读取到文件末尾
             config_content=$(sed -n "/^\\[$config\\]/,\$p" "$config_file" | tail -n +2)
         else
             # 否则读取到下一个配置节
@@ -239,7 +239,7 @@ validate_required_fields() {
             missing_fields+=("auth_token")
         fi
         
-        # model字段现在是可选的，如果为空或不存在，则使用默认模型
+        # model字段现在是可选的,如果为空或不存在,则使用默认模型
         
         if [[ ${#missing_fields[@]} -gt 0 ]]; then
             log_error "配置节 '$config' 缺少必需字段: ${missing_fields[*]}"
@@ -266,12 +266,12 @@ download_with_retry() {
         
         retry_count=$((retry_count + 1))
         if (( retry_count < max_retries )); then
-            log_warn "下载失败，$retry_delay 秒后重试 ($retry_count/$max_retries)"
+            log_warn "下载失败,$retry_delay 秒后重试 ($retry_count/$max_retries)"
             sleep "$retry_delay"
         fi
     done
     
-    log_error "下载失败，已达到最大重试次数: $url"
+    log_error "下载失败,已达到最大重试次数: $url"
     return $ERROR_DOWNLOAD_FAILED
 }
 

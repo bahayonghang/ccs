@@ -101,7 +101,7 @@ EOF
         echo "   或"
         echo "   vim ~/.ccs_config.toml"
         echo ""
-        echo "3. 填入您的API密钥后，开始使用："
+        echo "3. 填入您的API密钥后,开始使用："
         echo "   ccs list        # 查看所有配置"
         echo "   ccs [配置名]    # 切换配置"
         echo "   ccs current     # 查看当前配置"

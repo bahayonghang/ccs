@@ -1,6 +1,6 @@
 # 安装指南
 
-CCS (Claude Code Configuration Switcher) 支持多种安装方式，适用于不同的操作系统和使用场景。
+CCS (Claude Code Configuration Switcher) 支持多种安装方式,适用于不同的操作系统和使用场景。
 
 ## 🚀 一键安装（推荐）
 
@@ -118,7 +118,7 @@ if (Test-Path $ccsPath) {
 ## ✅ 安装验证
 
 ### 1. 重启终端
-安装完成后，请重新打开终端或运行以下命令：
+安装完成后,请重新打开终端或运行以下命令：
 
 ```bash
 # Bash/Zsh
@@ -156,7 +156,7 @@ Claude Code Configuration Switcher (CCS)
 
 ## 🔄 重新安装/更新
 
-如果CCS已经安装，再次运行安装脚本将执行更新操作：
+如果CCS已经安装,再次运行安装脚本将执行更新操作：
 
 ```bash
 # 更新所有脚本文件
@@ -183,7 +183,7 @@ bash install.sh --uninstall
 ```
 
 ### 手动卸载
-如果自动卸载失败，可以手动删除：
+如果自动卸载失败,可以手动删除：
 
 ```bash
 # 删除CCS目录
@@ -192,7 +192,7 @@ rm -rf ~/.ccs
 # 删除配置文件
 rm -f ~/.ccs_config.toml
 
-# 手动编辑Shell配置文件，删除CCS相关行
+# 手动编辑Shell配置文件,删除CCS相关行
 # ~/.bashrc, ~/.zshrc, ~/.config/fish/config.fish
 ```
 
@@ -200,7 +200,7 @@ rm -f ~/.ccs_config.toml
 
 ### 权限问题
 ```bash
-# 如果遇到权限错误，确保有写入权限
+# 如果遇到权限错误,确保有写入权限
 chmod +w ~/.bashrc ~/.zshrc
 
 # 或者使用sudo（不推荐）

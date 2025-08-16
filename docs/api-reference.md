@@ -204,7 +204,7 @@ ccs validate [CONFIG_NAME] [OPTIONS]
 ```
 
 **参数：**
-- `CONFIG_NAME` - 要验证的配置名称（可选，默认验证当前配置）
+- `CONFIG_NAME` - 要验证的配置名称（可选,默认验证当前配置）
 
 **选项：**
 - `--all` - 验证所有配置
@@ -363,7 +363,7 @@ test_api_connection <base_url> <auth_token> [timeout]
 **参数：**
 - `base_url` - API基础URL
 - `auth_token` - 认证令牌
-- `timeout` - 超时时间（秒，可选）
+- `timeout` - 超时时间（秒,可选）
 
 **返回值：**
 - `0` - 连接成功
@@ -392,7 +392,7 @@ ccs_error <error_code> <error_message> [exit_on_error]
 **参数：**
 - `error_code` - 错误代码
 - `error_message` - 错误消息
-- `exit_on_error` - 是否退出（可选，默认false）
+- `exit_on_error` - 是否退出（可选,默认false）
 
 **`ccs_debug()`** - 调试输出
 
@@ -560,7 +560,7 @@ temperature = -1.0                       # ❌ 无效值
 
 ### API 环境变量
 
-根据当前配置，CCS会设置以下环境变量：
+根据当前配置,CCS会设置以下环境变量：
 
 #### OpenAI 配置
 
@@ -850,7 +850,7 @@ function pre_switch_handler() {
     echo "准备从 $from_config 切换到 $to_config"
     
     # 执行预处理逻辑
-    # 返回0表示允许切换，非0表示阻止切换
+    # 返回0表示允许切换,非0表示阻止切换
     return 0
 }
 

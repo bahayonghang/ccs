@@ -238,7 +238,7 @@ function Uninstall-CCS {
         $remainingFiles = Get-ChildItem $ccsDir | Where-Object { $_.Name -ne ".ccs_config.toml" }
         
         if ($remainingFiles.Count -eq 0) {
-            # 如果没有配置文件，删除整个目录
+            # 如果没有配置文件,删除整个目录
             if (-not (Test-Path $CONFIG_FILE)) {
                 Remove-Item $ccsDir -Recurse -Force
                 Write-Host "[OK] 删除.ccs目录" -ForegroundColor Green
@@ -254,7 +254,7 @@ function Uninstall-CCS {
         if ($reply -eq "y" -or $reply -eq "Y") {
             Remove-Item $CONFIG_FILE -Force
             Write-Host "[OK] 删除配置文件" -ForegroundColor Green
-            # 如果删除了配置文件且.ccs目录为空，删除目录
+            # 如果删除了配置文件且.ccs目录为空,删除目录
             if (Test-Path $ccsDir) {
                 $remainingItems = Get-ChildItem $ccsDir
                 if ($remainingItems.Count -eq 0) {
@@ -279,7 +279,7 @@ function Uninstall-CCS {
     
     Write-Host "[OK] 卸载完成！请重新打开PowerShell" -ForegroundColor Green
     Write-Host ""
-    Write-Host "[!] 注意：当前PowerShell会话中的ccs命令仍然可用，直到重新打开" -ForegroundColor Yellow
+    Write-Host "[!] 注意：当前PowerShell会话中的ccs命令仍然可用,直到重新打开" -ForegroundColor Yellow
 }
 
 # 主函数
@@ -288,7 +288,7 @@ function ccs {
     
     switch ($command) {
         "" {
-            # 如果没有参数，使用默认配置
+            # 如果没有参数,使用默认配置
             $lines = Get-Content $CONFIG_FILE
             $defaultConfig = ""
             
@@ -336,7 +336,7 @@ function ccs {
     }
 }
 
-# 如果直接运行此脚本，则执行主函数
+# 如果直接运行此脚本,则执行主函数
 if ($MyInvocation.InvocationName -ne ".") {
     ccs $args[0]
 }

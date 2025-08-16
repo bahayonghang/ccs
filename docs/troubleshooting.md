@@ -58,7 +58,7 @@ $ ccs diagnose
    ✅ 互联网连接正常
    ⚠️  API端点响应慢 (>2s)
 
-📊 诊断结果: 系统基本正常，存在性能问题
+📊 诊断结果: 系统基本正常,存在性能问题
 💡 建议: 检查网络连接或考虑使用代理
 ```
 
@@ -382,7 +382,7 @@ $ ccs test openai-gpt4
 ```bash
 # 检查API密钥格式
 echo $OPENAI_API_KEY
-# OpenAI: sk-开头，51字符
+# OpenAI: sk-开头,51字符
 # Anthropic: sk-ant-开头
 # Google: 39字符
 
@@ -413,7 +413,7 @@ curl -H "Authorization: Bearer $OPENAI_API_KEY" \
      https://api.openai.com/v1/usage
 
 # 等待配额重置
-echo "等待配额重置，通常每分钟或每小时重置"
+echo "等待配额重置,通常每分钟或每小时重置"
 sleep 60
 ccs test openai-gpt4
 
@@ -629,7 +629,7 @@ ccs list
 ```powershell
 # 错误信息
 PS> .\ccs.ps1
-无法加载文件，因为在此系统上禁止运行脚本
+无法加载文件,因为在此系统上禁止运行脚本
 ```
 
 **解决方案：**
@@ -1074,7 +1074,7 @@ fix_permissions() {
 fix_config_format() {
     echo "📝 检查配置格式..."
     if ! ccs validate --format >/dev/null 2>&1; then
-        echo "⚠️  配置格式有误，尝试修复..."
+        echo "⚠️  配置格式有误,尝试修复..."
         cp ~/.ccs_config.toml ~/.ccs_config.toml.backup
         # 简单的格式修复
         sed -i 's/\([^"]*\)=\([^"]*[^"\s]\)$/\1="\2"/' ~/.ccs_config.toml
@@ -1097,7 +1097,7 @@ fix_environment() {
 fix_network() {
     echo "🌐 检查网络连接..."
     if ! ping -c 1 8.8.8.8 >/dev/null 2>&1; then
-        echo "❌ 网络连接异常，请检查网络设置"
+        echo "❌ 网络连接异常,请检查网络设置"
         return 1
     else
         echo "✅ 网络连接正常"
@@ -1111,7 +1111,7 @@ fix_environment
 fix_network
 
 echo "🎉 自动修复完成！"
-echo "💡 如果问题仍然存在，请运行: ccs diagnose --full"
+echo "💡 如果问题仍然存在,请运行: ccs diagnose --full"
 ```
 
 ---

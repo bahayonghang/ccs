@@ -11,15 +11,15 @@ function update_current_config --argument config_name
     
     # 检查current_config字段是否存在
     if grep -q "^current_config" "$config_file"
-        # 字段存在，执行替换
-        echo "🔄 current_config字段存在，执行更新" >&2
+        # 字段存在,执行替换
+        echo "🔄 current_config字段存在,执行更新" >&2
         sed "s/^current_config *= *\"[^\"]*\"/current_config = \"$config_name\"/" "$config_file" > "$temp_file"
         sed -i "s/^current_config *= *'[^']*'/current_config = \"$config_name\"/" "$temp_file"
         
         # 验证更新是否成功
         if grep -q "^current_config = \"$config_name\"" "$temp_file"
             if mv "$temp_file" "$config_file"
-                echo "✅ 配置文件已更新，当前配置: $config_name" >&2
+                echo "✅ 配置文件已更新,当前配置: $config_name" >&2
                 return 0
             else
                 echo "❌ 无法保存配置文件" >&2
@@ -32,8 +32,8 @@ function update_current_config --argument config_name
             return 1
         end
     else
-        # 字段不存在，自动修复：在文件开头添加current_config字段
-        echo "🔧 current_config字段不存在，执行自动修复" >&2
+        # 字段不存在,自动修复：在文件开头添加current_config字段
+        echo "🔧 current_config字段不存在,执行自动修复" >&2
         
         # 获取默认配置名称作为初始值
         set default_config (grep "^default_config" "$config_file" | cut -d'"' -f2 | cut -d"'" -f2)
@@ -50,7 +50,7 @@ function update_current_config --argument config_name
         # 验证修复结果
         if grep -q "^current_config = \"$config_name\"" "$temp_file"
             if mv "$temp_file" "$config_file"
-                echo "✅ 配置文件已自动修复并更新，当前配置: $config_name" >&2
+                echo "✅ 配置文件已自动修复并更新,当前配置: $config_name" >&2
                 return 0
             else
                 echo "❌ 无法保存修复后的配置文件" >&2
@@ -77,18 +77,18 @@ function load_current_config
     # 获取当前配置
     set current_config (grep "^current_config" "$config_file" | cut -d'"' -f2 | cut -d"'" -f2)
     
-    # 如果没有当前配置，尝试使用默认配置
+    # 如果没有当前配置,尝试使用默认配置
     if test -z "$current_config"
         set current_config (grep "^default_config" "$config_file" | cut -d'"' -f2 | cut -d"'" -f2)
     end
     
-    # 如果找到了配置，则加载它
+    # 如果找到了配置,则加载它
     if test -n "$current_config"
         # 检查配置是否存在
         if grep -q "^\[$current_config\]" "$config_file"
             set_config_env "$current_config" true
         else
-            # 当前配置不存在，回退到默认配置
+            # 当前配置不存在,回退到默认配置
             set default_config (grep "^default_config" "$config_file" | cut -d'"' -f2 | cut -d"'" -f2)
             if test -n "$default_config"; and grep -q "^\[$default_config\]" "$config_file"
                 set_config_env "$default_config" true
@@ -239,22 +239,22 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell"
         set web_path "$web_dir/index.html"
         
         if not test -f "$web_path"
-            echo "❌ web界面文件不存在，请重新运行安装脚本"
+            echo "❌ web界面文件不存在,请重新运行安装脚本"
             return 1
         end
         
         # 检查是否在远程环境（WSL/SSH）
         if test -n "$WSL_DISTRO_NAME" -o -n "$SSH_CLIENT" -o -n "$SSH_TTY"
-            # 远程环境，启动HTTP服务器
+            # 远程环境,启动HTTP服务器
              set port 8888
-             echo "检测到远程环境，启动HTTP服务器..."
+             echo "检测到远程环境,启动HTTP服务器..."
              
              # 检查端口是否被占用
              while netstat -ln 2>/dev/null | grep -q ":$port "
                  set port (math $port + 1)
              end
              
-             # 复制用户配置文件到web目录，确保web页面能读取到正确的配置
+             # 复制用户配置文件到web目录,确保web页面能读取到正确的配置
              set user_config "$HOME/.ccs_config.toml"
              if test -f "$user_config"
                  cp "$user_config" "$web_dir/.ccs_config.toml"
@@ -277,7 +277,7 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell"
                  return 1
              end
         else
-            # 本地环境，直接打开浏览器
+            # 本地环境,直接打开浏览器
             if command -v xdg-open >/dev/null 2>&1
                 xdg-open "$web_path"
             else if command -v open >/dev/null 2>&1
@@ -327,7 +327,7 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell"
             # 检查.ccs目录是否为空（除了配置文件）
             set remaining_files (find "$HOME/.ccs" -type f ! -name "*.toml" | wc -l)
             if test "$remaining_files" -eq 0
-                # 如果没有配置文件，删除整个目录
+                # 如果没有配置文件,删除整个目录
                 if not test -f "$config_file"
                     rm -rf "$HOME/.ccs"
                     echo "✅ 删除.ccs目录"
@@ -344,7 +344,7 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell"
             if test "$reply" = "y" -o "$reply" = "Y"
                 rm -f "$config_file"
                 echo "✅ 删除配置文件"
-                # 如果删除了配置文件且.ccs目录为空，删除目录
+                # 如果删除了配置文件且.ccs目录为空,删除目录
                 if test -d "$HOME/.ccs" -a -z "(ls -A "$HOME/.ccs" 2>/dev/null)"
                     rm -rf "$HOME/.ccs"
                     echo "✅ 删除空的.ccs目录"
@@ -425,7 +425,7 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell"
         
         echo "✅ 卸载完成！请重新启动终端或重新加载shell配置"
         echo ""
-        echo "⚠️ 注意：当前终端会话中的ccs函数仍然可用，直到重新启动终端"
+        echo "⚠️ 注意：当前终端会话中的ccs函数仍然可用,直到重新启动终端"
         return 0
     end
     
@@ -439,7 +439,7 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell"
         end
         
         if test -n "$ANTHROPIC_AUTH_TOKEN"
-            echo "  ANTHROPIC_AUTH_TOKEN=(已设置，长度: "(string length "$ANTHROPIC_AUTH_TOKEN")"字符)"
+            echo "  ANTHROPIC_AUTH_TOKEN=(已设置,长度: "(string length "$ANTHROPIC_AUTH_TOKEN")"字符)"
         else
             echo "  ANTHROPIC_AUTH_TOKEN=(未设置)"
         end
@@ -555,7 +555,7 @@ function show_version
     set script_dir (dirname (status --current-filename))
     set project_root (realpath "$script_dir/../..")
     
-    # 优先查找.ccs目录中的package.json，然后查找项目根目录
+    # 优先查找.ccs目录中的package.json,然后查找项目根目录
     set package_json "$HOME/.ccs/package.json"
     if not test -f "$package_json"
         set package_json "$project_root/package.json"
@@ -588,7 +588,7 @@ function show_version
         echo ""
         echo "📝 项目描述:"
         if test -n "$app_description"
-            # 处理长描述，进行换行显示
+            # 处理长描述,进行换行显示
             echo "$app_description" | fold -w 75 -s | sed 's/^/   /'
         else
             echo "   ⚠️  描述: 未知 (建议在package.json中补充description字段)"

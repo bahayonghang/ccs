@@ -18,7 +18,7 @@ CCS使用TOML格式的配置文件来管理多个API服务配置。本文档详�
 ```toml
 # 全局设置
 default_config = "配置名称"
-current_config = "当前配置"  # 自动管理，请勿手动修改
+current_config = "当前配置"  # 自动管理,请勿手动修改
 
 # API服务配置节
 [配置名称]
@@ -35,11 +35,11 @@ small_fast_model = "快速模型"  # 可选
 # 默认配置（首次启动时使用）
 default_config = "anyrouter"
 
-# 当前活跃配置（由CCS自动管理，请勿手动修改）
+# 当前活跃配置（由CCS自动管理,请勿手动修改）
 current_config = "anyrouter"
 
 # ==================== Claude API服务 ====================
-# 推荐：Claude API服务建议留空model字段，使用默认模型
+# 推荐：Claude API服务建议留空model字段,使用默认模型
 
 [anyrouter]
 description = "AnyRouter API服务 - 稳定的Claude代理"
@@ -115,14 +115,14 @@ model = "premium-model"
 
 | 字段 | 类型 | 必需 | 说明 |
 |------|------|------|------|
-| `default_config` | String | ✅ | 默认配置名称，首次启动时使用 |
-| `current_config` | String | ✅ | 当前活跃配置，由CCS自动管理 |
+| `default_config` | String | ✅ | 默认配置名称,首次启动时使用 |
+| `current_config` | String | ✅ | 当前活跃配置,由CCS自动管理 |
 
 ### 配置节字段
 
 | 字段 | 类型 | 必需 | 说明 |
 |------|------|------|------|
-| `description` | String | ✅ | 配置描述，用于显示和识别 |
+| `description` | String | ✅ | 配置描述,用于显示和识别 |
 | `base_url` | String | ✅ | API端点地址 |
 | `auth_token` | String | ✅ | API认证令牌/密钥 |
 | `model` | String | ❌ | 模型名称（可选） |
@@ -160,7 +160,7 @@ base_url = "api.openai.com"  # 缺少协议
 #### `auth_token`
 - **用途**：API认证令牌
 - **格式**：根据服务商要求
-- **安全**：确保密钥安全，不要泄露
+- **安全**：确保密钥安全,不要泄露
 
 ```toml
 # OpenAI格式
@@ -175,7 +175,7 @@ auth_token = "your-api-key-here"
 
 #### `model`（可选）
 - **用途**：指定使用的模型
-- **Claude服务**：建议留空，使用默认模型
+- **Claude服务**：建议留空,使用默认模型
 - **非Claude服务**：建议明确指定
 
 ```toml
@@ -193,7 +193,7 @@ model = "gpt-4"  # 明确指定
 #### `small_fast_model`（可选）
 - **用途**：指定快速模型（用于简单任务）
 - **使用场景**：代码补全、简单问答等
-- **建议**：Claude服务留空，其他服务可指定
+- **建议**：Claude服务留空,其他服务可指定
 
 ## 🎯 模型配置策略
 
@@ -204,8 +204,8 @@ model = "gpt-4"  # 明确指定
 description = "AnyRouter API服务"
 base_url = "https://anyrouter.top"
 auth_token = "sk-your-api-key"
-# model = ""  # 留空，让Claude Code选择最佳模型
-# small_fast_model = ""  # 留空，使用默认快速模型
+# model = ""  # 留空,让Claude Code选择最佳模型
+# small_fast_model = ""  # 留空,使用默认快速模型
 ```
 
 **优势**：
@@ -220,13 +220,13 @@ auth_token = "sk-your-api-key"
 description = "OpenAI API配置"
 base_url = "https://api.openai.com/v1"
 auth_token = "sk-your-api-key"
-model = "gpt-4"  # 明确指定，确保兼容性
+model = "gpt-4"  # 明确指定,确保兼容性
 
 [glm]
 description = "智谱GLM API服务"
 base_url = "https://open.bigmodel.cn/api/paas/v4"
 auth_token = "your-api-key"
-model = "glm-4"  # 明确指定，确保正确调用
+model = "glm-4"  # 明确指定,确保正确调用
 ```
 
 **优势**：
@@ -277,7 +277,7 @@ CCS会在启动时自动验证配置文件：
 # 检查配置文件语法
 ccs list
 
-# 如果配置有问题，会显示错误信息
+# 如果配置有问题,会显示错误信息
 ```
 
 ### 手动验证

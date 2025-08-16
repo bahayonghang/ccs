@@ -1,10 +1,10 @@
 # 快速入门指南
 
-本指南将帮助您在5分钟内快速上手CCS，从安装到实际使用。
+本指南将帮助您在5分钟内快速上手CCS,从安装到实际使用。
 
 ## 🎯 学习目标
 
-完成本指南后，您将能够：
+完成本指南后,您将能够：
 - ✅ 成功安装并配置CCS
 - ✅ 理解配置文件的基本结构
 - ✅ 切换不同的API配置
@@ -24,7 +24,7 @@ curl -L https://github.com/bahayonghang/ccs/raw/main/scripts/install/quick_insta
 
 ### 验证安装
 ```bash
-# 重新打开终端，然后运行
+# 重新打开终端,然后运行
 ccs help
 ```
 
@@ -92,7 +92,7 @@ model = "glm-4"
 
 | 服务商 | 获取地址 | 说明 |
 |--------|----------|------|
-| AnyRouter | https://anyrouter.top | 支持Claude API，推荐 |
+| AnyRouter | https://anyrouter.top | 支持Claude API,推荐 |
 | OpenAI | https://platform.openai.com/api-keys | 官方OpenAI服务 |
 | 智谱GLM | https://open.bigmodel.cn | 国产大模型服务 |
 | Anthropic | https://console.anthropic.com | Claude官方API |
@@ -158,11 +158,11 @@ Model: gpt-4
 
 ### 测试新终端继承配置
 ```bash
-# 打开新终端窗口，然后运行
+# 打开新终端窗口,然后运行
 ccs current
 ```
 
-应该显示相同的配置信息，证明全局配置持久化生效。
+应该显示相同的配置信息,证明全局配置持久化生效。
 
 ## 🌐 第五步：使用Web界面
 
@@ -273,7 +273,7 @@ source ~/.bashrc
 # 检查配置文件语法
 ccs list
 
-# 如果报错，重新编辑配置文件
+# 如果报错,重新编辑配置文件
 nano ~/.ccs_config.toml
 ```
 

@@ -1,6 +1,6 @@
 # 核心组件详解
 
-本文档详细介绍 CCS 项目的各个核心组件，包括其功能、实现原理、接口设计和使用方法。
+本文档详细介绍 CCS 项目的各个核心组件,包括其功能、实现原理、接口设计和使用方法。
 
 ## 📋 目录
 
@@ -107,7 +107,7 @@ handle_error() {
     # 显示用户友好的错误信息
     case $error_code in
         $ERROR_CONFIG_NOT_FOUND)
-            echo "❌ 配置 '$context' 不存在，请检查配置名称"
+            echo "❌ 配置 '$context' 不存在,请检查配置名称"
             echo "💡 使用 'ccs list' 查看可用配置"
             ;;
         $ERROR_CONFIG_INVALID)
@@ -160,7 +160,7 @@ get_cached_config() {
 #### 功能概述
 - **主要职责**：Fish Shell 环境的配置管理
 - **支持版本**：Fish 3.0+
-- **语法特点**：Fish 原生语法，更现代化的脚本结构
+- **语法特点**：Fish 原生语法,更现代化的脚本结构
 
 #### 核心函数实现
 
@@ -251,7 +251,7 @@ function list_configs_fish
     set config_file $CONFIG_FILE
     
     if not test -f $config_file
-        echo "❌ 配置文件不存在，请先运行安装脚本"
+        echo "❌ 配置文件不存在,请先运行安装脚本"
         return 1
     end
     
@@ -280,7 +280,7 @@ end
 ##### 功能概述
 - **主要职责**：Windows CMD 环境的基础配置管理
 - **兼容性**：Windows 7+ 的 CMD
-- **限制**：功能相对简化，主要提供基本的配置切换
+- **限制**：功能相对简化,主要提供基本的配置切换
 
 ##### 核心实现
 ```batch
@@ -397,7 +397,7 @@ goto :eof
 ##### 功能概述
 - **主要职责**：Windows PowerShell 环境的高级配置管理
 - **支持版本**：PowerShell 5.0+、PowerShell Core 6.0+
-- **特性**：完整功能实现，与 Bash 版本功能对等
+- **特性**：完整功能实现,与 Bash 版本功能对等
 
 ##### 核心实现
 ```powershell
@@ -508,7 +508,7 @@ function Update-CurrentConfig {
         if ($content -match $pattern) {
             $content = $content -replace $pattern, $replacement
         } else {
-            # 如果不存在，添加到global节
+            # 如果不存在,添加到global节
             $content = $content -replace '(\[global\])', "`$1`ncurrent_config = `"$ConfigName`""
         }
         
@@ -655,7 +655,7 @@ small_fast_model = "glm-4-flash"
 
 | 字段名 | 类型 | 必需 | 说明 |
 |--------|------|------|------|
-| `description` | String | 否 | 配置的描述信息，用于用户识别 |
+| `description` | String | 否 | 配置的描述信息,用于用户识别 |
 | `base_url` | String | 是 | API服务的基础URL地址 |
 | `auth_token` | String | 是 | API认证令牌或密钥 |
 | `model` | String | 否 | 默认使用的模型名称 |
@@ -805,7 +805,7 @@ cleanup_old_backups() {
     local backup_pattern="${config_file}.backup.*"
     local keep_count=5
     
-    # 查找所有备份文件，按时间排序
+    # 查找所有备份文件,按时间排序
     local backups=($(ls -t $backup_pattern 2>/dev/null))
     
     # 删除超出保留数量的备份
@@ -820,7 +820,7 @@ cleanup_old_backups() {
 # 恢复配置文件备份
 restore_config_backup() {
     local config_file="$1"
-    local backup_timestamp="$2"  # 可选，指定备份时间戳
+    local backup_timestamp="$2"  # 可选,指定备份时间戳
     
     if [[ -n "$backup_timestamp" ]]; then
         local backup_file="${config_file}.backup.${backup_timestamp}"
@@ -1044,7 +1044,7 @@ load_current_config() {
     # 检查配置文件存在
     if [[ ! -f "$config_file" ]]; then
         if [[ "$silent_mode" != "silent" ]]; then
-            log_warn "配置文件不存在，跳过自动加载"
+            log_warn "配置文件不存在,跳过自动加载"
         fi
         return 1
     fi
@@ -1067,12 +1067,12 @@ load_current_config() {
             fi
         else
             if [[ "$silent_mode" != "silent" ]]; then
-                log_warn "配置 '$current_config' 无效，跳过自动加载"
+                log_warn "配置 '$current_config' 无效,跳过自动加载"
             fi
         fi
     else
         if [[ "$silent_mode" != "silent" ]]; then
-            log_warn "未找到当前配置，跳过自动加载"
+            log_warn "未找到当前配置,跳过自动加载"
         fi
     fi
 }

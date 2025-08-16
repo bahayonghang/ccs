@@ -12,7 +12,7 @@ if [[ -f "$SCRIPT_DIR/../shell/ccs-common.sh" ]]; then
 elif [[ -f "$SCRIPT_DIR/ccs-common.sh" ]]; then
     source "$SCRIPT_DIR/ccs-common.sh"
 else
-    # 简单的错误处理，如果工具库不存在
+    # 简单的错误处理,如果工具库不存在
     handle_error() {
         echo "错误: $1" >&2
         exit "${2:-1}"
@@ -209,7 +209,7 @@ copy_script() {
     
     # 检查是否为重新安装
     if check_installed; then
-        print_message "$YELLOW" "检测到ccs已安装，将更新所有shell脚本..."
+        print_message "$YELLOW" "检测到ccs已安装,将更新所有shell脚本..."
         reinstall=true
     else
         print_step "复制ccs脚本..."
@@ -222,7 +222,7 @@ copy_script() {
     local source_common="$script_dir/../shell/ccs-common.sh"
     local source_web="$script_dir/../../web"
     
-    # 检查源文件是否存在，如果不存在则检查当前目录
+    # 检查源文件是否存在,如果不存在则检查当前目录
     if [[ ! -f "$source_sh" ]]; then
         source_sh="$script_dir/ccs.sh"
         source_fish="$script_dir/ccs.fish"
@@ -302,7 +302,7 @@ copy_script() {
             log_warn "无法复制web文件"
         fi
     else
-        print_warning "未找到web文件夹，跳过复制web文件"
+        print_warning "未找到web文件夹,跳过复制web文件"
     fi
     
     # 复制package.json文件
@@ -327,12 +327,12 @@ copy_script() {
             log_warn "无法复制package.json文件"
         fi
     else
-        print_warning "未找到package.json文件，跳过复制"
+        print_warning "未找到package.json文件,跳过复制"
     fi
     
-    # 如果是重新安装，提供额外提示
+    # 如果是重新安装,提供额外提示
     if [[ "$reinstall" == true ]]; then
-        print_warning "已更新所有shell脚本，配置文件保持不变"
+        print_warning "已更新所有shell脚本,配置文件保持不变"
     fi
 }
 
@@ -341,7 +341,7 @@ create_config_file() {
     print_step "检查配置文件..."
     
     if [[ -f "$CONFIG_FILE" ]]; then
-        print_warning "配置文件 $CONFIG_FILE 已存在，跳过创建"
+        print_warning "配置文件 $CONFIG_FILE 已存在,跳过创建"
         return
     fi
     
@@ -353,13 +353,13 @@ create_config_file() {
         if cp "$example_config" "$CONFIG_FILE"; then
             set_file_permissions "$CONFIG_FILE" "600"
             print_success "创建配置文件 $CONFIG_FILE"
-            print_warning "请编辑 $CONFIG_FILE 文件，填入您的API密钥"
+            print_warning "请编辑 $CONFIG_FILE 文件,填入您的API密钥"
             
             # 验证创建的配置文件
             if validate_config_file "$CONFIG_FILE"; then
                 print_success "配置文件验证通过"
             else
-                log_warn "配置文件创建成功但验证失败，请检查格式"
+                log_warn "配置文件创建成功但验证失败,请检查格式"
             fi
         else
             handle_error $ERROR_PERMISSION_DENIED "无法创建配置文件 $CONFIG_FILE"
@@ -382,18 +382,18 @@ configure_shell() {
             configure_shell_for_type "$shell"
             configured_count=$((configured_count + 1))
         else
-            print_warning "未找到 $shell 配置文件，跳过"
+            print_warning "未找到 $shell 配置文件,跳过"
         fi
     done
     
-    # 如果没有找到任何shell配置文件，至少为当前shell创建配置
+    # 如果没有找到任何shell配置文件,至少为当前shell创建配置
     if [ $configured_count -eq 0 ]; then
-        print_warning "未找到任何shell配置文件，为当前shell创建配置"
+        print_warning "未找到任何shell配置文件,为当前shell创建配置"
         if [ "$current_shell" != "unknown" ]; then
             configure_shell_for_type "$current_shell"
             configured_count=$((configured_count + 1))
         else
-            print_error "无法识别shell类型，请手动配置"
+            print_error "无法识别shell类型,请手动配置"
             exit 1
         fi
     fi
@@ -424,7 +424,7 @@ install_complete() {
     echo ""
     
     if [[ "$is_reinstall" == true ]]; then
-        print_warning "脚本已更新，请重新启动终端或运行 'source ~/.bashrc' (或 ~/.zshrc/~/.config/fish/config.fish) 来使新版本生效"
+        print_warning "脚本已更新,请重新启动终端或运行 'source ~/.bashrc' (或 ~/.zshrc/~/.config/fish/config.fish) 来使新版本生效"
     else
         print_warning "请重新启动终端或运行 'source ~/.bashrc' (或 ~/.zshrc/~/.config/fish/config.fish) 来使配置生效"
     fi
@@ -434,16 +434,16 @@ install_complete() {
         echo ""
         print_message "$BLUE" "配置文件位置: $CONFIG_FILE"
         if [[ "$is_reinstall" == true ]]; then
-            print_success "现有配置文件已保留，无需重新配置"
+            print_success "现有配置文件已保留,无需重新配置"
         else
-            print_warning "请编辑配置文件，确保您的API密钥正确"
+            print_warning "请编辑配置文件,确保您的API密钥正确"
         fi
         
         # 验证配置文件
         if validate_config_file "$CONFIG_FILE"; then
             print_success "配置文件格式正确"
         else
-            print_warning "配置文件格式有问题，请检查"
+            print_warning "配置文件格式有问题,请检查"
         fi
     fi
     
@@ -504,7 +504,7 @@ uninstall() {
         # 检查.ccs目录是否为空（除了配置文件）
         local remaining_files=$(find "$HOME/.ccs" -type f ! -name "*.toml" 2>/dev/null | wc -l)
         if [[ "$remaining_files" -eq 0 ]]; then
-            # 如果没有配置文件，删除整个目录
+            # 如果没有配置文件,删除整个目录
             if [[ ! -f "$CONFIG_FILE" ]]; then
                 rm -rf "$HOME/.ccs"
                 print_success "删除.ccs目录"
@@ -519,7 +519,7 @@ uninstall() {
         if ask_confirmation "是否要删除配置文件 $CONFIG_FILE" "N"; then
             rm -f "$CONFIG_FILE"
             print_success "删除配置文件"
-            # 如果删除了配置文件且.ccs目录为空，删除目录
+            # 如果删除了配置文件且.ccs目录为空,删除目录
             if [[ -d "$HOME/.ccs" ]] && [[ -z "$(ls -A "$HOME/.ccs" 2>/dev/null)" ]]; then
                 rm -rf "$HOME/.ccs"
                 print_success "删除空的.ccs目录"
@@ -656,7 +656,7 @@ main() {
         *)
             # 检查是否为重新安装
             if check_installed; then
-                print_message "$YELLOW" "检测到ccs已安装，开始更新..."
+                print_message "$YELLOW" "检测到ccs已安装,开始更新..."
                 echo ""
             else
                 print_message "$BLUE" "开始安装Claude Code Configuration Switcher..."

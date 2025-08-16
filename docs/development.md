@@ -257,12 +257,12 @@ small_fast_model = "gpt-3.5-turbo"
 # 严格模式
 set -euo pipefail
 
-# 全局变量（大写，下划线分隔）
+# 全局变量（大写,下划线分隔）
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly CONFIG_FILE="$HOME/.ccs_config.toml"
 readonly LOG_LEVEL="${CCS_LOG_LEVEL:-INFO}"
 
-# 函数定义（小写，下划线分隔）
+# 函数定义（小写,下划线分隔）
 function load_configuration() {
     local config_file="$1"
     local config_name="${2:-}"
@@ -285,7 +285,7 @@ function handle_error() {
     local exit_code="$?"
     local line_number="$1"
     
-    log_error "脚本在第 $line_number 行发生错误，退出码: $exit_code"
+    log_error "脚本在第 $line_number 行发生错误,退出码: $exit_code"
     cleanup
     exit "$exit_code"
 }
@@ -1147,7 +1147,7 @@ git merge main
 git push upstream develop
 
 # 11. 创建GitHub Release
-# 在GitHub上基于标签创建Release，上传构建产物
+# 在GitHub上基于标签创建Release,上传构建产物
 ```
 
 ---
@@ -1186,7 +1186,7 @@ test-config-validation.sh        # 测试脚本：test-开头
 # 切换到指定的配置
 # 参数:
 #   $1 - 配置名称 (必需)
-#   $2 - 是否验证配置 (可选，默认true)
+#   $2 - 是否验证配置 (可选,默认true)
 # 返回值:
 #   0 - 成功
 #   1 - 配置不存在

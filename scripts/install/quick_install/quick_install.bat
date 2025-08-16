@@ -11,7 +11,7 @@ set "TEMP_DIR=%TEMP%\ccs_install_%RANDOM%"
 REM 检查PowerShell是否可用
 powershell -Command "Exit 0" >nul 2>&1
 if %errorlevel% neq 0 (
-    echo 错误: PowerShell 不可用，无法完成安装
+    echo 错误: PowerShell 不可用,无法完成安装
     pause
     exit /b 1
 )
@@ -176,7 +176,7 @@ call :print_message "%BLUE%" "下一步操作："
 echo 1. 重新启动命令提示符或PowerShell
 echo 2. 编辑配置文件：
 echo    notepad %USERPROFILE%\.ccs_config.toml
-echo 3. 填入您的API密钥后，开始使用：
+echo 3. 填入您的API密钥后,开始使用：
 echo    ccs list        # 查看所有配置
 echo    ccs [配置名]    # 切换配置
 echo    ccs current     # 查看当前配置

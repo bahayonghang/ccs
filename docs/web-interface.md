@@ -129,7 +129,7 @@ const ConfigValidator = {
         base_url: {
             required: true,
             pattern: /^https?:\/\/[^\s]+$/,
-            message: 'URL格式无效，必须以http://或https://开头'
+            message: 'URL格式无效,必须以http://或https://开头'
         },
         auth_token: {
             required: true,
@@ -352,7 +352,7 @@ function confirmConfigSwitch(configName) {
 - ✅ **连接成功** - API可正常访问
 - ❌ **连接失败** - 网络或URL问题
 - 🔐 **认证失败** - API密钥无效
-- ⏱️ **超时** - 请求超时，可能是网络问题
+- ⏱️ **超时** - 请求超时,可能是网络问题
 - 🚫 **服务不可用** - API服务暂时不可用
 
 ## ⚙️ 配置管理
@@ -386,7 +386,7 @@ function confirmConfigSwitch(configName) {
     <div class="form-group">
         <label for="description">描述</label>
         <input type="text" id="description" name="description" 
-               placeholder="例如: OpenAI官方API，用于生产环境">
+               placeholder="例如: OpenAI官方API,用于生产环境">
         <div class="field-hint">可选的配置说明</div>
     </div>
     
@@ -601,7 +601,7 @@ function batchUpdateConfigs(updates) {
                     `<li><strong>${field}</strong>: ${updates[0].fields[field]}</li>`
                 ).join('')}
             </ul>
-            <p class="warning">⚠️ 此操作将影响多个配置，请确认无误</p>
+            <p class="warning">⚠️ 此操作将影响多个配置,请确认无误</p>
             <div class="dialog-buttons">
                 <button class="btn-cancel" onclick="closeBatchDialog()">取消</button>
                 <button class="btn-confirm" onclick="executeBatchUpdate()">确认更新</button>
@@ -1432,7 +1432,7 @@ const KeyboardShortcuts = {
 <div class="config-item" 
      role="button" 
      tabindex="0" 
-     aria-label="OpenAI GPT-4 配置，当前激活" 
+     aria-label="OpenAI GPT-4 配置,当前激活" 
      aria-describedby="config-description-1">
     
     <div class="config-header">
@@ -1441,7 +1441,7 @@ const KeyboardShortcuts = {
     </div>
     
     <div id="config-description-1" class="config-description">
-        OpenAI官方API服务，用于生产环境
+        OpenAI官方API服务,用于生产环境
     </div>
     
     <div class="config-actions" role="group" aria-label="配置操作">

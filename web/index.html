@@ -681,11 +681,11 @@
                         }
                     })
                     .catch(() => {
-                        // 忽略错误，继续尝试下一个路径
+                        // 忽略错误,继续尝试下一个路径
                     });
             });
             
-            // 如果通过 HTTP 无法加载，尝试从 localStorage 读取缓存的配置
+            // 如果通过 HTTP 无法加载,尝试从 localStorage 读取缓存的配置
             setTimeout(() => {
                 if (!currentConfig) {
                     const cachedConfig = localStorage.getItem('ccs_config');
@@ -719,7 +719,7 @@
             container.innerHTML = '';
             
             if (!currentConfig) {
-                container.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">无法加载配置文件，请确保 ~/.ccs_config.toml 文件存在</div>';
+                container.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">无法加载配置文件,请确保 ~/.ccs_config.toml 文件存在</div>';
                 updateCurrentConfigDisplay('ERROR');
                 return;
             }
@@ -792,7 +792,7 @@
             }
             
             if (!hasConfigs) {
-                container.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">没有找到任何配置，请点击"添加配置"来创建新的配置</div>';
+                container.innerHTML = '<div style="text-align: center; color: #666; padding: 40px;">没有找到任何配置,请点击"添加配置"来创建新的配置</div>';
             }
             
             configList.style.display = 'block';
@@ -860,7 +860,7 @@
             if (confirm(`确定要删除配置 "${configName}" 吗？`)) {
                 delete currentConfig[configName];
                 
-                // 如果删除的是默认配置，清除默认配置
+                // 如果删除的是默认配置,清除默认配置
                 if (currentConfig.default_config === configName) {
                     delete currentConfig.default_config;
                 }
@@ -888,7 +888,7 @@
             // 同时保存到 localStorage
             localStorage.setItem('ccs_config', JSON.stringify(currentConfig));
             
-            updateStatus('配置文件已保存，请将下载的文件替换 ~/.ccs_config.toml');
+            updateStatus('配置文件已保存,请将下载的文件替换 ~/.ccs_config.toml');
         }
 
         function updateStatus(message) {
@@ -916,11 +916,11 @@
                 }
             }
             
-            // 如果是编辑模式，先删除旧配置
+            // 如果是编辑模式,先删除旧配置
             if (editingConfigName && editingConfigName !== configName) {
                 delete currentConfig[editingConfigName];
                 
-                // 如果修改的是默认配置，更新默认配置名称
+                // 如果修改的是默认配置,更新默认配置名称
                 if (currentConfig.default_config === editingConfigName) {
                     currentConfig.default_config = configName;
                 }
@@ -958,7 +958,7 @@
             });
         }
 
-        // 监听滚动事件，自动更新导航状态
+        // 监听滚动事件,自动更新导航状态
         window.addEventListener('scroll', function() {
             const sections = document.querySelectorAll('[id^="config-"], #overview');
             let currentSection = 'overview';

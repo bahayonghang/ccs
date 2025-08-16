@@ -1,6 +1,6 @@
 # Claude Code Configuration Switcher (CCS)
 
-一个用于快速切换不同Claude Code API配置的工具，支持多种Shell环境和Windows环境。
+一个用于快速切换不同Claude Code API配置的工具,支持多种Shell环境和Windows环境。
 
 ![实际效果](assets/imgs/screenshot1.png)
 
@@ -25,17 +25,17 @@ curl -L https://github.com/bahayonghang/ccs/raw/main/scripts/install/quick_insta
 - 🌐 Web界面管理
 - 🔧 支持多平台和多Shell环境
 - 📝 TOML配置格式
-- 🔗 **全局配置持久化** - 在一个终端切换配置，所有新终端自动继承
-- 🎯 **智能模型选择** - Claude服务可使用默认模型，其他服务指定模型
+- 🔗 **全局配置持久化** - 在一个终端切换配置,所有新终端自动继承
+- 🎯 **智能模型选择** - Claude服务可使用默认模型,其他服务指定模型
 
 ## 📝 配置文件
 
-配置文件位于 `~/.ccs_config.toml`，示例配置文件在 `config/.ccs_config.toml.example`：
+配置文件位于 `~/.ccs_config.toml`,示例配置文件在 `config/.ccs_config.toml.example`：
 
 ```toml
 default_config = "anyrouter"
 
-# 当前活跃配置（自动管理，请勿手动修改）
+# 当前活跃配置（自动管理,请勿手动修改）
 current_config = "anyrouter"
 
 [anyrouter]
@@ -68,17 +68,17 @@ model = "gpt-4"
 ### 🔧 配置字段说明
 
 - `default_config`: 默认配置名称
-- `current_config`: 当前活跃配置（自动管理，无需手动修改）
+- `current_config`: 当前活跃配置（自动管理,无需手动修改）
 - `base_url`: API端点地址
 - `auth_token`: API认证令牌
 - `model`: 指定模型名称（可选）
-  - 如果留空或注释，Claude API服务将使用默认模型
-  - 对于非Claude服务（如GLM、OpenAI），建议明确指定模型
+  - 如果留空或注释,Claude API服务将使用默认模型
+  - 对于非Claude服务（如GLM、OpenAI）,建议明确指定模型
 - `small_fast_model`: 快速模型名称（可选）
 
 ### 🎯 模型配置策略
 
-- **Claude API服务**（anyrouter、anthropic、aicodemirror等）：建议留空`model`字段，使用Claude Code工具的默认模型选择
+- **Claude API服务**（anyrouter、anthropic、aicodemirror等）：建议留空`model`字段,使用Claude Code工具的默认模型选择
 - **非Claude服务**（glm、openai、moonshot等）：明确指定`model`字段以确保兼容性
 
 ## 📖 使用方法
@@ -95,7 +95,7 @@ ccs                  # 使用当前活跃配置
 
 ### 🔗 全局配置持久化
 
-CCS支持全局配置持久化，解决了传统环境变量作用域限制：
+CCS支持全局配置持久化,解决了传统环境变量作用域限制：
 
 ```bash
 # 终端1
@@ -105,7 +105,7 @@ ccs glm              # 切换到GLM配置
 echo $ANTHROPIC_MODEL # 自动显示: glm-4.5
 ```
 
-- ✅ 在任意终端切换配置，其他新终端自动继承
+- ✅ 在任意终端切换配置,其他新终端自动继承
 - ✅ 重启电脑后配置保持不变
 - ✅ 支持Bash、Zsh、Fish等多种Shell
 
@@ -117,7 +117,7 @@ echo $ANTHROPIC_MODEL # 自动显示: glm-4.5
 ccs web  # 启动Web管理界面
 ```
 
-通过浏览器访问显示的地址（如 `http://localhost:8888`），可以：
+通过浏览器访问显示的地址（如 `http://localhost:8888`）,可以：
 - 可视化管理所有配置
 - 在线编辑配置参数
 - 实时保存修改
@@ -426,14 +426,14 @@ ccs uninstall  # 推荐方式
 ccs会自动设置以下环境变量：
 - `ANTHROPIC_BASE_URL`: API端点地址
 - `ANTHROPIC_AUTH_TOKEN`: API认证令牌
-- `ANTHROPIC_MODEL`: 模型名称（可选，留空使用默认模型）
+- `ANTHROPIC_MODEL`: 模型名称（可选,留空使用默认模型）
 - `ANTHROPIC_SMALL_FAST_MODEL`: 快速模型名称（可选）
 
 ### 💡 模型设置逻辑
 
 - **有值时**: 设置对应的环境变量
-- **空值时**: 不设置环境变量，由Claude Code工具使用默认模型
-- **建议**: Claude API服务留空model字段，非Claude服务明确指定model
+- **空值时**: 不设置环境变量,由Claude Code工具使用默认模型
+- **建议**: Claude API服务留空model字段,非Claude服务明确指定model
 
 ## 🛠️ 故障排除
 
@@ -471,7 +471,7 @@ Unexpected token 'PATH", $newPath, "User")' in expression or statement.
 
 **原因**: 早期版本的配置验证逻辑在某些情况下可能误报失败。
 
-**解决方案**: 此问题已在最新版本中修复，使用了更健壮的验证方法。如果仍遇到问题：
+**解决方案**: 此问题已在最新版本中修复,使用了更健壮的验证方法。如果仍遇到问题：
 
 1. **更新脚本**：
    ```bash
