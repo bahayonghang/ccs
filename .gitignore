@@ -6,3 +6,6 @@ debug.log
 .yoyo/
 .vscode
 .git/
+
+# BMad Method workflow files
+.bmad-core/
