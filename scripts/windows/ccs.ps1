@@ -312,6 +312,9 @@ function ccs {
                 exit 1
             }
         }
+        "ls" {
+            List-Configs
+        }
         "list" {
             List-Configs
         }

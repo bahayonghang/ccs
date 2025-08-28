@@ -647,7 +647,7 @@ ccs() {
     validate_config_file "$CONFIG_FILE"
     
     case "${1:-}" in
-        "list")
+        "ls"|"list")
             list_configs
             ;;
         "current")

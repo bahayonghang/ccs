@@ -340,6 +340,8 @@ if "%~1"=="" (
             exit /b 1
         )
     )
+) else if "%~1"=="ls" (
+    call :list_configs
 ) else if "%~1"=="list" (
     call :list_configs
 ) else if "%~1"=="current" (

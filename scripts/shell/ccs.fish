@@ -201,7 +201,7 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell"
     end
     
     # 处理list子命令
-    if test "$profile_name" = "list"
+    if test "$profile_name" = "list" -o "$profile_name" = "ls"
         echo "可用的配置:"
         echo ""
         
