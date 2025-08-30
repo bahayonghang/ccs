@@ -349,6 +349,11 @@ create_config_file() {
     local script_dir="$(cd "$(dirname "$0")" && pwd)"
     local example_config="$script_dir/../../config/.ccs_config.toml.example"
     
+    # 如果在标准路径找不到，检查当前目录（用于快速安装场景）
+    if [[ ! -f "$example_config" ]]; then
+        example_config="$script_dir/.ccs_config.toml.example"
+    fi
+    
     if [[ -f "$example_config" ]]; then
         if cp "$example_config" "$CONFIG_FILE"; then
             set_file_permissions "$CONFIG_FILE" "600"

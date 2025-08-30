@@ -19,6 +19,12 @@ curl -L https://github.com/bahayonghang/ccs/raw/main/scripts/install/quick_insta
 2. 编辑配置文件：`~/.ccs_config.toml`
 3. 填入API密钥并开始使用
 
+### 安装问题排查
+如果遇到安装错误，特别是"找不到示例配置文件"的错误，这通常是由于路径问题导致的。最新版本已修复此问题，如果仍有问题请：
+1. 确保网络连接正常
+2. 重新运行安装命令
+3. 如果问题持续，请提交Issue
+
 ## ✨ 功能特性
 
 - 🔄 快速切换Claude Code API配置
