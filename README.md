@@ -1,6 +1,6 @@
 # Claude Code Configuration Switcher (CCS)
 
-一个用于快速切换不同Claude Code API配置[供应商切换]的工具,支持多种Shell环境[暂时不支持Windows]。
+一个用于快速切换不同Claude Code API配置[供应商切换]的工具,支持多种Shell环境。
 
 ![实际效果](assets/imgs/screenshot1.png)
 
@@ -12,6 +12,12 @@ curl -L https://github.com/bahayonghang/ccs/raw/main/scripts/install/quick_insta
 ```
 
 ### Windows
+**方法一：使用PowerShell**
+```powershell
+irm https://github.com/bahayonghang/ccs/raw/main/scripts/install/quick_install/quick_install.ps1 | iex
+```
+
+**方法二：手动下载**
 下载并运行：https://github.com/bahayonghang/ccs/raw/main/scripts/install/quick_install/quick_install.bat
 
 ### 安装后配置
@@ -108,7 +114,7 @@ CCS支持全局配置持久化,解决了传统环境变量作用域限制：
 ccs glm              # 切换到GLM配置
 
 # 终端2（新打开）
-echo $ANTHROPIC_MODEL # 自动显示: glm-4.5
+echo $ANTHROPIC_MODEL # 自动显示: glm-4
 ```
 
 - ✅ 在任意终端切换配置,其他新终端自动继承
@@ -176,7 +182,6 @@ ccs/
 ├── web/                       # Web界面
 │   └── index.html
 ├── docs/                      # 文档目录
-│   └── CLAUDE.md
 ├── assets/                    # 资源文件目录
 │   └── imgs/
 │       ├── screenshot1.png
@@ -252,7 +257,7 @@ Unexpected token 'PATH", $newPath, "User")' in expression or statement.
    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
    ```
 
-详细信息请参考：[POWERSHELL_FIX.md](POWERSHELL_FIX.md)
+
 
 ### 配置文件更新验证失败
 
