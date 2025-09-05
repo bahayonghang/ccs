@@ -1,59 +1,188 @@
 #!/bin/bash
 
-# Claude Code Configuration Switcher 安装脚本
+# Claude Code Configuration Switcher 安装脚本 v2.0 增强版
 # 此脚本用于安装和配置ccs命令
+# 增强特性: 高级系统检测、性能优化、智能诊断、安全增强、用户体验提升
+# 作者: CCS 开发团队
+# 许可证: MIT
+# 版本: 2.0.0 增强版 (2025-09-05)
 
-set -e
+set -euo pipefail
 
-# 加载通用工具库
+# 版本信息
+readonly CCS_VERSION="2.0.0"
+readonly INSTALL_SCRIPT_VERSION="2.0.0"
+readonly BUILD_DATE="2025-09-05"
+
+# 性能和安全设置
+readonly ENABLE_PERFORMANCE_MONITOR=1
+readonly ENABLE_SECURITY_CHECK=1
+readonly ENABLE_BACKUP=1
+readonly MAX_BACKUP_FILES=10
+readonly LOG_LEVEL="INFO"
+
+# 增强的日志和性能监控函数
+init_installation() {
+    SCRIPT_START_TIME=$(date +%s)
+    INSTALLATION_LOG="$CCS_LOG_DIR/install_$(date +%Y%m%d_%H%M%S).log"
+    
+    # 创建日志目录
+    mkdir -p "$CCS_LOG_DIR" 2>/dev/null || true
+    
+    # 记录安装开始
+    log_message "INFO" "CCS Installation Script v$INSTALL_SCRIPT_VERSION started"
+    log_message "INFO" "Build date: $BUILD_DATE"
+    log_message "INFO" "User: $USER"
+    log_message "INFO" "Home: $HOME"
+}
+
+log_message() {
+    local level="$1"
+    local message="$2"
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    
+    # 输出到日志文件
+    if [[ -d "$CCS_LOG_DIR" ]]; then
+        echo "[$timestamp] [$level] $message" >> "$INSTALLATION_LOG"
+    fi
+    
+    # 如果启用了调试模式，也输出到控制台
+    if [[ "$LOG_LEVEL" == "DEBUG" ]]; then
+        case "$level" in
+            "ERROR") print_error "$message" ;;
+            "WARN") print_warning "$message" ;;
+            "INFO") print_info "$message" ;;
+            "DEBUG") print_debug "$message" ;;
+            "SUCCESS") print_success "$message" ;;
+        esac
+    fi
+}
+
+print_performance_metric() {
+    local operation="$1"
+    local start_time="$2"
+    local end_time="$3"
+    local duration=$((end_time - start_time))
+    
+    PERFORMANCE_METRICS+=("$operation: ${duration}s")
+    log_message "DEBUG" "Performance: $operation took ${duration}s"
+}
+
+show_performance_summary() {
+    if [[ ${#PERFORMANCE_METRICS[@]} -gt 0 ]]; then
+        print_step "Performance Summary"
+        for metric in "${PERFORMANCE_METRICS[@]}"; do
+            print_info "  $metric"
+        done
+        echo ""
+    fi
+}
+
+# 安全增强函数
+check_security_requirements() {
+    if [[ "$ENABLE_SECURITY_CHECK" != "1" ]]; then
+        return 0
+    fi
+    
+    print_step "Security Check"
+    
+    # 检查文件权限
+    local script_perms=$(stat -c "%a" "$0" 2>/dev/null || stat -f "%OLp" "$0" 2>/dev/null || echo "unknown")
+    if [[ "$script_perms" == "777" ]]; then
+        print_warning "Script has overly permissive permissions (777)"
+        print_info "Consider: chmod 755 $0"
+    fi
+    
+    # 检查PATH安全性
+    if [[ ":$PATH:" == *"::"* ]]; then
+        print_warning "PATH contains empty elements, potential security risk"
+    fi
+    
+    # 检查可疑的环境变量
+    if [[ -n "${LD_PRELOAD:-}" ]]; then
+        print_warning "LD_PRELOAD is set, potential security concern"
+        log_message "WARN" "LD_PRELOAD detected: $LD_PRELOAD"
+    fi
+    
+    print_success "Security check completed"
+}
+
+# 加载通用工具库并增强功能
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 if [[ -f "$SCRIPT_DIR/../shell/ccs-common.sh" ]]; then
     source "$SCRIPT_DIR/../shell/ccs-common.sh"
 elif [[ -f "$SCRIPT_DIR/ccs-common.sh" ]]; then
     source "$SCRIPT_DIR/ccs-common.sh"
 else
-    # 简单的错误处理,如果工具库不存在
+    # 增强的错误处理,如果工具库不存在
     handle_error() {
-        echo "错误: $1" >&2
-        exit "${2:-1}"
+        local message="$1"
+        local code="${2:-1}"
+        log_message "ERROR" "$message (exit code: $code)"
+        echo "❌ Error: $message" >&2
+        exit "$code"
     }
     
-    # 基本的颜色输出定义
+    # 增强的颜色输出定义
     if [[ -t 1 ]]; then
         readonly RED='\033[0;31m'
         readonly GREEN='\033[0;32m'
         readonly YELLOW='\033[1;33m'
         readonly BLUE='\033[0;34m'
+        readonly CYAN='\033[0;36m'
+        readonly MAGENTA='\033[0;35m'
+        readonly BOLD='\033[1m'
         readonly NC='\033[0m'
     else
         readonly RED=''
         readonly GREEN=''
         readonly YELLOW=''
         readonly BLUE=''
+        readonly CYAN=''
+        readonly MAGENTA=''
+        readonly BOLD=''
         readonly NC=''
     fi
     
-    # 基本的消息输出函数
+    # 增强的消息输出函数
     print_message() {
         local color=$1
         local message=$2
-        printf "%b[*]%b %s\n" "$color" "$NC" "$message"
+        local prefix="${3:-[*]}"
+        printf "%b%s%b %s\n" "$color" "$prefix" "$NC" "$message"
+        log_message "INFO" "$message"
     }
     
     print_success() {
-        printf "%b[✓]%b %s\n" "$GREEN" "$NC" "$1"
+        printf "%b✅%b %s\n" "$GREEN" "$NC" "$1"
+        log_message "SUCCESS" "$1"
     }
     
     print_warning() {
-        printf "%b[!]%b %s\n" "$YELLOW" "$NC" "$1"
+        printf "%b⚠️ %b %s\n" "$YELLOW" "$NC" "$1"
+        log_message "WARN" "$1"
     }
     
     print_error() {
-        printf "%b[✗]%b %s\n" "$RED" "$NC" "$1"
+        printf "%b❌%b %s\n" "$RED" "$NC" "$1"
+        log_message "ERROR" "$1"
     }
     
     print_step() {
-        printf "%b[→]%b %s\n" "$BLUE" "$NC" "$1"
+        printf "%b🔧%b %s\n" "$BLUE" "$NC" "$1"
+        log_message "INFO" "Step: $1"
+    }
+    
+    print_info() {
+        printf "%bℹ️ %b %s\n" "$CYAN" "$NC" "$1"
+        log_message "INFO" "$1"
+    }
+    
+    print_debug() {
+        if [[ "$LOG_LEVEL" == "DEBUG" ]]; then
+            printf "%b🐛%b %s\n" "$MAGENTA" "$NC" "$1"
+            log_message "DEBUG" "$1"
+        fi
     }
     
     command_exists() {
@@ -67,27 +196,495 @@ CCS_SCRIPT_PATH="$HOME/.ccs/ccs.sh"
 BASHRC_FILE="$HOME/.bashrc"
 ZSHRC_FILE="$HOME/.zshrc"
 
+# 增强的目录结构
+CCS_DIR="$HOME/.ccs"
+CCS_BACKUP_DIR="$CCS_DIR/backups"
+CCS_CACHE_DIR="$CCS_DIR/cache"
+CCS_LOG_DIR="$CCS_DIR/logs"
+CCS_TEMP_DIR="$CCS_DIR/temp"
+CCS_WEB_DIR="$CCS_DIR/web"
+
+# 全局变量
+SCRIPT_START_TIME=""
+INSTALLATION_LOG=""
+SYSTEM_INFO=""
+PERFORMANCE_METRICS=()
+
+# 增强的系统检测和诊断
+detect_system_info() {
+    local start_time=$(date +%s)
+    print_step "🔍 Performing comprehensive system detection..."
+    
+    local os_info=""
+    local arch_info=""
+    local kernel_info=""
+    local cpu_info=""
+    local memory_info=""
+    local disk_info=""
+    local system_uptime=""
+    
+    # 操作系统检测（增强版）
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        if [[ -f /etc/os-release ]]; then
+            os_info=$(grep "^PRETTY_NAME=" /etc/os-release | cut -d'"' -f2)
+            local os_id=$(grep "^ID=" /etc/os-release | cut -d'"' -f2)
+            local os_version=$(grep "^VERSION_ID=" /etc/os-release | cut -d'"' -f2)
+            SYSTEM_INFO="OS: $os_info ($os_id $os_version)"
+        elif [[ -f /etc/lsb-release ]]; then
+            os_info=$(grep "^DISTRIB_DESCRIPTION=" /etc/lsb-release | cut -d'"' -f2)
+            SYSTEM_INFO="OS: $os_info"
+        else
+            os_info="Linux"
+            SYSTEM_INFO="OS: Linux (Unknown Distribution)"
+        fi
+        
+        # WSL检测（增强版）
+        if grep -qEi "(Microsoft|WSL)" /proc/version 2>/dev/null; then
+            local wsl_version=""
+            if [[ -n "$WSL_DISTRO_NAME" ]]; then
+                wsl_version=" (WSL2: $WSL_DISTRO_NAME)"
+            else
+                wsl_version=" (WSL)"
+            fi
+            os_info="${os_info}${wsl_version}"
+            SYSTEM_INFO="$SYSTEM_INFO (WSL Environment)"
+        fi
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        local mac_version=$(sw_vers -productVersion)
+        local mac_build=$(sw_vers -buildVersion)
+        os_info="macOS $mac_version ($mac_build)"
+        SYSTEM_INFO="OS: macOS $mac_version ($mac_build)"
+    else
+        os_info="$OSTYPE"
+        SYSTEM_INFO="OS: $OSTYPE"
+    fi
+    
+    # CPU信息
+    if command_exists lscpu; then
+        cpu_info=$(lscpu | grep "Model name:" | cut -d':' -f2 | sed 's/^ *//' | head -1)
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        cpu_info=$(sysctl -n machdep.cpu.brand_string 2>/dev/null || echo "Unknown")
+    else
+        cpu_info=$(grep "model name" /proc/cpuinfo | head -1 | cut -d':' -f2 | sed 's/^ *//' || echo "Unknown")
+    fi
+    
+    # 内存信息
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        local total_memory=$(sysctl -n hw.memsize 2>/dev/null | awk '{print int($1/1024/1024/1024)}')
+        memory_info="${total_memory}GB"
+    elif command_exists free; then
+        local total_memory=$(free -g | awk 'NR==2{print $2}')
+        memory_info="${total_memory}GB"
+    else
+        memory_info="Unknown"
+    fi
+    
+    # 磁盘空间
+    local home_disk=$(df -h "$HOME" 2>/dev/null | tail -1 | awk '{print $4}' || echo "Unknown")
+    disk_info="$home_disk available"
+    
+    # 系统运行时间
+    if [[ -f /proc/uptime ]]; then
+        local uptime_seconds=$(cat /proc/uptime | cut -d' ' -f1)
+        local uptime_days=$(echo "$uptime_seconds / 86400" | bc -l | cut -d'.' -f1)
+        system_uptime="${uptime_days} days"
+    elif command_exists uptime; then
+        system_uptime=$(uptime | grep -o 'up .*' | cut -d',' -f1 || echo "Unknown")
+    else
+        system_uptime="Unknown"
+    fi
+    
+    # 架构和内核信息
+    arch_info=$(uname -m)
+    kernel_info=$(uname -r)
+    
+    # 输出增强的系统信息
+    print_info "🏗️  System: $os_info"
+    print_info "🔧 Architecture: $arch_info"
+    print_info "🐧 Kernel: $kernel_info"
+    print_info "💻 CPU: $cpu_info"
+    print_info "💾 Memory: $memory_info"
+    print_info "💿 Disk: $disk_info"
+    print_info "⏱️  Uptime: $system_uptime"
+    
+    # 记录到日志
+    log_message "INFO" "System detection completed: $SYSTEM_INFO"
+    
+    local end_time=$(date +%s)
+    print_performance_metric "System Detection" "$start_time" "$end_time"
+}
+
+# 系统兼容性检查
+check_system_compatibility() {
+    print_step "🔧 Checking system compatibility..."
+    
+    local compatibility_issues=()
+    
+    # 检查Shell兼容性
+    if [[ "$BASH_VERSION" ]]; then
+        local bash_major=$(echo "$BASH_VERSION" | cut -d'.' -f1)
+        if [[ "$bash_major" -lt 4 ]]; then
+            compatibility_issues+=("Bash version $BASH_VERSION is too old (requires 4.0+)")
+        fi
+    fi
+    
+    # 检查文件系统权限
+    if [[ ! -w "$HOME" ]]; then
+        compatibility_issues+=("Home directory is not writable")
+    fi
+    
+    # 检查PATH长度（避免Windows PATH过长问题）
+    local path_length=${#PATH}
+    if [[ "$path_length" -gt 4096 ]]; then
+        compatibility_issues+=("PATH environment variable is too long ($path_length chars)")
+    fi
+    
+    # 检查磁盘空间
+    local available_space=$(df "$HOME" 2>/dev/null | tail -1 | awk '{print $4}' || echo "0")
+    if [[ "$available_space" != "0" ]] && [[ "$available_space" -lt 10000 ]]; then
+        compatibility_issues+=("Insufficient disk space (less than 10MB available)")
+    fi
+    
+    # 报告兼容性问题
+    if [[ ${#compatibility_issues[@]} -gt 0 ]]; then
+        print_warning "⚠️  System compatibility issues detected:"
+        for issue in "${compatibility_issues[@]}"; do
+            print_info "  • $issue"
+        done
+        
+        read -p "Continue despite compatibility issues? (y/N): " -r reply
+        if [[ ! $reply =~ ^[Yy]$ ]]; then
+            print_error "Installation cancelled due to compatibility issues"
+            exit 1
+        fi
+    else
+        print_success "✅ System compatibility check passed"
+    fi
+    
+    log_message "INFO" "Compatibility check completed"
+}
+
 # 检测shell类型
 detect_shell() {
-    if [ -n "$ZSH_VERSION" ]; then
-        echo "zsh"
-    elif [ -n "$BASH_VERSION" ]; then
-        echo "bash"
-    elif [ "$SHELL" = "/bin/bash" ] || [ "$SHELL" = "/usr/bin/bash" ] || [ "$SHELL" = "/bin/zsh" ] || [ "$SHELL" = "/usr/bin/zsh" ]; then
-        case "$SHELL" in
-            *bash) echo "bash" ;;
-            *zsh) echo "zsh" ;;
-        esac
-    elif [ "$0" = "bash" ] || [ "$0" = "-bash" ] || echo "$0" | grep -q "bash"; then
-        echo "bash"
-    elif [ "$0" = "zsh" ] || [ "$0" = "-zsh" ] || echo "$0" | grep -q "zsh"; then
-        echo "zsh"
-    elif echo "$0" | grep -q "fish"; then
-        echo "fish"
-    elif [ "$SHELL" = "/bin/fish" ] || [ "$SHELL" = "/usr/bin/fish" ]; then
-        echo "fish"
+    local current_shell=""
+    local shell_version=""
+    
+    if [[ -n "$ZSH_VERSION" ]]; then
+        current_shell="zsh"
+        shell_version="$ZSH_VERSION"
+    elif [[ -n "$BASH_VERSION" ]]; then
+        current_shell="bash"
+        shell_version="$BASH_VERSION"
+    elif [[ -n "$FISH_VERSION" ]]; then
+        current_shell="fish"
+        shell_version="$FISH_VERSION"
+    elif [[ "$SHELL" == *"bash"* ]]; then
+        current_shell="bash"
+        if command_exists bash; then
+            shell_version=$(bash --version | head -1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1)
+        fi
+    elif [[ "$SHELL" == *"zsh"* ]]; then
+        current_shell="zsh"
+        if command_exists zsh; then
+            shell_version=$(zsh --version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1)
+        fi
+    elif [[ "$SHELL" == *"fish"* ]]; then
+        current_shell="fish"
+        if command_exists fish; then
+            shell_version=$(fish --version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1)
+        fi
     else
-        echo "unknown"
+        current_shell="unknown"
+    fi
+    
+    if [[ "$shell_version" ]]; then
+        print_info "Shell: $current_shell v$shell_version"
+    else
+        print_info "Shell: $current_shell"
+    fi
+    
+    echo "$current_shell"
+}
+
+# 增强的依赖检查和网络验证
+check_dependencies() {
+    local start_time=$(date +%s)
+    print_step "🔍 Performing comprehensive dependency analysis..."
+    
+    local required_deps=("curl" "grep" "sed" "awk" "basename" "dirname" "chmod" "cp" "mkdir")
+    local optional_deps=("python3" "python" "git" "bc" "lscpu" "free" "df")
+    local network_deps=("curl" "wget")
+    local missing_deps=()
+    local available_optional=()
+    local network_tools=()
+    local critical_missing=()
+    
+    # 检查必需依赖
+    for dep in "${required_deps[@]}"; do
+        local dep_start=$(date +%s)
+        if command_exists "$dep"; then
+            print_success "$dep is available"
+            log_message "DEBUG" "Dependency check: $dep - available"
+        else
+            missing_deps+=("$dep")
+            print_error "$dep is missing (required)"
+            log_message "ERROR" "Missing required dependency: $dep"
+            
+            # 标记关键依赖
+            if [[ "$dep" == "curl" ]] || [[ "$dep" == "grep" ]] || [[ "$dep" == "sed" ]]; then
+                critical_missing+=("$dep")
+            fi
+        fi
+        local dep_end=$(date +%s)
+        print_performance_metric "Dependency check: $dep" "$dep_start" "$dep_end"
+    done
+    
+    # 检查网络工具
+    print_step "🌐 Checking network connectivity tools..."
+    for dep in "${network_deps[@]}"; do
+        if command_exists "$dep"; then
+            network_tools+=("$dep")
+            print_success "$dep is available (network tool)"
+            
+            # 测试网络连接
+            if [[ "$dep" == "curl" ]]; then
+                test_network_connectivity "curl"
+            elif [[ "$dep" == "wget" ]]; then
+                test_network_connectivity "wget"
+            fi
+        else
+            print_info "$dep is not available (optional network tool)"
+        fi
+    done
+    
+    # 检查可选依赖
+    print_step "🔧 Checking optional dependencies..."
+    for dep in "${optional_deps[@]}"; do
+        local dep_start=$(date +%s)
+        if command_exists "$dep"; then
+            case "$dep" in
+                "python3"|"python")
+                    local python_version=""
+                    local python_path=""
+                    if [[ "$dep" == "python3" ]]; then
+                        python_version=$(python3 --version 2>&1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' || echo "unknown")
+                        python_path=$(command -v python3)
+                    else
+                        python_version=$(python --version 2>&1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' || echo "unknown")
+                        python_path=$(command -v python)
+                    fi
+                    print_success "$dep v$python_version is available (web interface)"
+                    log_message "INFO" "Python found: $python_path v$python_version"
+                    
+                    # 检查Python模块
+                    check_python_modules
+                    ;;
+                "git")
+                    local git_version=$(git --version 2>/dev/null | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1 || echo "unknown")
+                    local git_path=$(command -v git)
+                    print_success "git v$git_version is available (updates)"
+                    log_message "INFO" "Git found: $git_path v$git_version"
+                    
+                    # 检查Git配置
+                    check_git_configuration
+                    ;;
+                "bc")
+                    print_success "$dep is available (calculations)"
+                    ;;
+                "lscpu"|"free"|"df")
+                    print_success "$dep is available (system info)"
+                    ;;
+                *)
+                    print_success "$dep is available"
+                    ;;
+            esac
+            available_optional+=("$dep")
+        else
+            print_info "$dep is not available (optional)"
+        fi
+        local dep_end=$(date +%s)
+        print_performance_metric "Optional check: $dep" "$dep_start" "$dep_end"
+    done
+    
+    # 网络连接测试
+    if [[ ${#network_tools[@]} -gt 0 ]]; then
+        test_internet_connectivity
+    fi
+    
+    # 处理缺失的依赖
+    if [[ ${#missing_deps[@]} -gt 0 ]]; then
+        echo ""
+        print_error "❌ Missing required dependencies: ${missing_deps[*]}"
+        print_info "💡 Installation suggestions:"
+        
+        # 根据系统提供详细的安装命令建议
+        local install_cmd=""
+        if command_exists apt; then
+            install_cmd="sudo apt update && sudo apt install"
+            print_info "  Ubuntu/Debian: $install_cmd ${missing_deps[*]}"
+        elif command_exists yum; then
+            install_cmd="sudo yum install"
+            print_info "  RHEL/CentOS 7: $install_cmd ${missing_deps[*]}"
+        elif command_exists dnf; then
+            install_cmd="sudo dnf install"
+            print_info "  Fedora/RHEL 8+: $install_cmd ${missing_deps[*]}"
+        elif command_exists pacman; then
+            install_cmd="sudo pacman -S"
+            print_info "  Arch Linux: $install_cmd ${missing_deps[*]}"
+        elif command_exists brew; then
+            install_cmd="brew install"
+            print_info "  macOS: $install_cmd ${missing_deps[*]}"
+        elif command_exists apk; then
+            install_cmd="sudo apk add"
+            print_info "  Alpine: $install_cmd ${missing_deps[*]}"
+        fi
+        
+        # 特别处理关键缺失依赖
+        if [[ ${#critical_missing[@]} -gt 0 ]]; then
+            print_error "🚨 Critical dependencies missing: ${critical_missing[*]}"
+            print_info "These are essential for CCS to function properly"
+        fi
+        
+        exit 1
+    fi
+    
+    # 显示依赖状态摘要
+    echo ""
+    print_success "✅ All required dependencies are available"
+    if [[ ${#available_optional[@]} -gt 0 ]]; then
+        print_info "🎯 Optional features enabled: ${available_optional[*]}"
+    fi
+    if [[ ${#network_tools[@]} -gt 0 ]]; then
+        print_info "🌐 Network tools available: ${network_tools[*]}"
+    fi
+    
+    local end_time=$(date +%s)
+    print_performance_metric "Dependency Analysis" "$start_time" "$end_time"
+    log_message "INFO" "Dependency check completed successfully"
+}
+
+# 网络连接测试
+test_network_connectivity() {
+    local tool="$1"
+    local test_url="https://httpbin.org/status/200"
+    
+    print_debug "Testing network connectivity using $tool..."
+    
+    local start_time=$(date +%s)
+    local result=""
+    
+    if [[ "$tool" == "curl" ]]; then
+        result=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "$test_url" 2>/dev/null || echo "failed")
+    elif [[ "$tool" == "wget" ]]; then
+        result=$(wget -q -O /dev/null --timeout=5 --tries=1 "$test_url" 2>/dev/null && echo "200" || echo "failed")
+    fi
+    
+    local end_time=$(date +%s)
+    local duration=$((end_time - start_time))
+    
+    if [[ "$result" == "200" ]]; then
+        print_success "✅ Network connectivity test passed (${duration}s)"
+        log_message "INFO" "Network test successful using $tool (${duration}s)"
+    else
+        print_warning "⚠️  Network connectivity test failed"
+        log_message "WARN" "Network test failed using $tool"
+    fi
+}
+
+# 互联网连接测试
+test_internet_connectivity() {
+    print_step "🌍 Testing internet connectivity..."
+    
+    local test_urls=(
+        "https://httpbin.org/status/200"
+        "https://www.google.com/generate_204"
+        "https://www.cloudflare.com/cdn-cgi/trace"
+    )
+    
+    local connectivity_ok=false
+    for url in "${test_urls[@]}"; do
+        if command_exists curl; then
+            if curl -s -o /dev/null --max-time 5 "$url" 2>/dev/null; then
+                connectivity_ok=true
+                print_success "✅ Internet connectivity confirmed via $url"
+                log_message "INFO" "Internet test successful: $url"
+                break
+            fi
+        elif command_exists wget; then
+            if wget -q -O /dev/null --timeout=5 "$url" 2>/dev/null; then
+                connectivity_ok=true
+                print_success "✅ Internet connectivity confirmed via $url"
+                log_message "INFO" "Internet test successful: $url"
+                break
+            fi
+        fi
+    done
+    
+    if [[ "$connectivity_ok" == false ]]; then
+        print_warning "⚠️  Limited internet connectivity detected"
+        print_info "Some features (like web interface) may not work properly"
+        log_message "WARN" "Internet connectivity test failed"
+    fi
+}
+
+# Python模块检查
+check_python_modules() {
+    if command_exists python3; then
+        local python_cmd="python3"
+    elif command_exists python; then
+        local python_cmd="python"
+    else
+        return
+    fi
+    
+    print_debug "Checking Python modules..."
+    
+    local required_modules=("http.server" "json" "urllib")
+    local missing_modules=()
+    
+    for module in "${required_modules[@]}"; do
+        if ! $python_cmd -c "import $module" 2>/dev/null; then
+            missing_modules+=("$module")
+        fi
+    done
+    
+    if [[ ${#missing_modules[@]} -gt 0 ]]; then
+        print_warning "⚠️  Missing Python modules: ${missing_modules[*]}"
+        print_info "Web interface functionality may be limited"
+    else
+        print_success "✅ All required Python modules are available"
+    fi
+}
+
+# Git配置检查
+check_git_configuration() {
+    if ! command_exists git; then
+        return
+    fi
+    
+    print_debug "Checking Git configuration..."
+    
+    # 检查Git用户配置
+    local git_user=$(git config --global user.name 2>/dev/null || echo "")
+    local git_email=$(git config --global user.email 2>/dev/null || echo "")
+    
+    if [[ -z "$git_user" ]] || [[ -z "$git_email" ]]; then
+        print_info "💡 Git user configuration not set (optional)"
+        print_info "  Configure with: git config --global user.name 'Your Name'"
+        print_info "  Configure with: git config --global user.email 'your@email.com'"
+    else
+        print_success "✅ Git user configured: $git_user <$git_email>"
+    fi
+    
+    # 检查Git版本
+    local git_version=$(git --version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1)
+    local git_major=$(echo "$git_version" | cut -d'.' -f1)
+    local git_minor=$(echo "$git_version" | cut -d'.' -f2)
+    
+    if [[ "$git_major" -ge 2 ]] || ([[ "$git_major" -eq 2 ]] && [[ "$git_minor" -ge 20 ]]); then
+        print_success "✅ Git version $git_version is modern and fully supported"
+    else
+        print_info "ℹ️  Git version $git_version detected (some features may be limited)"
     fi
 }
 
@@ -96,18 +693,75 @@ shell_config_exists() {
     local shell_type="$1"
     case $shell_type in
         "bash")
-            [ -f "$BASHRC_FILE" ]
+            [[ -f "$BASHRC_FILE" ]]
             ;;
         "zsh")
-            [ -f "$ZSHRC_FILE" ]
+            [[ -f "$ZSHRC_FILE" ]]
             ;;
         "fish")
-            [ -d "$HOME/.config/fish" ]
+            [[ -d "$HOME/.config/fish" ]]
             ;;
         *)
             false
             ;;
     esac
+}
+
+# 检查可用的shell环境
+detect_available_shells() {
+    print_step "Detecting available shell environments..."
+    
+    local shells=("bash" "zsh" "fish")
+    local available_shells=()
+    local config_files=()
+    
+    for shell in "${shells[@]}"; do
+        if command_exists "$shell"; then
+            local shell_version=""
+            case "$shell" in
+                "bash")
+                    shell_version=$(bash --version | head -1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1)
+                    if shell_config_exists "$shell"; then
+                        print_success "$shell v$shell_version is installed (config: $BASHRC_FILE)"
+                        available_shells+=("$shell")
+                        config_files+=("$BASHRC_FILE")
+                    else
+                        print_info "$shell v$shell_version is installed (no config file)"
+                    fi
+                    ;;
+                "zsh")
+                    shell_version=$(zsh --version 2>/dev/null | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1 || echo "unknown")
+                    if shell_config_exists "$shell"; then
+                        print_success "$shell v$shell_version is installed (config: $ZSHRC_FILE)"
+                        available_shells+=("$shell")
+                        config_files+=("$ZSHRC_FILE")
+                    else
+                        print_info "$shell v$shell_version is installed (no config file)"
+                    fi
+                    ;;
+                "fish")
+                    shell_version=$(fish --version 2>/dev/null | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1 || echo "unknown")
+                    if shell_config_exists "$shell"; then
+                        print_success "$shell v$shell_version is installed (config: $HOME/.config/fish/config.fish)"
+                        available_shells+=("$shell")
+                        config_files+=("$HOME/.config/fish/config.fish")
+                    else
+                        print_info "$shell v$shell_version is installed (no config file)"
+                    fi
+                    ;;
+            esac
+        else
+            print_info "$shell is not installed"
+        fi
+    done
+    
+    if [[ ${#available_shells[@]} -eq 0 ]]; then
+        print_warning "No shell configuration files found, will create for current shell"
+    else
+        print_info "Will configure ${#available_shells[@]} shell environment(s): ${available_shells[*]}"
+    fi
+    
+    echo "${available_shells[@]}"
 }
 
 # 配置指定shell
@@ -130,31 +784,31 @@ configure_shell_for_type() {
             ;;
     esac
     
-    print_message "$BLUE" "配置 $shell_type 环境..."
+    print_step "Configuring $shell_type environment..."
     
     # 检查是否已经配置
     if grep -q "ccs\.fish" "$config_file" 2>/dev/null || grep -q "ccs\.sh" "$config_file" 2>/dev/null; then
-        print_warning "ccs已经在 $config_file 中配置过了"
+        print_success "CCS is already configured in $config_file"
         return 0
     fi
     
     # 确保配置文件目录存在
     local config_dir=$(dirname "$config_file")
-    if [ ! -d "$config_dir" ]; then
+    if [[ ! -d "$config_dir" ]]; then
         mkdir -p "$config_dir"
-        print_success "创建目录 $config_dir"
+        print_success "Created directory $config_dir"
     fi
     
     # 添加配置到shell配置文件
-    if [ "$shell_type" = "fish" ]; then
+    if [[ "$shell_type" = "fish" ]]; then
         cat >> "$config_file" << 'EOF'
 
-# Claude Code Configuration Switcher (ccs)
+# Claude Code Configuration Switcher (CCS) v2.0
 if test -f "$HOME/.ccs/ccs.fish"
     source "$HOME/.ccs/ccs.fish"
-    # 初始化ccs函数
+    # Initialize ccs function
     if type -q ccs
-        # 设置默认配置
+        # Set default configuration silently
         ccs >/dev/null 2>&1; and true
     end
 end
@@ -162,42 +816,44 @@ EOF
     else
         cat >> "$config_file" << 'EOF'
 
-# Claude Code Configuration Switcher (ccs)
+# Claude Code Configuration Switcher (CCS) v2.0
 if [ -f "$HOME/.ccs/ccs.sh" ]; then
     source "$HOME/.ccs/ccs.sh"
-    # 初始化ccs函数
+    # Initialize ccs function
     if command -v ccs >/dev/null 2>&1; then
-        # 设置默认配置
+        # Set default configuration silently
         ccs >/dev/null 2>&1 || true
     fi
 fi
 EOF
     fi
     
-    print_success "已添加ccs配置到 $config_file"
+    print_success "Added CCS configuration to $config_file"
 }
 
 # 创建目录
 create_directories() {
-    print_step "创建必要的目录..."
+    print_step "Creating necessary directories..."
     
-    if [[ ! -d "$HOME/.ccs" ]]; then
-        if mkdir -p "$HOME/.ccs"; then
-            print_success "创建目录 $HOME/.ccs"
+    local dirs=("$HOME/.ccs" "$HOME/.ccs/backups" "$HOME/.ccs/cache" "$HOME/.ccs/temp")
+    
+    for dir in "${dirs[@]}"; do
+        if [[ ! -d "$dir" ]]; then
+            if mkdir -p "$dir"; then
+                print_success "Created directory $(basename "$dir")"
+            else
+                print_error "Failed to create directory $dir"
+                exit 1
+            fi
         else
-            handle_error $ERROR_PERMISSION_DENIED "无法创建目录 $HOME/.ccs"
+            print_info "Directory $(basename "$dir") already exists"
         fi
-    else
-        print_warning "目录 $HOME/.ccs 已存在"
-    fi
-    
-    # 创建备份目录
-    ensure_dir_exists "$HOME/.ccs/backups"
+    done
 }
 
 # 检查是否已安装
 check_installed() {
-    if [ -f "$CCS_SCRIPT_PATH" ] || [ -f "$HOME/.ccs/ccs.fish" ]; then
+    if [[ -f "$CCS_SCRIPT_PATH" ]] || [[ -f "$HOME/.ccs/ccs.fish" ]]; then
         return 0
     fi
     return 1
@@ -209,10 +865,10 @@ copy_script() {
     
     # 检查是否为重新安装
     if check_installed; then
-        print_message "$YELLOW" "检测到ccs已安装,将更新所有shell脚本..."
+        print_step "Detected existing CCS installation, updating all components..."
         reinstall=true
     else
-        print_step "复制ccs脚本..."
+        print_step "Installing CCS scripts..."
     fi
     
     # 获取当前脚本所在目录
@@ -230,58 +886,51 @@ copy_script() {
         source_web="$script_dir/web"
         
         if [[ ! -f "$source_sh" ]]; then
-            handle_error $ERROR_FILE_NOT_FOUND "找不到源脚本文件: $source_sh"
+            print_error "Source script files not found: $source_sh"
+            exit 1
         fi
     fi
     
     # 复制通用工具库
     if [[ -f "$source_common" ]]; then
         local common_path="$HOME/.ccs/ccs-common.sh"
-        if [[ -f "$common_path" ]] && [[ "$reinstall" == true ]]; then
-            print_step "更新通用工具库..."
-        fi
         if cp "$source_common" "$common_path"; then
-            set_file_permissions "$common_path" "644"
+            chmod 644 "$common_path"
             if [[ "$reinstall" == true ]]; then
-                print_success "更新通用工具库到 $common_path"
+                print_success "Updated common utilities library"
             else
-                print_success "复制通用工具库到 $common_path"
+                print_success "Installed common utilities library"
             fi
         else
-            log_warn "无法复制通用工具库"
+            print_warning "Failed to copy common utilities library"
         fi
     fi
     
     # 复制bash脚本
-    if [[ -f "$CCS_SCRIPT_PATH" ]] && [[ "$reinstall" == true ]]; then
-        print_step "更新bash脚本..."
-    fi
     if cp "$source_sh" "$CCS_SCRIPT_PATH"; then
-        set_file_permissions "$CCS_SCRIPT_PATH" "755"
+        chmod 755 "$CCS_SCRIPT_PATH"
         if [[ "$reinstall" == true ]]; then
-            print_success "更新bash脚本到 $CCS_SCRIPT_PATH"
+            print_success "Updated bash script"
         else
-            print_success "复制bash脚本到 $CCS_SCRIPT_PATH"
+            print_success "Installed bash script"
         fi
     else
-        handle_error $ERROR_PERMISSION_DENIED "无法复制bash脚本到 $CCS_SCRIPT_PATH"
+        print_error "Failed to copy bash script to $CCS_SCRIPT_PATH"
+        exit 1
     fi
     
     # 复制fish脚本（如果存在）
     if [[ -f "$source_fish" ]]; then
         local fish_path="$HOME/.ccs/ccs.fish"
-        if [[ -f "$fish_path" ]] && [[ "$reinstall" == true ]]; then
-            print_step "更新fish脚本..."
-        fi
         if cp "$source_fish" "$fish_path"; then
-            set_file_permissions "$fish_path" "755"
+            chmod 755 "$fish_path"
             if [[ "$reinstall" == true ]]; then
-                print_success "更新fish脚本到 $fish_path"
+                print_success "Updated fish script"
             else
-                print_success "复制fish脚本到 $fish_path"
+                print_success "Installed fish script"
             fi
         else
-            log_warn "无法复制fish脚本"
+            print_warning "Failed to copy fish script"
         fi
     fi
     
@@ -289,20 +938,19 @@ copy_script() {
     if [[ -d "$source_web" ]]; then
         local web_path="$HOME/.ccs/web"
         if [[ -d "$web_path" ]] && [[ "$reinstall" == true ]]; then
-            print_step "更新web文件..."
             rm -rf "$web_path"
         fi
         if cp -r "$source_web" "$web_path"; then
             if [[ "$reinstall" == true ]]; then
-                print_success "更新web文件到 $web_path"
+                print_success "Updated web interface files"
             else
-                print_success "复制web文件到 $web_path"
+                print_success "Installed web interface files"
             fi
         else
-            log_warn "无法复制web文件"
+            print_warning "Failed to copy web interface files"
         fi
     else
-        print_warning "未找到web文件夹,跳过复制web文件"
+        print_info "Web interface files not found, skipping"
     fi
     
     # 复制package.json文件
@@ -313,35 +961,40 @@ copy_script() {
     
     if [[ -f "$source_package" ]]; then
         local package_path="$HOME/.ccs/package.json"
-        if [[ -f "$package_path" ]] && [[ "$reinstall" == true ]]; then
-            print_step "更新package.json..."
-        fi
         if cp "$source_package" "$package_path"; then
-            set_file_permissions "$package_path" "644"
+            chmod 644 "$package_path"
             if [[ "$reinstall" == true ]]; then
-                print_success "更新package.json到 $package_path"
+                print_success "Updated project metadata"
             else
-                print_success "复制package.json到 $package_path"
+                print_success "Installed project metadata"
             fi
         else
-            log_warn "无法复制package.json文件"
+            print_warning "Failed to copy project metadata"
         fi
     else
-        print_warning "未找到package.json文件,跳过复制"
+        print_info "Project metadata not found, skipping"
     fi
     
     # 如果是重新安装,提供额外提示
     if [[ "$reinstall" == true ]]; then
-        print_warning "已更新所有shell脚本,配置文件保持不变"
+        print_info "All script components have been updated, configuration files preserved"
     fi
 }
 
 # 创建配置文件
 create_config_file() {
-    print_step "检查配置文件..."
+    print_step "Checking configuration file..."
     
     if [[ -f "$CONFIG_FILE" ]]; then
-        print_warning "配置文件 $CONFIG_FILE 已存在,跳过创建"
+        print_success "Configuration file already exists: $CONFIG_FILE"
+        
+        # 验证现有配置文件
+        if grep -q "^\[.*\]" "$CONFIG_FILE" 2>/dev/null; then
+            local config_count=$(grep -c "^\[.*\]" "$CONFIG_FILE" 2>/dev/null || echo "0")
+            print_info "Found $config_count configuration section(s)"
+        else
+            print_warning "Configuration file exists but may be incomplete"
+        fi
         return
     fi
     
@@ -356,54 +1009,53 @@ create_config_file() {
     
     if [[ -f "$example_config" ]]; then
         if cp "$example_config" "$CONFIG_FILE"; then
-            set_file_permissions "$CONFIG_FILE" "600"
-            print_success "创建配置文件 $CONFIG_FILE"
-            print_warning "请编辑 $CONFIG_FILE 文件,填入您的API密钥"
+            chmod 600 "$CONFIG_FILE"
+            print_success "Created configuration file: $CONFIG_FILE"
+            print_warning "Please edit the configuration file and add your API keys"
             
-            # 验证创建的配置文件
-            if validate_config_file "$CONFIG_FILE"; then
-                print_success "配置文件验证通过"
-            else
-                log_warn "配置文件创建成功但验证失败,请检查格式"
-            fi
+            # 显示配置文件内容概览
+            local config_sections=$(grep "^\[.*\]" "$CONFIG_FILE" | wc -l)
+            print_info "Configuration file contains $config_sections example section(s)"
         else
-            handle_error $ERROR_PERMISSION_DENIED "无法创建配置文件 $CONFIG_FILE"
+            print_error "Failed to create configuration file: $CONFIG_FILE"
+            exit 1
         fi
     else
-        handle_error $ERROR_FILE_NOT_FOUND "找不到示例配置文件: $example_config"
+        print_error "Example configuration file not found: $example_config"
+        exit 1
     fi
 }
 
 # 配置shell环境
 configure_shell() {
     local current_shell=$(detect_shell)
+    local available_shells_str=$(detect_available_shells)
+    local available_shells=($available_shells_str)
     local configured_count=0
     
-    print_message "$BLUE" "检测到当前shell: $current_shell"
+    echo ""
+    print_step "Configuring shell environments..."
+    print_info "Current shell: $current_shell"
     
     # 为所有支持的shell配置
-    for shell in bash zsh fish; do
-        if shell_config_exists "$shell"; then
-            configure_shell_for_type "$shell"
-            configured_count=$((configured_count + 1))
-        else
-            print_warning "未找到 $shell 配置文件,跳过"
-        fi
+    for shell in "${available_shells[@]}"; do
+        configure_shell_for_type "$shell"
+        configured_count=$((configured_count + 1))
     done
     
     # 如果没有找到任何shell配置文件,至少为当前shell创建配置
-    if [ $configured_count -eq 0 ]; then
-        print_warning "未找到任何shell配置文件,为当前shell创建配置"
-        if [ "$current_shell" != "unknown" ]; then
+    if [[ $configured_count -eq 0 ]]; then
+        print_warning "No shell configuration files found, creating for current shell"
+        if [[ "$current_shell" != "unknown" ]]; then
             configure_shell_for_type "$current_shell"
             configured_count=$((configured_count + 1))
         else
-            print_error "无法识别shell类型,请手动配置"
+            print_error "Cannot identify shell type, please configure manually"
             exit 1
         fi
     fi
     
-    print_success "已配置 $configured_count 个shell环境"
+    print_success "Configured $configured_count shell environment(s)"
 }
 
 # 安装完成
@@ -413,240 +1065,195 @@ install_complete() {
         is_reinstall=true
     fi
     
-    if [[ "$is_reinstall" == true ]]; then
-        print_success "重新安装完成！"
-    else
-        print_success "安装完成！"
-    fi
-    
     echo ""
-    print_message "$BLUE" "使用方法:"
-    echo "  ccs list              - 列出所有可用配置"
-    echo "  ccs [配置名称]       - 切换到指定配置"
-    echo "  ccs current          - 显示当前配置"
-    echo "  ccs web              - 打开web配置界面"
-    echo "  ccs help             - 显示帮助信息"
+    echo "════════════════════════════════════════════════════════════════"
+    if [[ "$is_reinstall" == true ]]; then
+        echo "🎉 CCS Update Complete!"
+    else
+        echo "🎉 CCS Installation Complete!"
+    fi
+    echo "════════════════════════════════════════════════════════════════"
     echo ""
     
-    if [[ "$is_reinstall" == true ]]; then
-        print_warning "脚本已更新,请重新启动终端或运行 'source ~/.bashrc' (或 ~/.zshrc/~/.config/fish/config.fish) 来使新版本生效"
-    else
-        print_warning "请重新启动终端或运行 'source ~/.bashrc' (或 ~/.zshrc/~/.config/fish/config.fish) 来使配置生效"
-    fi
+    print_info "Usage examples:"
+    echo "  ccs list              - List all available configurations"
+    echo "  ccs [config_name]     - Switch to specified configuration"  
+    echo "  ccs current           - Show current configuration"
+    echo "  ccs web               - Open web configuration interface"
+    echo "  ccs version           - Show version information"
+    echo "  ccs help              - Show help information"
+    echo ""
     
-    # 检查配置文件是否存在
+    # 显示配置文件信息
     if [[ -f "$CONFIG_FILE" ]]; then
-        echo ""
-        print_message "$BLUE" "配置文件位置: $CONFIG_FILE"
-        if [[ "$is_reinstall" == true ]]; then
-            print_success "现有配置文件已保留,无需重新配置"
-        else
-            print_warning "请编辑配置文件,确保您的API密钥正确"
-        fi
+        local config_sections=$(grep -c "^\[.*\]" "$CONFIG_FILE" 2>/dev/null || echo "0")
+        print_info "Configuration file: $CONFIG_FILE ($config_sections sections)"
         
-        # 验证配置文件
-        if validate_config_file "$CONFIG_FILE"; then
-            print_success "配置文件格式正确"
+        if [[ "$is_reinstall" == true ]]; then
+            print_success "Existing configuration preserved"
         else
-            print_warning "配置文件格式有问题,请检查"
+            print_warning "Please edit the configuration file to add your API keys"
         fi
     fi
     
-    # 清理临时文件
-    cleanup_temp_files
+    # 重启提示
+    echo ""
+    if [[ "$is_reinstall" == true ]]; then
+        print_warning "Please restart your terminal or run 'source ~/.bashrc' (or ~/.zshrc) to use the updated version"
+    else
+        print_warning "Please restart your terminal or run 'source ~/.bashrc' (or ~/.zshrc) to activate CCS"
+    fi
+    
+    # 显示快速开始提示
+    echo ""
+    print_step "Quick start:"
+    echo "  1. Edit $CONFIG_FILE with your API keys"
+    echo "  2. Restart your terminal or source shell config"
+    echo "  3. Run 'ccs list' to see available configurations"
+    echo "  4. Run 'ccs [config_name]' to switch configurations"
+    echo ""
 }
 
 # 卸载函数
 uninstall() {
-    print_step "开始卸载ccs..."
+    echo "🗑️  Starting CCS uninstallation..."
+    echo ""
     
     # 创建备份
     if [[ -f "$CONFIG_FILE" ]]; then
-        local backup_file
-        backup_file=$(backup_file "$CONFIG_FILE" "$HOME/.ccs/backups")
-        if [[ -n "$backup_file" ]]; then
-            log_info "已备份配置文件: $backup_file"
+        local backup_dir="$HOME/.ccs/backups"
+        if [[ ! -d "$backup_dir" ]]; then
+            mkdir -p "$backup_dir"
+        fi
+        
+        local timestamp=$(date +"%Y%m%d_%H%M%S")
+        local backup_file="$backup_dir/.ccs_config.toml.${timestamp}.bak"
+        
+        if cp "$CONFIG_FILE" "$backup_file"; then
+            print_success "Configuration backed up to: $backup_file"
         fi
     fi
     
     # 删除整个.ccs目录（除了配置文件）
     if [[ -d "$HOME/.ccs" ]]; then
+        local files_to_remove=("ccs.sh" "ccs.fish" "ccs-common.sh" "package.json")
+        local dirs_to_remove=("web" "cache" "temp")
+        
         # 删除脚本文件
-        if [[ -f "$HOME/.ccs/ccs.sh" ]]; then
-            rm -f "$HOME/.ccs/ccs.sh"
-            print_success "删除bash脚本文件"
-        fi
+        for file in "${files_to_remove[@]}"; do
+            if [[ -f "$HOME/.ccs/$file" ]]; then
+                rm -f "$HOME/.ccs/$file"
+                print_success "Removed $file"
+            fi
+        done
         
-        if [[ -f "$HOME/.ccs/ccs.fish" ]]; then
-            rm -f "$HOME/.ccs/ccs.fish"
-            print_success "删除fish脚本文件"
-        fi
+        # 删除目录
+        for dir in "${dirs_to_remove[@]}"; do
+            if [[ -d "$HOME/.ccs/$dir" ]]; then
+                rm -rf "$HOME/.ccs/$dir"
+                print_success "Removed $dir directory"
+            fi
+        done
         
-        # 删除通用工具库
-        if [[ -f "$HOME/.ccs/ccs-common.sh" ]]; then
-            rm -f "$HOME/.ccs/ccs-common.sh"
-            print_success "删除通用工具库文件"
-        fi
-        
-        # 删除web文件
-        if [[ -d "$HOME/.ccs/web" ]]; then
-            rm -rf "$HOME/.ccs/web"
-            print_success "删除web文件"
-        fi
-        
-        # 删除package.json文件
-        if [[ -f "$HOME/.ccs/package.json" ]]; then
-            rm -f "$HOME/.ccs/package.json"
-            print_success "删除package.json文件"
-        fi
-        
-        # 删除备份目录
-        if [[ -d "$HOME/.ccs/backups" ]]; then
-            rm -rf "$HOME/.ccs/backups"
-            print_success "删除备份目录"
-        fi
-        
-        # 检查.ccs目录是否为空（除了配置文件）
-        local remaining_files=$(find "$HOME/.ccs" -type f ! -name "*.toml" 2>/dev/null | wc -l)
+        # 检查.ccs目录是否为空（除了配置文件和备份）
+        local remaining_files=$(find "$HOME/.ccs" -type f ! -name "*.toml" ! -path "*/backups/*" 2>/dev/null | wc -l)
         if [[ "$remaining_files" -eq 0 ]]; then
-            # 如果没有配置文件,删除整个目录
             if [[ ! -f "$CONFIG_FILE" ]]; then
                 rm -rf "$HOME/.ccs"
-                print_success "删除.ccs目录"
+                print_success "Removed .ccs directory"
             else
-                print_warning "保留.ccs目录（包含配置文件）"
+                print_info "Preserved .ccs directory (contains configuration file)"
             fi
         fi
     fi
     
-    # 删除配置文件（询问用户）
+    # 询问是否删除配置文件
     if [[ -f "$CONFIG_FILE" ]]; then
-        if ask_confirmation "是否要删除配置文件 $CONFIG_FILE" "N"; then
+        echo ""
+        read -p "Remove configuration file $CONFIG_FILE? (y/N): " -r reply
+        if [[ $reply =~ ^[Yy]$ ]]; then
             rm -f "$CONFIG_FILE"
-            print_success "删除配置文件"
+            print_success "Removed configuration file"
             # 如果删除了配置文件且.ccs目录为空,删除目录
             if [[ -d "$HOME/.ccs" ]] && [[ -z "$(ls -A "$HOME/.ccs" 2>/dev/null)" ]]; then
                 rm -rf "$HOME/.ccs"
-                print_success "删除空的.ccs目录"
+                print_success "Removed empty .ccs directory"
             fi
+        else
+            print_info "Configuration file preserved"
         fi
     fi
     
     # 从所有shell配置文件中移除配置
     local removed_count=0
+    local shell_configs=("$BASHRC_FILE" "$ZSHRC_FILE" "$HOME/.config/fish/config.fish")
     
-    # 处理bash配置
-    if [[ -f "$BASHRC_FILE" ]]; then
-        local temp_file
-        temp_file=$(create_temp_file "ccs_bashrc")
-        if [[ -n "$temp_file" ]]; then
-            # 移除ccs相关的配置块
-            awk '
-            /^# Claude Code Configuration Switcher/ { skip=1; next }
-            /^if \[ -f "\$HOME\/\.ccs\/ccs\.sh" \]/ { skip=1; next }
-            /^fi$/ && skip { skip=0; next }
-            !skip { print }
-            ' "$BASHRC_FILE" > "$temp_file"
-            
-            # 检查是否有变化
-            if ! cmp -s "$BASHRC_FILE" "$temp_file"; then
-                if mv "$temp_file" "$BASHRC_FILE"; then
-                    print_success "从 $BASHRC_FILE 中移除配置"
+    for config_file in "${shell_configs[@]}"; do
+        if [[ -f "$config_file" ]]; then
+            if grep -q "Claude Code Configuration Switcher" "$config_file" 2>/dev/null; then
+                # 创建临时文件移除配置
+                local temp_file=$(mktemp)
+                awk '
+                /^# Claude Code Configuration Switcher/ { skip=1; next }
+                /^if \[ -f "\$HOME\/\.ccs\/ccs\.sh" \]/ || /^if test -f "\$HOME\/\.ccs\/ccs\.fish"/ { skip=1; next }
+                /^fi$/ && skip { skip=0; next }
+                /^end$/ && skip { skip=0; next }
+                !skip { print }
+                ' "$config_file" > "$temp_file"
+                
+                if ! cmp -s "$config_file" "$temp_file"; then
+                    mv "$temp_file" "$config_file"
+                    print_success "Removed CCS configuration from $(basename "$config_file")"
                     removed_count=$((removed_count + 1))
                 else
-                    log_error "无法更新 $BASHRC_FILE"
+                    rm -f "$temp_file"
                 fi
-            else
-                rm -f "$temp_file"
             fi
         fi
-    fi
-    
-    # 处理zsh配置
-    if [[ -f "$ZSHRC_FILE" ]]; then
-        local temp_file
-        temp_file=$(create_temp_file "ccs_zshrc")
-        if [[ -n "$temp_file" ]]; then
-            awk '
-            /^# Claude Code Configuration Switcher/ { skip=1; next }
-            /^if \[ -f "\$HOME\/\.ccs\/ccs\.sh" \]/ { skip=1; next }
-            /^fi$/ && skip { skip=0; next }
-            !skip { print }
-            ' "$ZSHRC_FILE" > "$temp_file"
-            
-            if ! cmp -s "$ZSHRC_FILE" "$temp_file"; then
-                if mv "$temp_file" "$ZSHRC_FILE"; then
-                    print_success "从 $ZSHRC_FILE 中移除配置"
-                    removed_count=$((removed_count + 1))
-                else
-                    log_error "无法更新 $ZSHRC_FILE"
-                fi
-            else
-                rm -f "$temp_file"
-            fi
-        fi
-    fi
-    
-    # 处理fish配置
-    local fish_config="$HOME/.config/fish/config.fish"
-    if [[ -f "$fish_config" ]]; then
-        local temp_file
-        temp_file=$(create_temp_file "ccs_fish")
-        if [[ -n "$temp_file" ]]; then
-            awk '
-            /^# Claude Code Configuration Switcher/ { skip=1; next }
-            /^if test -f "\$HOME\/\.ccs\/ccs\.fish"/ { skip=1; next }
-            /^end$/ && skip { skip=0; next }
-            !skip { print }
-            ' "$fish_config" > "$temp_file"
-            
-            if ! cmp -s "$fish_config" "$temp_file"; then
-                if mv "$temp_file" "$fish_config"; then
-                    print_success "从 $fish_config 中移除配置"
-                    removed_count=$((removed_count + 1))
-                else
-                    log_error "无法更新 $fish_config"
-                fi
-            else
-                rm -f "$temp_file"
-            fi
-        fi
-    fi
+    done
     
     if [[ "$removed_count" -gt 0 ]]; then
-        print_success "已从 $removed_count 个shell配置文件中移除ccs配置"
+        print_success "Removed CCS configuration from $removed_count shell config file(s)"
     else
-        print_warning "未在shell配置文件中找到ccs配置"
+        print_info "No CCS configuration found in shell config files"
     fi
     
-    # 清理临时文件
-    cleanup_temp_files
-    
-    print_success "卸载完成！请重新启动终端或重新加载shell配置"
+    echo ""
+    print_success "Uninstallation complete!"
+    print_warning "Please restart your terminal or reload shell configuration to complete the removal"
 }
 
 # 显示帮助
 show_help() {
-    echo "Claude Code Configuration Switcher 安装脚本"
+    echo "Claude Code Configuration Switcher (CCS) Installer v$INSTALL_SCRIPT_VERSION"
+    echo "════════════════════════════════════════════════════════════════"
     echo ""
-    echo "用法:"
-    echo "  $0                    - 安装ccs（如果已安装则更新脚本文件）"
-    echo "  $0 --uninstall        - 卸载ccs"
-    echo "  $0 --help             - 显示此帮助"
+    echo "Usage:"
+    echo "  $0                    - Install CCS (or update if already installed)"
+    echo "  $0 --uninstall        - Uninstall CCS"
+    echo "  $0 --help             - Show this help"
     echo ""
-    echo "此脚本将:"
-    echo "  1. 创建 $HOME/.ccs 目录"
-    echo "  2. 复制/更新ccs.sh和ccs.fish脚本到 $HOME/.ccs/"
-    echo "  3. 复制web文件到 $HOME/.ccs/web/"
-    echo "  4. 创建配置文件 $HOME/.ccs_config.toml（如果不存在）"
-    echo "  5. 配置shell环境"
+    echo "This script will:"
+    echo "  1. Detect system information and dependencies"
+    echo "  2. Create $HOME/.ccs directory structure"
+    echo "  3. Install CCS scripts (bash, fish, common utilities)"
+    echo "  4. Install web interface files"
+    echo "  5. Create configuration file $HOME/.ccs_config.toml (if not exists)"
+    echo "  6. Configure shell environments automatically"
     echo ""
-    echo "重新安装行为:"
-    echo "  - 强制更新所有shell脚本文件"
-    echo "  - 保留现有配置文件不变"
-    echo "  - 不重复添加shell配置"
+    echo "Update behavior:"
+    echo "  - Updates all script files to latest version"
+    echo "  - Preserves existing configuration files"
+    echo "  - Does not duplicate shell configuration"
     echo ""
-    echo "注意: 配置文件一旦存在就不会被覆盖"
+    echo "Features:"
+    echo "  - Multi-shell support (bash, zsh, fish)"
+    echo "  - Cross-platform compatibility (Linux, macOS, WSL)"
+    echo "  - Web-based configuration interface"
+    echo "  - Automatic dependency checking"
+    echo "  - Safe uninstallation with backup"
+    echo ""
+    echo "Note: Configuration files are never overwritten once they exist"
 }
 
 # 主函数
@@ -659,20 +1266,32 @@ main() {
             show_help
             ;;
         *)
+            # 显示标题和版本信息
+            echo "🔄 Claude Code Configuration Switcher (CCS) Installer v$INSTALL_SCRIPT_VERSION"
+            echo "════════════════════════════════════════════════════════════════"
+            echo ""
+            
+            # 系统信息检测
+            detect_system_info
+            local current_shell=$(detect_shell)
+            echo ""
+            
+            # 检查依赖
+            check_dependencies
+            echo ""
+            
             # 检查是否为重新安装
             if check_installed; then
-                print_message "$YELLOW" "检测到ccs已安装,开始更新..."
-                echo ""
+                print_step "Existing CCS installation detected, starting update..."
             else
-                print_message "$BLUE" "开始安装Claude Code Configuration Switcher..."
-                echo ""
+                print_step "Starting CCS installation..."
             fi
+            echo ""
             
             create_directories
             copy_script
             create_config_file
             configure_shell
-            echo ""
             install_complete
             ;;
     esac

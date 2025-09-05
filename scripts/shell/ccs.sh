@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# Claude Code Configuration Switcher (ccs)
-# 此函数用于切换不同的Claude Code API配置
+# Claude Code Configuration Switcher (ccs) - 主脚本 v2.0 优化版
+# 此脚本用于快速切换不同的Claude Code API配置
+# 优化特性: 缓存系统、性能提升、增强的错误处理
 
 # 配置文件路径
 CONFIG_FILE="$HOME/.ccs_config.toml"
@@ -11,20 +12,23 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if [[ -f "$SCRIPT_DIR/ccs-common.sh" ]]; then
     source "$SCRIPT_DIR/ccs-common.sh"
 else
-    # 简单的错误处理,如果工具库不存在
-    handle_error() {
-        echo "错误: $1" >&2
-        return "${2:-1}"
-    }
+    echo "错误: 无法加载工具库 $SCRIPT_DIR/ccs-common.sh" >&2
+    echo "请确保文件存在或重新安装CCS" >&2
+    exit 1
 fi
 
-# 检查配置文件是否存在
+# 检查核心依赖
+check_dependencies "grep" "sed" "awk" "cut" "optional:curl" "optional:wget"
+
+# 检查配置文件是否存在（使用新的验证函数）
 if [[ ! -f "$CONFIG_FILE" ]]; then
     handle_error $ERROR_CONFIG_MISSING "配置文件 $CONFIG_FILE 不存在,请先运行安装脚本来创建配置文件" "true"
 fi
 
-# 验证配置文件
-validate_config_file "$CONFIG_FILE"
+# 验证配置文件完整性
+if ! verify_config_integrity "$CONFIG_FILE"; then
+    handle_error $ERROR_CONFIGURATION_CORRUPT "配置文件验证失败" "true"
+fi
 
 # 更新配置文件中的当前配置
 update_current_config() {
@@ -140,25 +144,53 @@ load_current_config() {
         fi
     fi
 }
+# 帮助信息（优化版）
 ccs_help() {
-    echo "Claude Code Configuration Switcher (ccs)"
+    echo -e "${BLUE}════════════════════════════════════════════════════════════════${NC}"
+    echo -e "${BLUE}🔄 Claude Code Configuration Switcher (CCS) v2.0${NC}"
+    echo -e "${BLUE}════════════════════════════════════════════════════════════════${NC}"
     echo ""
-    echo "用法:"
-    echo "  ccs [配置名称]    - 切换到指定配置"
-    echo "  ccs list          - 列出所有可用配置"
-    echo "  ccs current       - 显示当前配置"
-    echo "  ccs web           - 打开web配置界面"
-    echo "  ccs version       - 显示版本信息"
-    echo "  ccs uninstall     - 卸载ccs工具"
-    echo "  ccs help          - 显示此帮助信息"
+    echo -e "${GREEN}📋 基本用法:${NC}"
+    echo "  ccs [配置名称]          - 切换到指定配置"
+    echo "  ccs list               - 列出所有可用配置"
+    echo "  ccs current            - 显示当前配置状态"
     echo ""
-    echo "示例:"
-    echo "  ccs anyrouter     - 切换到anyrouter配置"
-    echo "  ccs glm           - 切换到智谱GLM配置"
-    echo "  ccs list          - 查看所有可用配置"
-    echo "  ccs web           - 打开web配置界面"
-    echo "  ccs version       - 查看当前版本"
-    echo "  ccs uninstall     - 完全卸载ccs工具"
+    echo -e "${GREEN}🔧 管理命令:${NC}"
+    echo "  ccs web                - 启动Web配置界面"
+    echo "  ccs backup             - 备份当前配置文件"
+    echo "  ccs verify             - 验证配置文件完整性"
+    echo "  ccs clear-cache        - 清理配置缓存"
+    echo "  ccs uninstall          - 卸载CCS工具"
+    echo ""
+    echo -e "${GREEN}ℹ️  信息命令:${NC}"
+    echo "  ccs version            - 显示版本信息"
+    echo "  ccs help               - 显示此帮助信息"
+    echo ""
+    echo -e "${GREEN}🔍 调试命令:${NC}"
+    echo "  ccs --debug [命令]      - 启用调试模式运行命令"
+    echo ""
+    echo -e "${CYAN}💡 使用示例:${NC}"
+    echo "  ccs anyrouter          - 切换到anyrouter配置"
+    echo "  ccs glm                - 切换到智谱GLM配置"
+    echo "  ccs list               - 查看所有可用配置"
+    echo "  ccs current            - 查看当前配置状态"
+    echo "  ccs web                - 打开图形化配置界面"
+    echo "  ccs backup             - 备份配置文件"
+    echo "  ccs --debug list       - 以调试模式列出配置"
+    echo ""
+    echo -e "${YELLOW}🔗 配置文件:${NC}"
+    echo "  位置: ~/.ccs_config.toml"
+    echo "  格式: TOML"
+    echo "  示例: 参考 config/.ccs_config.toml.example"
+    echo ""
+    echo -e "${YELLOW}📝 新功能 (v2.0):${NC}"
+    echo "  • 配置缓存系统 - 提升解析性能"
+    echo "  • 增强的错误处理和诊断"
+    echo "  • 配置文件完整性验证"
+    echo "  • 自动备份和恢复系统"
+    echo "  • 性能监控和调试模式"
+    echo ""
+    echo -e "${BLUE}════════════════════════════════════════════════════════════════${NC}"
 }
 
 # 显示版本信息
@@ -245,158 +277,226 @@ show_version() {
     echo "🚀 感谢使用 CCS！如有问题请访问项目主页获取帮助。"
 }
 
-# 解析TOML配置文件
+# 解析TOML配置文件（优化版，使用缓存）
 parse_toml() {
     local config_name="$1"
     local silent_mode="$2"  # 如果为"silent",减少输出
     
-    log_debug "解析配置: $config_name"
+    log_debug "解析配置: $config_name (模式: ${silent_mode:-normal})"
     
-    # 检查配置是否存在
-    if ! grep -q "^\[$config_name\]" "$CONFIG_FILE"; then
-        handle_error $ERROR_CONFIG_INVALID "配置 '$config_name' 不存在"
-    fi
-    
-    # 获取配置节内容（处理最后一个配置节的情况）
+    # 使用高效解析器
     local config_content
-    local last_config=$(grep "^\\[" "$CONFIG_FILE" | sed 's/\[\(.*\)\]/\1/' | tail -1)
-    if [[ "$config_name" == "$last_config" ]]; then
-        # 如果是最后一个配置节,读取到文件末尾
-        config_content=$(sed -n "/^\[$config_name\]/,\$p" "$CONFIG_FILE" | tail -n +2 | grep -v "^#")
-    else
-        # 否则读取到下一个配置节
-        config_content=$(sed -n "/^\[$config_name\]/,/^\[/p" "$CONFIG_FILE" | tail -n +2 | head -n -1 | grep -v "^#")
-    fi
+    config_content=$(parse_toml_fast "$CONFIG_FILE" "$config_name")
     
-    if [[ -z "$config_content" ]]; then
-        handle_error $ERROR_CONFIG_INVALID "配置 '$config_name' 内容为空"
+    if [[ $? -ne 0 ]] || [[ -z "$config_content" ]]; then
+        handle_error $ERROR_CONFIG_INVALID "配置 '$config_name' 不存在或为空"
     fi
     
     # 清理环境变量
-    unset ANTHROPIC_BASE_URL
-    unset ANTHROPIC_AUTH_TOKEN
-    unset ANTHROPIC_MODEL
-    unset ANTHROPIC_SMALL_FAST_MODEL
+    unset ANTHROPIC_BASE_URL ANTHROPIC_AUTH_TOKEN ANTHROPIC_MODEL ANTHROPIC_SMALL_FAST_MODEL
     
-    # 解析配置项
-    local base_url auth_token model small_fast_model
+    # 使用关联数组优化解析
+    declare -A config_vars
+    while IFS='=' read -r key value; do
+        # 清理键值对
+        key=$(echo "$key" | tr -d ' ')
+        value=$(echo "$value" | sed 's/^[[:space:]]*["'\'']\(.*\)["'\'']*[[:space:]]*$/\1/')
+        config_vars["$key"]="$value"
+    done <<< "$config_content"
     
-    # 提取base_url
-    base_url=$(echo "$config_content" | grep "^base_url" | sed 's/.*base_url *= *"\([^"]*\)".*/\1/' | sed "s/.*base_url *= *'\([^']*\)'.*/\1/")
-    if [[ -n "$base_url" ]]; then
-        export ANTHROPIC_BASE_URL="$base_url"
-        if [[ "$silent_mode" != "silent" ]]; then
-            print_success "设置 ANTHROPIC_BASE_URL=$base_url"
-        fi
+    # 设置环境变量
+    local vars_set=0
+    
+    if [[ -n "${config_vars[base_url]}" ]]; then
+        export ANTHROPIC_BASE_URL="${config_vars[base_url]}"
+        ((vars_set++))
+        [[ "$silent_mode" != "silent" ]] && print_success "设置 ANTHROPIC_BASE_URL=${config_vars[base_url]}"
     else
         log_warn "配置 '$config_name' 缺少 base_url"
     fi
     
-    # 提取auth_token
-    auth_token=$(echo "$config_content" | grep "^auth_token" | sed 's/.*auth_token *= *"\([^"]*\)".*/\1/' | sed "s/.*auth_token *= *'\([^']*\)'.*/\1/")
-    if [[ -n "$auth_token" ]]; then
-        export ANTHROPIC_AUTH_TOKEN="$auth_token"
-        if [[ "$silent_mode" != "silent" ]]; then
-            print_success "设置 ANTHROPIC_AUTH_TOKEN=$(mask_sensitive_info "$auth_token")"
-        fi
+    if [[ -n "${config_vars[auth_token]}" ]]; then
+        export ANTHROPIC_AUTH_TOKEN="${config_vars[auth_token]}"
+        ((vars_set++))
+        [[ "$silent_mode" != "silent" ]] && print_success "设置 ANTHROPIC_AUTH_TOKEN=$(mask_sensitive_info "${config_vars[auth_token]}")"
     else
         log_warn "配置 '$config_name' 缺少 auth_token"
     fi
     
-    # 提取model
-    model=$(echo "$config_content" | grep "^model" | sed 's/.*model *= *"\([^"]*\)".*/\1/' | sed "s/.*model *= *'\([^']*\)'.*/\1/")
-    if [[ -n "$model" && "$model" != "" ]]; then
-        export ANTHROPIC_MODEL="$model"
-        if [[ "$silent_mode" != "silent" ]]; then
-            print_success "设置 ANTHROPIC_MODEL=$model"
-        fi
+    if [[ -n "${config_vars[model]}" && "${config_vars[model]}" != "" ]]; then
+        export ANTHROPIC_MODEL="${config_vars[model]}"
+        ((vars_set++))
+        [[ "$silent_mode" != "silent" ]] && print_success "设置 ANTHROPIC_MODEL=${config_vars[model]}"
     else
-        if [[ "$silent_mode" != "silent" ]]; then
-            log_info "配置 '$config_name' 使用默认模型"
-        fi
+        [[ "$silent_mode" != "silent" ]] && log_info "配置 '$config_name' 使用默认模型"
     fi
     
-    # 提取small_fast_model（可选）
-    small_fast_model=$(echo "$config_content" | grep "^small_fast_model" | sed 's/.*small_fast_model *= *"\([^"]*\)".*/\1/' | sed "s/.*small_fast_model *= *'\([^']*\)'.*/\1/")
-    if [[ -n "$small_fast_model" && "$small_fast_model" != "" ]]; then
-        export ANTHROPIC_SMALL_FAST_MODEL="$small_fast_model"
-        if [[ "$silent_mode" != "silent" ]]; then
-            print_success "设置 ANTHROPIC_SMALL_FAST_MODEL=$small_fast_model"
-        fi
+    if [[ -n "${config_vars[small_fast_model]}" && "${config_vars[small_fast_model]}" != "" ]]; then
+        export ANTHROPIC_SMALL_FAST_MODEL="${config_vars[small_fast_model]}"
+        ((vars_set++))
+        [[ "$silent_mode" != "silent" ]] && print_success "设置 ANTHROPIC_SMALL_FAST_MODEL=${config_vars[small_fast_model]}"
+    fi
+    
+    if (( vars_set == 0 )); then
+        handle_error $ERROR_CONFIG_INVALID "配置 '$config_name' 没有设置任何有效的环境变量"
     fi
     
     if [[ "$silent_mode" != "silent" ]]; then
-        print_success "已切换到配置: $config_name"
+        print_success "已切换到配置: $config_name ($vars_set 个变量已设置)"
         
-        # 更新配置文件中的当前配置（非静默模式下才更新,避免自动加载时的循环）
+        # 更新配置文件中的当前配置（非静默模式下才更新）
         update_current_config "$config_name"
     fi
 }
 
-# 列出所有可用配置
+# 列出所有可用配置（优化版）
 list_configs() {
-    echo "可用的配置:"
+    print_step "扫描可用的配置..."
     echo ""
     
-    # 提取所有配置节
-    local configs=$(grep "^\[" "$CONFIG_FILE" | sed 's/\[\(.*\)\]/\1/')
+    # 使用高效方法提取所有配置节
+    local configs
+    configs=$(awk '/^\[.*\]/ { gsub(/\[|\]/, ""); print }' "$CONFIG_FILE")
     
     if [[ -z "$configs" ]]; then
         log_warn "未找到任何配置节"
         return 1
     fi
     
+    # 获取当前配置
+    local current_config
+    current_config=$(grep "^current_config" "$CONFIG_FILE" | cut -d'"' -f2 | cut -d"'" -f2)
+    
+    # 计算最大长度用于对齐
+    local max_length=0
     for config in $configs; do
-        # 跳过default_config
-        if [[ "$config" == "default_config" ]]; then
-            continue
-        fi
+        [[ "$config" != "default_config" ]] && (( ${#config} > max_length )) && max_length=${#config}
+    done
+    
+    local config_count=0
+    for config in $configs; do
+        # 跳过内部配置
+        [[ "$config" == "default_config" ]] && continue
+        
+        ((config_count++))
         
         # 获取配置描述
-        local description=$(sed -n "/^\[$config\]/,/^$/p" "$CONFIG_FILE" | grep "description" | cut -d'"' -f2 | cut -d"'" -f2)
+        local description
+        description=$(parse_toml_fast "$CONFIG_FILE" "$config" | grep "^description" | cut -d'=' -f2- | sed 's/^[[:space:]]*["'\'']\(.*\)["'\'']*[[:space:]]*$/\1/')
         
+        # 格式化输出
+        local marker=" "
+        local color="$NC"
+        if [[ "$config" == "$current_config" ]]; then
+            marker="▶"
+            color="$GREEN"
+        fi
+        
+        printf "${color}%s %-*s${NC}" "$marker" "$max_length" "$config"
         if [[ -n "$description" ]]; then
-            echo "  $config - $description"
+            echo " - $description"
         else
-            echo "  $config"
+            echo " - (无描述)"
         fi
     done
     
     echo ""
     
+    # 显示统计信息
+    print_step "配置统计: $config_count 个配置可用"
+    
     # 显示默认配置
-    local default_config=$(grep "default_config" "$CONFIG_FILE" | cut -d'"' -f2 | cut -d"'" -f2)
+    local default_config
+    default_config=$(grep "^default_config" "$CONFIG_FILE" | cut -d'"' -f2 | cut -d"'" -f2)
     if [[ -n "$default_config" ]]; then
         echo "默认配置: $default_config"
     fi
+    
+    # 显示当前配置
+    if [[ -n "$current_config" ]]; then
+        echo "当前配置: ${GREEN}$current_config${NC}"
+    else
+        echo "当前配置: ${YELLOW}未设置${NC}"
+    fi
 }
 
-# 显示当前配置
+# 显示当前配置（优化版）
 show_current() {
-    echo "当前配置:"
+    print_step "检查当前环境配置..."
+    echo ""
     
-    if [[ -n "$ANTHROPIC_BASE_URL" ]]; then
-        echo "  ANTHROPIC_BASE_URL=$ANTHROPIC_BASE_URL"
+    # 定义环境变量配置
+    declare -A env_vars=(
+        ["ANTHROPIC_BASE_URL"]="API端点"
+        ["ANTHROPIC_AUTH_TOKEN"]="认证令牌"
+        ["ANTHROPIC_MODEL"]="模型"
+        ["ANTHROPIC_SMALL_FAST_MODEL"]="快速模型"
+    )
+    
+    local vars_set=0
+    local max_name_length=25
+    
+    # 显示环境变量状态
+    for var_name in "${!env_vars[@]}"; do
+        local var_value="${!var_name}"
+        local description="${env_vars[$var_name]}"
+        
+        printf "  %-*s: " "$max_name_length" "$description"
+        
+        if [[ -n "$var_value" ]]; then
+            ((vars_set++))
+            if [[ "$var_name" == "ANTHROPIC_AUTH_TOKEN" ]]; then
+                echo "${GREEN}$(mask_sensitive_info "$var_value")${NC}"
+            else
+                echo "${GREEN}$var_value${NC}"
+            fi
+        else
+            echo "${YELLOW}(未设置)${NC}"
+        fi
+    done
+    
+    echo ""
+    
+    # 获取并显示配置文件中的当前配置
+    local current_config
+    current_config=$(grep "^current_config" "$CONFIG_FILE" | cut -d'"' -f2 | cut -d"'" -f2)
+    
+    if [[ -n "$current_config" ]]; then
+        print_step "配置文件中的活跃配置: ${GREEN}$current_config${NC}"
     else
-        echo "  ANTHROPIC_BASE_URL=(未设置)"
+        print_warning "配置文件中未找到 current_config 字段"
     fi
     
-    if [[ -n "$ANTHROPIC_AUTH_TOKEN" ]]; then
-        echo "  ANTHROPIC_AUTH_TOKEN=$(mask_sensitive_info "$ANTHROPIC_AUTH_TOKEN")"
+    # 显示统计信息
+    echo ""
+    if (( vars_set > 0 )); then
+        print_success "环境状态: $vars_set/4 个环境变量已设置"
     else
-        echo "  ANTHROPIC_AUTH_TOKEN=(未设置)"
+        print_warning "环境状态: 没有设置任何CCS环境变量"
+        echo "建议运行: ccs <配置名称> 来设置配置"
     fi
     
-    if [[ -n "$ANTHROPIC_MODEL" ]]; then
-        echo "  ANTHROPIC_MODEL=$ANTHROPIC_MODEL"
+    # 配置文件信息
+    echo ""
+    print_step "配置文件信息:"
+    echo "  路径: $CONFIG_FILE"
+    if [[ -f "$CONFIG_FILE" ]]; then
+        local file_size
+        file_size=$(stat -c%s "$CONFIG_FILE" 2>/dev/null || stat -f%z "$CONFIG_FILE" 2>/dev/null)
+        local file_mtime
+        file_mtime=$(stat -c%Y "$CONFIG_FILE" 2>/dev/null || stat -f%m "$CONFIG_FILE" 2>/dev/null)
+        local modified_time
+        modified_time=$(date -d "@$file_mtime" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || date -r "$file_mtime" '+%Y-%m-%d %H:%M:%S' 2>/dev/null)
+        
+        echo "  大小: $file_size 字节"
+        echo "  修改时间: $modified_time"
+        
+        # 配置节统计
+        local config_count
+        config_count=$(grep -c "^\[.*\]" "$CONFIG_FILE")
+        echo "  配置节数量: $config_count 个"
     else
-        echo "  ANTHROPIC_MODEL=(未设置)"
-    fi
-    
-    if [[ -n "$ANTHROPIC_SMALL_FAST_MODEL" ]]; then
-        echo "  ANTHROPIC_SMALL_FAST_MODEL=$ANTHROPIC_SMALL_FAST_MODEL"
-    else
-        echo "  ANTHROPIC_SMALL_FAST_MODEL=(未设置)"
+        print_error "配置文件不存在"
     fi
 }
 
@@ -636,48 +736,136 @@ open_web() {
     fi
 }
 
-# 主函数
+# 主函数（优化版）
 ccs() {
-    # 验证配置文件是否存在
-    if [[ ! -f "$CONFIG_FILE" ]]; then
-        handle_error $ERROR_CONFIG_MISSING "配置文件 $CONFIG_FILE 不存在,请先运行安装脚本来创建配置文件" "true"
+    # 参数验证
+    local command="${1:-}"
+    local start_time
+    start_time=$(date +%s.%N 2>/dev/null || date +%s)
+    
+    log_debug "CCS 主函数调用: 命令='$command', 参数个数=$#"
+    
+    # 检查配置文件完整性（只在需要时检查）
+    if [[ "$command" != "help" && "$command" != "-h" && "$command" != "--help" && "$command" != "version" ]]; then
+        if [[ ! -f "$CONFIG_FILE" ]]; then
+            handle_error $ERROR_CONFIG_MISSING "配置文件 $CONFIG_FILE 不存在,请先运行安装脚本来创建配置文件" "true"
+        fi
+        
+        if ! verify_config_integrity "$CONFIG_FILE" 2>/dev/null; then
+            log_warn "配置文件完整性检查失败，尝试基本验证"
+            if ! validate_config_file "$CONFIG_FILE"; then
+                handle_error $ERROR_CONFIGURATION_CORRUPT "配置文件验证失败" "true"
+            fi
+        fi
     fi
     
-    # 验证配置文件
-    validate_config_file "$CONFIG_FILE"
-    
-    case "${1:-}" in
+    # 命令路由（优化的case结构）
+    case "$command" in
         "ls"|"list")
-            list_configs
+            profile_function list_configs
             ;;
-        "current")
-            show_current
+        "current"|"show"|"status")
+            profile_function show_current
             ;;
         "web")
-            open_web
+            if command_exists python3 || command_exists python; then
+                profile_function open_web
+            else
+                handle_error $ERROR_DEPENDENCY_MISSING "启动Web界面需要Python支持" "true"
+            fi
             ;;
         "version"|"-v"|"--version")
-            show_version
+            profile_function show_version
             ;;
-        "uninstall")
-            ccs_uninstall
+        "uninstall"|"remove")
+            if ask_confirmation "确定要卸载CCS吗？这将删除所有脚本文件" "N"; then
+                profile_function ccs_uninstall
+            else
+                print_step "取消卸载操作"
+            fi
             ;;
         "help"|"-h"|"--help")
-            ccs_help
+            profile_function ccs_help
+            ;;
+        "clear-cache"|"cache-clear")
+            clear_all_cache
+            print_success "配置缓存已清理"
+            ;;
+        "verify"|"check")
+            log_info "验证配置文件完整性..."
+            if verify_config_integrity "$CONFIG_FILE"; then
+                print_success "配置文件验证通过"
+            else
+                handle_error $ERROR_CONFIGURATION_CORRUPT "配置文件验证失败"
+            fi
+            ;;
+        "backup")
+            local backup_file
+            backup_file=$(auto_backup "$CONFIG_FILE")
+            if [[ $? -eq 0 ]]; then
+                print_success "配置文件已备份: $backup_file"
+            else
+                handle_error $ERROR_UNKNOWN "备份失败"
+            fi
             ;;
         "")
-            # 如果没有参数,使用默认配置
-            local default_config=$(grep "default_config" "$CONFIG_FILE" | cut -d'"' -f2 | cut -d"'" -f2)
-            if [[ -n "$default_config" ]]; then
-                parse_toml "$default_config"
+            # 如果没有参数,使用默认配置或当前配置
+            local target_config
+            target_config=$(grep "^current_config" "$CONFIG_FILE" | cut -d'"' -f2 | cut -d"'" -f2)
+            
+            if [[ -z "$target_config" ]]; then
+                target_config=$(grep "^default_config" "$CONFIG_FILE" | cut -d'"' -f2 | cut -d"'" -f2)
+            fi
+            
+            if [[ -n "$target_config" ]]; then
+                log_info "使用配置: $target_config"
+                profile_function parse_toml "$target_config"
             else
                 handle_error $ERROR_CONFIG_INVALID "没有指定配置名称且没有默认配置" "true"
             fi
             ;;
+        --debug)
+            # 启用调试模式
+            export CCS_LOG_LEVEL=$LOG_LEVEL_DEBUG
+            log_info "调试模式已启用"
+            shift
+            ccs "$@"  # 递归调用处理剩余参数
+            ;;
+        --*)
+            # 处理其他选项
+            handle_error $ERROR_INVALID_ARGUMENT "未知选项: $command" "true"
+            ;;
         *)
-            parse_toml "$1"
+            # 指定的配置名称
+            if [[ -n "$command" ]]; then
+                # 验证配置名称是否存在
+                if ! grep -q "^\[$command\]" "$CONFIG_FILE"; then
+                    log_error "配置 '$command' 不存在"
+                    echo ""
+                    print_step "可用的配置:"
+                    list_configs
+                    exit $ERROR_CONFIG_INVALID
+                fi
+                
+                profile_function parse_toml "$command"
+            else
+                handle_error $ERROR_INVALID_ARGUMENT "无效的参数" "true"
+            fi
             ;;
     esac
+    
+    # 性能统计（仅在调试模式下）
+    if [[ $CCS_LOG_LEVEL -le $LOG_LEVEL_DEBUG ]]; then
+        local end_time
+        end_time=$(date +%s.%N 2>/dev/null || date +%s)
+        local duration
+        if command -v bc >/dev/null 2>&1; then
+            duration=$(echo "$end_time - $start_time" | bc 2>/dev/null || echo "unknown")
+        else
+            duration="unknown"
+        fi
+        log_debug "CCS 命令执行完成 (耗时: ${duration}s)"
+    fi
 }
 
 # 如果直接运行此脚本（而不是source）,则执行主函数

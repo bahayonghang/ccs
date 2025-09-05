@@ -1,7 +1,9 @@
 #!/bin/bash
 
 # CCS (Claude Code Configuration Switcher) 通用工具函数库
+# 版本: 2.0 - 优化版
 # 此文件包含跨平台的共享功能,用于减少代码重复并提高一致性
+# 包含: 性能优化、缓存机制、增强的安全性和错误处理
 
 # 颜色输出定义
 if [[ -n "$TERM" && "$TERM" != "dumb" ]]; then
@@ -20,7 +22,7 @@ else
     readonly NC=''
 fi
 
-# 错误码定义
+# 错误码定义（扩展版）
 readonly ERROR_SUCCESS=0
 readonly ERROR_CONFIG_MISSING=1
 readonly ERROR_CONFIG_INVALID=2
@@ -29,7 +31,24 @@ readonly ERROR_PERMISSION_DENIED=4
 readonly ERROR_FILE_NOT_FOUND=5
 readonly ERROR_INVALID_ARGUMENT=6
 readonly ERROR_NETWORK_UNREACHABLE=7
+readonly ERROR_DEPENDENCY_MISSING=8
+readonly ERROR_CONFIGURATION_CORRUPT=9
+readonly ERROR_RESOURCE_BUSY=10
+readonly ERROR_TIMEOUT=11
+readonly ERROR_AUTHENTICATION_FAILED=12
 readonly ERROR_UNKNOWN=99
+
+# 版本信息
+readonly CCS_COMMON_VERSION="2.0.0"
+
+# 性能配置
+readonly CCS_CACHE_TTL="${CCS_CACHE_TTL:-300}"  # 缓存生存时间(秒)
+readonly CCS_MAX_RETRIES="${CCS_MAX_RETRIES:-3}"  # 最大重试次数  
+readonly CCS_TIMEOUT="${CCS_TIMEOUT:-30}"  # 默认超时时间(秒)
+
+# 缓存相关变量
+declare -A _config_cache
+declare -A _config_cache_timestamp
 
 # 日志级别
 readonly LOG_LEVEL_DEBUG=0
@@ -41,7 +60,7 @@ readonly LOG_LEVEL_OFF=4
 # 当前日志级别（默认为INFO）
 CCS_LOG_LEVEL=${CCS_LOG_LEVEL:-$LOG_LEVEL_INFO}
 
-# 统一错误处理函数
+# 统一错误处理函数（增强版）
 # 用法: handle_error <错误码> <错误信息> [是否显示帮助]
 handle_error() {
     local error_code="$1"
@@ -53,24 +72,50 @@ handle_error() {
     case "$error_code" in
         $ERROR_CONFIG_MISSING)
             log_info "解决方案: 请运行安装脚本创建配置文件"
+            log_info "  命令: ccs --install 或 ./scripts/install/install.sh"
             ;;
         $ERROR_CONFIG_INVALID)
             log_info "解决方案: 请检查配置文件格式和必需字段"
+            log_info "  参考: ~/.ccs_config.toml 必须包含 [section] 和 base_url、auth_token 字段"
             ;;
         $ERROR_DOWNLOAD_FAILED)
             log_info "解决方案: 请检查网络连接或稍后重试"
+            log_info "  检查: 防火墙设置、代理配置、DNS设置"
             ;;
         $ERROR_PERMISSION_DENIED)
             log_info "解决方案: 请检查文件权限或使用管理员权限运行"
+            log_info "  命令: chmod 755 <script_file> 或 sudo <command>"
             ;;
         $ERROR_NETWORK_UNREACHABLE)
             log_info "解决方案: 请检查网络连接和防火墙设置"
+            log_info "  测试: ping github.com 或 curl -I https://github.com"
+            ;;
+        $ERROR_DEPENDENCY_MISSING)
+            log_info "解决方案: 安装缺少的依赖程序"
+            log_info "  检查: 使用 check_dependencies 函数检查所需依赖"
+            ;;
+        $ERROR_CONFIGURATION_CORRUPT)
+            log_info "解决方案: 恢复或重新创建配置文件"
+            log_info "  备份: 检查 ~/.ccs/backups/ 目录中的备份文件"
+            ;;
+        $ERROR_RESOURCE_BUSY)
+            log_info "解决方案: 等待资源释放或终止占用的进程"
+            log_info "  检查: ps aux | grep ccs 查找相关进程"
+            ;;
+        $ERROR_TIMEOUT)
+            log_info "解决方案: 检查网络连接或增加超时时间"
+            log_info "  设置: 使用 CCS_TIMEOUT 环境变量调整超时时间"
+            ;;
+        $ERROR_AUTHENTICATION_FAILED)
+            log_info "解决方案: 检查API认证令牌是否正确"
+            log_info "  验证: 确保 auth_token 字段包含有效的API密钥"
             ;;
     esac
     
     if [[ "$show_help" == "true" ]]; then
         echo
         echo "使用 'ccs help' 查看帮助信息"
+        echo "使用 'ccs --debug' 启用调试模式获取更多信息"
     fi
     
     exit "$error_code"
@@ -522,5 +567,344 @@ version_compare() {
     echo "equal"
 }
 
+# ============================================================================
+# 高级功能模块 (v2.0 新增)
+# ============================================================================
+
+# 配置缓存系统
+# 用法: cache_config <config_name> <config_data>
+cache_config() {
+    local config_name="$1"
+    local config_data="$2"
+    local timestamp=$(date +%s)
+    
+    _config_cache["$config_name"]="$config_data"
+    _config_cache_timestamp["$config_name"]="$timestamp"
+    
+    log_debug "缓存配置: $config_name"
+}
+
+# 获取缓存的配置
+# 用法: get_cached_config <config_name>
+# 返回: 如果缓存有效返回配置数据，否则返回空
+get_cached_config() {
+    local config_name="$1"
+    local current_time=$(date +%s)
+    local cache_timestamp="${_config_cache_timestamp[$config_name]}"
+    
+    if [[ -n "$cache_timestamp" ]]; then
+        local age=$((current_time - cache_timestamp))
+        if (( age < CCS_CACHE_TTL )); then
+            log_debug "使用缓存配置: $config_name (age: ${age}s)"
+            echo "${_config_cache[$config_name]}"
+            return 0
+        else
+            log_debug "缓存过期，清理: $config_name (age: ${age}s)"
+            unset _config_cache["$config_name"]
+            unset _config_cache_timestamp["$config_name"]
+        fi
+    fi
+    
+    return 1
+}
+
+# 清理所有缓存
+clear_all_cache() {
+    _config_cache=()
+    _config_cache_timestamp=()
+    log_debug "清理所有配置缓存"
+}
+
+# 高效的TOML解析器（改进版）
+# 用法: parse_toml_fast <config_file> <section_name>
+parse_toml_fast() {
+    local config_file="$1"
+    local section_name="$2"
+    local cache_key="${config_file}:${section_name}"
+    
+    # 检查缓存
+    local cached_result
+    cached_result=$(get_cached_config "$cache_key")
+    if [[ -n "$cached_result" ]]; then
+        echo "$cached_result"
+        return 0
+    fi
+    
+    # 解析配置文件（优化的单次读取）
+    local result
+    result=$(awk -v section="$section_name" '
+        BEGIN { in_section = 0; found = 0 }
+        /^\[.*\]/ { 
+            if ($0 == "[" section "]") { 
+                in_section = 1; found = 1 
+            } else { 
+                in_section = 0 
+            }
+            next
+        }
+        in_section && /^[^#]/ && NF > 0 { 
+            gsub(/^[ \t]+|[ \t]+$/, ""); 
+            print 
+        }
+        END { if (!found) exit 1 }
+    ' "$config_file")
+    
+    if [[ $? -eq 0 ]] && [[ -n "$result" ]]; then
+        # 缓存结果
+        cache_config "$cache_key" "$result"
+        echo "$result"
+        return 0
+    fi
+    
+    return 1
+}
+
+# 批量操作支持
+# 用法: batch_operation <operation> <items...>
+batch_operation() {
+    local operation="$1"
+    shift
+    local items=("$@")
+    local total=${#items[@]}
+    local completed=0
+    local failed=0
+    
+    log_info "开始批量操作: $operation (总计: $total 项)"
+    
+    for item in "${items[@]}"; do
+        completed=$((completed + 1))
+        show_progress "$completed" "$total" 30
+        
+        if ! "$operation" "$item"; then
+            failed=$((failed + 1))
+            log_warn "批量操作失败: $item"
+        fi
+    done
+    
+    echo
+    if (( failed > 0 )); then
+        log_warn "批量操作完成，成功: $((completed - failed))，失败: $failed"
+        return 1
+    else
+        log_info "批量操作全部成功完成"
+        return 0
+    fi
+}
+
+# 智能文件监控
+# 用法: monitor_file_changes <file> <callback_function>
+monitor_file_changes() {
+    local file="$1"
+    local callback="$2"
+    local last_mtime
+    
+    if [[ ! -f "$file" ]]; then
+        log_error "监控的文件不存在: $file"
+        return 1
+    fi
+    
+    last_mtime=$(stat -c %Y "$file" 2>/dev/null || stat -f %m "$file" 2>/dev/null)
+    
+    while true; do
+        local current_mtime
+        current_mtime=$(stat -c %Y "$file" 2>/dev/null || stat -f %m "$file" 2>/dev/null)
+        
+        if [[ "$current_mtime" != "$last_mtime" ]]; then
+            log_debug "检测到文件变化: $file"
+            if command -v "$callback" >/dev/null 2>&1; then
+                "$callback" "$file"
+            fi
+            last_mtime="$current_mtime"
+        fi
+        
+        sleep 1
+    done
+}
+
+# 配置文件完整性检查
+# 用法: verify_config_integrity <config_file>
+verify_config_integrity() {
+    local config_file="$1"
+    local errors=()
+    
+    log_info "检查配置文件完整性: $config_file"
+    
+    # 检查文件存在性和权限
+    if [[ ! -f "$config_file" ]]; then
+        errors+=("配置文件不存在")
+    elif [[ ! -r "$config_file" ]]; then
+        errors+=("配置文件不可读")
+    fi
+    
+    # 检查TOML语法
+    if ! validate_toml_syntax "$config_file"; then
+        errors+=("TOML语法错误")
+    fi
+    
+    # 检查字符编码（确保是UTF-8）
+    if command_exists file; then
+        local encoding
+        encoding=$(file -bi "$config_file" | grep -o 'charset=[^;]*' | cut -d= -f2)
+        if [[ "$encoding" != "utf-8" ]] && [[ "$encoding" != "us-ascii" ]]; then
+            errors+=("文件编码非UTF-8: $encoding")
+        fi
+    fi
+    
+    # 检查文件大小（防止异常大文件）
+    local file_size
+    file_size=$(stat -c%s "$config_file" 2>/dev/null || stat -f%z "$config_file" 2>/dev/null)
+    if (( file_size > 1048576 )); then  # 1MB
+        errors+=("配置文件过大: ${file_size} bytes")
+    fi
+    
+    # 输出检查结果
+    if [[ ${#errors[@]} -eq 0 ]]; then
+        log_info "配置文件完整性检查通过"
+        return 0
+    else
+        log_error "配置文件完整性检查失败:"
+        for error in "${errors[@]}"; do
+            log_error "  - $error"
+        done
+        return 1
+    fi
+}
+
+# 自动备份和恢复系统
+# 用法: auto_backup <file> [backup_count]
+auto_backup() {
+    local file="$1"
+    local max_backups="${2:-5}"
+    local backup_dir="${HOME}/.ccs/backups/auto"
+    
+    if [[ ! -f "$file" ]]; then
+        log_warn "要备份的文件不存在: $file"
+        return 1
+    fi
+    
+    ensure_dir_exists "$backup_dir"
+    
+    local basename_file
+    basename_file=$(basename "$file")
+    local timestamp
+    timestamp=$(date +%Y%m%d_%H%M%S)
+    local backup_file="$backup_dir/${basename_file}_${timestamp}.bak"
+    
+    # 创建备份
+    if cp "$file" "$backup_file"; then
+        log_info "自动备份创建: $backup_file"
+        
+        # 清理旧备份，保留最新的N个
+        local old_backups
+        old_backups=$(find "$backup_dir" -name "${basename_file}_*.bak" -type f | sort -r | tail -n +$((max_backups + 1)))
+        
+        if [[ -n "$old_backups" ]]; then
+            echo "$old_backups" | xargs rm -f
+            local cleaned_count
+            cleaned_count=$(echo "$old_backups" | wc -l)
+            log_debug "清理旧备份: $cleaned_count 个文件"
+        fi
+        
+        echo "$backup_file"
+        return 0
+    else
+        log_error "自动备份失败: $file"
+        return 1
+    fi
+}
+
+# 配置迁移工具
+# 用法: migrate_config <old_config> <new_config> [version]
+migrate_config() {
+    local old_config="$1" 
+    local new_config="$2"
+    local version="${3:-2.0}"
+    
+    log_info "迁移配置文件: $old_config -> $new_config"
+    
+    if [[ ! -f "$old_config" ]]; then
+        log_error "源配置文件不存在: $old_config"
+        return 1
+    fi
+    
+    # 创建自动备份
+    auto_backup "$old_config" >/dev/null
+    
+    # 基本复制并添加版本信息
+    {
+        echo "# 配置文件版本: $version"
+        echo "# 迁移时间: $(date '+%Y-%m-%d %H:%M:%S')"
+        echo ""
+        cat "$old_config"
+    } > "$new_config"
+    
+    # 验证新配置文件
+    if verify_config_integrity "$new_config"; then
+        log_info "配置迁移成功"
+        return 0
+    else
+        log_error "配置迁移后验证失败"
+        rm -f "$new_config"
+        return 1
+    fi
+}
+
+# 性能监控
+# 用法: profile_function <function_name> [args...]
+profile_function() {
+    local func_name="$1"
+    shift
+    local start_time
+    start_time=$(date +%s.%N)
+    
+    log_debug "开始执行函数: $func_name"
+    
+    # 执行函数
+    "$func_name" "$@"
+    local result=$?
+    
+    local end_time
+    end_time=$(date +%s.%N)
+    local duration
+    duration=$(echo "$end_time - $start_time" | bc 2>/dev/null || echo "unknown")
+    
+    log_debug "函数执行完成: $func_name (耗时: ${duration}s, 结果: $result)"
+    
+    return $result
+}
+
+# 依赖检查工具
+# 用法: check_dependencies <cmd1> <cmd2> ...
+check_dependencies() {
+    local missing_deps=()
+    local optional_deps=()
+    
+    for cmd in "$@"; do
+        if [[ "$cmd" == "optional:"* ]]; then
+            local opt_cmd="${cmd#optional:}"
+            if ! command_exists "$opt_cmd"; then
+                optional_deps+=("$opt_cmd")
+            fi
+        else
+            if ! command_exists "$cmd"; then
+                missing_deps+=("$cmd")
+            fi
+        fi
+    done
+    
+    if [[ ${#missing_deps[@]} -gt 0 ]]; then
+        log_error "缺少必需的依赖: ${missing_deps[*]}"
+        log_info "请安装缺少的依赖后重试"
+        return 1
+    fi
+    
+    if [[ ${#optional_deps[@]} -gt 0 ]]; then
+        log_warn "缺少可选依赖: ${optional_deps[*]}"
+        log_info "这些依赖不是必需的，但安装后可获得更好的体验"
+    fi
+    
+    return 0
+}
+
 # 加载工具库完成
-log_debug "CCS工具库加载完成"
+log_debug "CCS工具库加载完成 (版本: $CCS_COMMON_VERSION)"
