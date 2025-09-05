@@ -46,15 +46,9 @@ log_message() {
         echo "[$timestamp] [$level] $message" >> "$INSTALLATION_LOG"
     fi
     
-    # 如果启用了调试模式，也输出到控制台
+    # 简化的控制台输出，避免循环依赖
     if [[ "$LOG_LEVEL" == "DEBUG" ]]; then
-        case "$level" in
-            "ERROR") print_error "$message" ;;
-            "WARN") print_warning "$message" ;;
-            "INFO") print_info "$message" ;;
-            "DEBUG") print_debug "$message" ;;
-            "SUCCESS") print_success "$message" ;;
-        esac
+        echo "[$timestamp] [$level] $message"
     fi
 }
 
@@ -150,38 +144,49 @@ else
         local message=$2
         local prefix="${3:-[*]}"
         printf "%b%s%b %s\n" "$color" "$prefix" "$NC" "$message"
-        log_message "INFO" "$message"
+        simple_log "INFO" "$message"
+    }
+    
+    # 简单的日志记录函数，避免循环依赖
+    simple_log() {
+        local level="$1"
+        local message="$2"
+        local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+        
+        if [[ -d "$CCS_LOG_DIR" ]]; then
+            echo "[$timestamp] [$level] $message" >> "$INSTALLATION_LOG"
+        fi
     }
     
     print_success() {
         printf "%b✅%b %s\n" "$GREEN" "$NC" "$1"
-        log_message "SUCCESS" "$1"
+        simple_log "SUCCESS" "$1"
     }
     
     print_warning() {
         printf "%b⚠️ %b %s\n" "$YELLOW" "$NC" "$1"
-        log_message "WARN" "$1"
+        simple_log "WARN" "$1"
     }
     
     print_error() {
         printf "%b❌%b %s\n" "$RED" "$NC" "$1"
-        log_message "ERROR" "$1"
+        simple_log "ERROR" "$1"
     }
     
     print_step() {
         printf "%b🔧%b %s\n" "$BLUE" "$NC" "$1"
-        log_message "INFO" "Step: $1"
+        simple_log "INFO" "Step: $1"
     }
     
     print_info() {
         printf "%bℹ️ %b %s\n" "$CYAN" "$NC" "$1"
-        log_message "INFO" "$1"
+        simple_log "INFO" "$1"
     }
     
     print_debug() {
         if [[ "$LOG_LEVEL" == "DEBUG" ]]; then
             printf "%b🐛%b %s\n" "$MAGENTA" "$NC" "$1"
-            log_message "DEBUG" "$1"
+            simple_log "DEBUG" "$1"
         fi
     }
     
@@ -369,13 +374,13 @@ detect_shell() {
     local current_shell=""
     local shell_version=""
     
-    if [[ -n "$ZSH_VERSION" ]]; then
+    if [[ -n "${ZSH_VERSION:-}" ]]; then
         current_shell="zsh"
         shell_version="$ZSH_VERSION"
-    elif [[ -n "$BASH_VERSION" ]]; then
+    elif [[ -n "${BASH_VERSION:-}" ]]; then
         current_shell="bash"
         shell_version="$BASH_VERSION"
-    elif [[ -n "$FISH_VERSION" ]]; then
+    elif [[ -n "${FISH_VERSION:-}" ]]; then
         current_shell="fish"
         shell_version="$FISH_VERSION"
     elif [[ "$SHELL" == *"bash"* ]]; then
@@ -761,7 +766,8 @@ detect_available_shells() {
         print_info "Will configure ${#available_shells[@]} shell environment(s): ${available_shells[*]}"
     fi
     
-    echo "${available_shells[@]}"
+    # 只返回shell名称，不包含其他输出
+    printf "%s\n" "${available_shells[@]}"
 }
 
 # 配置指定shell
@@ -1029,8 +1035,11 @@ create_config_file() {
 # 配置shell环境
 configure_shell() {
     local current_shell=$(detect_shell)
-    local available_shells_str=$(detect_available_shells)
-    local available_shells=($available_shells_str)
+    # 将detect_available_shells的输出读取到数组中
+    local available_shells=()
+    while IFS= read -r shell; do
+        [[ -n "$shell" ]] && available_shells+=("$shell")
+    done < <(detect_available_shells)
     local configured_count=0
     
     echo ""
@@ -1039,16 +1048,18 @@ configure_shell() {
     
     # 为所有支持的shell配置
     for shell in "${available_shells[@]}"; do
-        configure_shell_for_type "$shell"
-        configured_count=$((configured_count + 1))
+        if configure_shell_for_type "$shell"; then
+            configured_count=$((configured_count + 1))
+        fi
     done
     
     # 如果没有找到任何shell配置文件,至少为当前shell创建配置
     if [[ $configured_count -eq 0 ]]; then
         print_warning "No shell configuration files found, creating for current shell"
         if [[ "$current_shell" != "unknown" ]]; then
-            configure_shell_for_type "$current_shell"
-            configured_count=$((configured_count + 1))
+            if configure_shell_for_type "$current_shell"; then
+                configured_count=$((configured_count + 1))
+            fi
         else
             print_error "Cannot identify shell type, please configure manually"
             exit 1

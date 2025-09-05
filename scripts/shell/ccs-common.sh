@@ -906,5 +906,57 @@ check_dependencies() {
     return 0
 }
 
+# 简单的日志记录函数，避免循环依赖
+simple_log() {
+    local level="$1"
+    local message="$2"
+    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    
+    if [[ -d "${CCS_LOG_DIR:-$HOME/.ccs/logs}" ]]; then
+        echo "[$timestamp] [$level] $message" >> "${INSTALLATION_LOG:-$HOME/.ccs/logs/install.log}"
+    fi
+}
+
+# 增强的消息输出函数
+print_message() {
+    local color=$1
+    local message=$2
+    local prefix="${3:-[*]}"
+    printf "%b%s%b %s\n" "$color" "$prefix" "$NC" "$message"
+    simple_log "INFO" "$message"
+}
+
+print_success() {
+    printf "%b✅%b %s\n" "$GREEN" "$NC" "$1"
+    simple_log "SUCCESS" "$1"
+}
+
+print_warning() {
+    printf "%b⚠️ %b %s\n" "$YELLOW" "$NC" "$1"
+    simple_log "WARN" "$1"
+}
+
+print_error() {
+    printf "%b❌%b %s\n" "$RED" "$NC" "$1"
+    simple_log "ERROR" "$1"
+}
+
+print_step() {
+    printf "%b🔧%b %s\n" "$BLUE" "$NC" "$1"
+    simple_log "INFO" "Step: $1"
+}
+
+print_info() {
+    printf "%bℹ️ %b %s\n" "$CYAN" "$NC" "$1"
+    simple_log "INFO" "$1"
+}
+
+print_debug() {
+    if [[ "${LOG_LEVEL:-INFO}" == "DEBUG" ]]; then
+        printf "%b🐛%b %s\n" "${MAGENTA:-\033[0;35m}" "$NC" "$1"
+        simple_log "DEBUG" "$1"
+    fi
+}
+
 # 加载工具库完成
 log_debug "CCS工具库加载完成 (版本: $CCS_COMMON_VERSION)"

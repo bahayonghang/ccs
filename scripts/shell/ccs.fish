@@ -66,7 +66,7 @@ end
 
 # 从配置内容中提取值
 function _ccs_extract_value --argument key content
-    echo $content | string match -r "^$key\s*=\s*[\"']?([^\"']*)[\"']?" | string replace -r '.*=\s*["\'"'"']?([^"\'"'"']*)["\'"'"']?' '$1'
+    echo $content | string match -r "^$key\s*=\s*(.*)" | string replace -r "^$key\s*=\s*[\"']?([^\"']*)[\"']?.*" '$1'
 end
 
 # 更新当前配置
@@ -103,14 +103,14 @@ function _ccs_set_env_vars --argument config_name
     # 解析并设置环境变量
     for line in (echo $config_content | string split \n)
         if string match -rq "^base_url\s*=" -- $line
-            set base_url (echo $line | string replace -r '.*=\s*["\'"'"']?([^"\'"'"']*)["\'"'"']?' '$1')
+            set base_url (echo $line | string replace -r ".*=\s*[\"']?([^\"']*)[\"']?" '$1')
             if test -n "$base_url"
                 set -gx ANTHROPIC_BASE_URL $base_url
                 _ccs_log_success "设置 ANTHROPIC_BASE_URL=$base_url"
                 set vars_set (math $vars_set + 1)
             end
         else if string match -rq "^auth_token\s*=" -- $line
-            set auth_token (echo $line | string replace -r '.*=\s*["\'"'"']?([^"\'"'"']*)["\'"'"']?' '$1')
+            set auth_token (echo $line | string replace -r ".*=\s*[\"']?([^\"']*)[\"']?" '$1')
             if test -n "$auth_token"
                 set -gx ANTHROPIC_AUTH_TOKEN $auth_token
                 set masked_token (string sub -l 10 $auth_token)...
@@ -118,14 +118,14 @@ function _ccs_set_env_vars --argument config_name
                 set vars_set (math $vars_set + 1)
             end
         else if string match -rq "^model\s*=" -- $line
-            set model (echo $line | string replace -r '.*=\s*["\'"'"']?([^"\'"'"']*)["\'"'"']?' '$1')
+            set model (echo $line | string replace -r ".*=\s*[\"']?([^\"']*)[\"']?" '$1')
             if test -n "$model"; and test "$model" != ""
                 set -gx ANTHROPIC_MODEL $model
                 _ccs_log_success "设置 ANTHROPIC_MODEL=$model"
                 set vars_set (math $vars_set + 1)
             end
         else if string match -rq "^small_fast_model\s*=" -- $line
-            set small_fast_model (echo $line | string replace -r '.*=\s*["\'"'"']?([^"\'"'"']*)["\'"'"']?' '$1')
+            set small_fast_model (echo $line | string replace -r ".*=\s*[\"']?([^\"']*)[\"']?" '$1')
             if test -n "$small_fast_model"; and test "$small_fast_model" != ""
                 set -gx ANTHROPIC_SMALL_FAST_MODEL $small_fast_model
                 _ccs_log_success "设置 ANTHROPIC_SMALL_FAST_MODEL=$small_fast_model"
@@ -157,11 +157,11 @@ function _ccs_list_configs
     end
     
     # 获取当前配置
-    set current_config (grep "^current_config" $CONFIG_FILE | string replace -r '.*=\s*["\'"'"']?([^"\'"'"']*)["\'"'"']?' '$1')
+    set current_config (grep "^current_config" $CONFIG_FILE | string replace -r ".*=\s*[\"']?([^\"']*)[\"']?" '$1')
     
     # 显示配置列表
     for config in $configs
-        set description (_ccs_parse_config_section $config | grep "^description" | string replace -r '.*=\s*["\'"'"']?([^"\'"'"']*)["\'"'"']?' '$1')
+        set description (_ccs_parse_config_section $config | grep "^description" | string replace -r ".*=\s*[\"']?([^\"']*)[\"']?" '$1')
         
         if test "$config" = "$current_config"
             printf "\033[0;32m▶ %-15s\033[0m" $config
@@ -202,11 +202,12 @@ function _ccs_show_current
         
         if set -q $var_name
             set vars_set (math $vars_set + 1)
+            set -l value (eval echo \$$var_name)
             if test $var_name = "ANTHROPIC_AUTH_TOKEN"
-                set masked_value (string sub -l 10 $$var_name)...
+                set masked_value (string sub -l 10 $value)...
                 echo -e "\033[0;32m$masked_value\033[0m"
             else
-                echo -e "\033[0;32m$$var_name\033[0m"
+                echo -e "\033[0;32m$value\033[0m"
             end
         else
             echo -e "\033[1;33m(未设置)\033[0m"
@@ -272,10 +273,10 @@ function _ccs_auto_load_current
         return
     end
     
-    set current_config (grep "^current_config" $CONFIG_FILE | string replace -r '.*=\s*["\'"'"']?([^"\'"'"']*)["\'"'"']?' '$1')
+    set current_config (grep "^current_config" $CONFIG_FILE | string replace -r ".*=\s*[\"']?([^\"']*)[\"']?" '$1')
     
     if test -z "$current_config"
-        set current_config (grep "^default_config" $CONFIG_FILE | string replace -r '.*=\s*["\'"'"']?([^"\'"'"']*)["\'"'"']?' '$1')
+        set current_config (grep "^default_config" $CONFIG_FILE | string replace -r ".*=\s*[\"']?([^\"']*)[\"']?" '$1')
     end
     
     if test -n "$current_config"; and _ccs_validate_config $current_config >/dev/null 2>&1
@@ -312,10 +313,10 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell v2
             _ccs_show_current
         case ""
             # 无参数时使用当前或默认配置
-            set target_config (grep "^current_config" $CONFIG_FILE | string replace -r '.*=\s*["\'"'"']?([^"\'"'"']*)["\'"'"']?' '$1')
+            set target_config (grep "^current_config" $CONFIG_FILE | string replace -r ".*=\s*[\"']?([^\"']*)[\"']?" '$1')
             
             if test -z "$target_config"
-                set target_config (grep "^default_config" $CONFIG_FILE | string replace -r '.*=\s*["\'"'"']?([^"\'"'"']*)["\'"'"']?' '$1')
+                set target_config (grep "^default_config" $CONFIG_FILE | string replace -r ".*=\s*[\"']?([^\"']*)[\"']?" '$1')
             end
             
             if test -n "$target_config"
