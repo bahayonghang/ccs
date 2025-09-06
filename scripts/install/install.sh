@@ -215,108 +215,35 @@ INSTALLATION_LOG=""
 SYSTEM_INFO=""
 PERFORMANCE_METRICS=()
 
-# 增强的系统检测和诊断
+# 基本系统信息检测
 detect_system_info() {
-    local start_time=$(date +%s)
-    print_step "🔍 Performing comprehensive system detection..."
+    print_step "🔍 Detecting system information..."
     
-    local os_info=""
-    local arch_info=""
-    local kernel_info=""
-    local cpu_info=""
-    local memory_info=""
-    local disk_info=""
-    local system_uptime=""
+    # 基本系统信息
+    OS_NAME=$(uname -s 2>/dev/null || echo "unknown")
+    OS_VERSION=$(uname -r 2>/dev/null || echo "unknown")
+    ARCH=$(uname -m 2>/dev/null || echo "unknown")
     
-    # 操作系统检测（增强版）
-    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-        if [[ -f /etc/os-release ]]; then
-            os_info=$(grep "^PRETTY_NAME=" /etc/os-release | cut -d'"' -f2)
-            local os_id=$(grep "^ID=" /etc/os-release | cut -d'"' -f2)
-            local os_version=$(grep "^VERSION_ID=" /etc/os-release | cut -d'"' -f2)
-            SYSTEM_INFO="OS: $os_info ($os_id $os_version)"
-        elif [[ -f /etc/lsb-release ]]; then
-            os_info=$(grep "^DISTRIB_DESCRIPTION=" /etc/lsb-release | cut -d'"' -f2)
-            SYSTEM_INFO="OS: $os_info"
-        else
-            os_info="Linux"
-            SYSTEM_INFO="OS: Linux (Unknown Distribution)"
-        fi
-        
-        # WSL检测（增强版）
-        if grep -qEi "(Microsoft|WSL)" /proc/version 2>/dev/null; then
-            local wsl_version=""
-            if [[ -n "$WSL_DISTRO_NAME" ]]; then
-                wsl_version=" (WSL2: $WSL_DISTRO_NAME)"
-            else
-                wsl_version=" (WSL)"
-            fi
-            os_info="${os_info}${wsl_version}"
-            SYSTEM_INFO="$SYSTEM_INFO (WSL Environment)"
-        fi
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-        local mac_version=$(sw_vers -productVersion)
-        local mac_build=$(sw_vers -buildVersion)
-        os_info="macOS $mac_version ($mac_build)"
-        SYSTEM_INFO="OS: macOS $mac_version ($mac_build)"
+    # 操作系统信息
+    if [[ -f /etc/os-release ]]; then
+        source /etc/os-release
+        DISTRO_NAME="${NAME:-unknown}"
+        DISTRO_VERSION="${VERSION:-unknown}"
+    elif [[ "$OS_NAME" == "Darwin" ]]; then
+        DISTRO_NAME="macOS"
+        DISTRO_VERSION=$(sw_vers -productVersion 2>/dev/null || echo "unknown")
     else
-        os_info="$OSTYPE"
-        SYSTEM_INFO="OS: $OSTYPE"
+        DISTRO_NAME="$OS_NAME"
+        DISTRO_VERSION="$OS_VERSION"
     fi
     
-    # CPU信息
-    if command_exists lscpu; then
-        cpu_info=$(lscpu | grep "Model name:" | cut -d':' -f2 | sed 's/^ *//' | head -1)
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-        cpu_info=$(sysctl -n machdep.cpu.brand_string 2>/dev/null || echo "Unknown")
-    else
-        cpu_info=$(grep "model name" /proc/cpuinfo | head -1 | cut -d':' -f2 | sed 's/^ *//' || echo "Unknown")
-    fi
+    # 显示基本系统信息
+    echo ""
+    print_info "📋 System Information:"
+    print_info "  OS: $DISTRO_NAME $DISTRO_VERSION"
+    print_info "  Architecture: $ARCH"
     
-    # 内存信息
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        local total_memory=$(sysctl -n hw.memsize 2>/dev/null | awk '{print int($1/1024/1024/1024)}')
-        memory_info="${total_memory}GB"
-    elif command_exists free; then
-        local total_memory=$(free -g | awk 'NR==2{print $2}')
-        memory_info="${total_memory}GB"
-    else
-        memory_info="Unknown"
-    fi
-    
-    # 磁盘空间
-    local home_disk=$(df -h "$HOME" 2>/dev/null | tail -1 | awk '{print $4}' || echo "Unknown")
-    disk_info="$home_disk available"
-    
-    # 系统运行时间
-    if [[ -f /proc/uptime ]]; then
-        local uptime_seconds=$(cat /proc/uptime | cut -d' ' -f1)
-        local uptime_days=$(echo "$uptime_seconds / 86400" | bc -l | cut -d'.' -f1)
-        system_uptime="${uptime_days} days"
-    elif command_exists uptime; then
-        system_uptime=$(uptime | grep -o 'up .*' | cut -d',' -f1 || echo "Unknown")
-    else
-        system_uptime="Unknown"
-    fi
-    
-    # 架构和内核信息
-    arch_info=$(uname -m)
-    kernel_info=$(uname -r)
-    
-    # 输出增强的系统信息
-    print_info "🏗️  System: $os_info"
-    print_info "🔧 Architecture: $arch_info"
-    print_info "🐧 Kernel: $kernel_info"
-    print_info "💻 CPU: $cpu_info"
-    print_info "💾 Memory: $memory_info"
-    print_info "💿 Disk: $disk_info"
-    print_info "⏱️  Uptime: $system_uptime"
-    
-    # 记录到日志
-    log_message "INFO" "System detection completed: $SYSTEM_INFO"
-    
-    local end_time=$(date +%s)
-    print_performance_metric "System Detection" "$start_time" "$end_time"
+    log_message "INFO" "System detection completed: $DISTRO_NAME $DISTRO_VERSION on $ARCH"
 }
 
 # 系统兼容性检查
@@ -336,18 +263,6 @@ check_system_compatibility() {
     # 检查文件系统权限
     if [[ ! -w "$HOME" ]]; then
         compatibility_issues+=("Home directory is not writable")
-    fi
-    
-    # 检查PATH长度（避免Windows PATH过长问题）
-    local path_length=${#PATH}
-    if [[ "$path_length" -gt 4096 ]]; then
-        compatibility_issues+=("PATH environment variable is too long ($path_length chars)")
-    fi
-    
-    # 检查磁盘空间
-    local available_space=$(df "$HOME" 2>/dev/null | tail -1 | awk '{print $4}' || echo "0")
-    if [[ "$available_space" != "0" ]] && [[ "$available_space" -lt 10000 ]]; then
-        compatibility_issues+=("Insufficient disk space (less than 10MB available)")
     fi
     
     # 报告兼容性问题
@@ -411,110 +326,19 @@ detect_shell() {
     echo "$current_shell"
 }
 
-# 增强的依赖检查和网络验证
+# 基本依赖检查
 check_dependencies() {
-    local start_time=$(date +%s)
-    print_step "🔍 Performing comprehensive dependency analysis..."
+    print_step "🔍 Checking basic dependencies..."
     
     local required_deps=("curl" "grep" "sed" "awk" "basename" "dirname" "chmod" "cp" "mkdir")
-    local optional_deps=("python3" "python" "git" "bc" "lscpu" "free" "df")
-    local network_deps=("curl" "wget")
     local missing_deps=()
-    local available_optional=()
-    local network_tools=()
-    local critical_missing=()
     
     # 检查必需依赖
     for dep in "${required_deps[@]}"; do
-        local dep_start=$(date +%s)
-        if command_exists "$dep"; then
-            print_success "$dep is available"
-            log_message "DEBUG" "Dependency check: $dep - available"
-        else
+        if ! command_exists "$dep"; then
             missing_deps+=("$dep")
-            print_error "$dep is missing (required)"
-            log_message "ERROR" "Missing required dependency: $dep"
-            
-            # 标记关键依赖
-            if [[ "$dep" == "curl" ]] || [[ "$dep" == "grep" ]] || [[ "$dep" == "sed" ]]; then
-                critical_missing+=("$dep")
-            fi
-        fi
-        local dep_end=$(date +%s)
-        print_performance_metric "Dependency check: $dep" "$dep_start" "$dep_end"
-    done
-    
-    # 检查网络工具
-    print_step "🌐 Checking network connectivity tools..."
-    for dep in "${network_deps[@]}"; do
-        if command_exists "$dep"; then
-            network_tools+=("$dep")
-            print_success "$dep is available (network tool)"
-            
-            # 测试网络连接
-            if [[ "$dep" == "curl" ]]; then
-                test_network_connectivity "curl"
-            elif [[ "$dep" == "wget" ]]; then
-                test_network_connectivity "wget"
-            fi
-        else
-            print_info "$dep is not available (optional network tool)"
         fi
     done
-    
-    # 检查可选依赖
-    print_step "🔧 Checking optional dependencies..."
-    for dep in "${optional_deps[@]}"; do
-        local dep_start=$(date +%s)
-        if command_exists "$dep"; then
-            case "$dep" in
-                "python3"|"python")
-                    local python_version=""
-                    local python_path=""
-                    if [[ "$dep" == "python3" ]]; then
-                        python_version=$(python3 --version 2>&1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' || echo "unknown")
-                        python_path=$(command -v python3)
-                    else
-                        python_version=$(python --version 2>&1 | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' || echo "unknown")
-                        python_path=$(command -v python)
-                    fi
-                    print_success "$dep v$python_version is available (web interface)"
-                    log_message "INFO" "Python found: $python_path v$python_version"
-                    
-                    # 检查Python模块
-                    check_python_modules
-                    ;;
-                "git")
-                    local git_version=$(git --version 2>/dev/null | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1 || echo "unknown")
-                    local git_path=$(command -v git)
-                    print_success "git v$git_version is available (updates)"
-                    log_message "INFO" "Git found: $git_path v$git_version"
-                    
-                    # 检查Git配置
-                    check_git_configuration
-                    ;;
-                "bc")
-                    print_success "$dep is available (calculations)"
-                    ;;
-                "lscpu"|"free"|"df")
-                    print_success "$dep is available (system info)"
-                    ;;
-                *)
-                    print_success "$dep is available"
-                    ;;
-            esac
-            available_optional+=("$dep")
-        else
-            print_info "$dep is not available (optional)"
-        fi
-        local dep_end=$(date +%s)
-        print_performance_metric "Optional check: $dep" "$dep_start" "$dep_end"
-    done
-    
-    # 网络连接测试
-    if [[ ${#network_tools[@]} -gt 0 ]]; then
-        test_internet_connectivity
-    fi
     
     # 处理缺失的依赖
     if [[ ${#missing_deps[@]} -gt 0 ]]; then
@@ -522,50 +346,23 @@ check_dependencies() {
         print_error "❌ Missing required dependencies: ${missing_deps[*]}"
         print_info "💡 Installation suggestions:"
         
-        # 根据系统提供详细的安装命令建议
-        local install_cmd=""
         if command_exists apt; then
-            install_cmd="sudo apt update && sudo apt install"
-            print_info "  Ubuntu/Debian: $install_cmd ${missing_deps[*]}"
+            print_info "  Ubuntu/Debian: sudo apt update && sudo apt install ${missing_deps[*]}"
         elif command_exists yum; then
-            install_cmd="sudo yum install"
-            print_info "  RHEL/CentOS 7: $install_cmd ${missing_deps[*]}"
+            print_info "  RHEL/CentOS 7: sudo yum install ${missing_deps[*]}"
         elif command_exists dnf; then
-            install_cmd="sudo dnf install"
-            print_info "  Fedora/RHEL 8+: $install_cmd ${missing_deps[*]}"
+            print_info "  Fedora/RHEL 8+: sudo dnf install ${missing_deps[*]}"
         elif command_exists pacman; then
-            install_cmd="sudo pacman -S"
-            print_info "  Arch Linux: $install_cmd ${missing_deps[*]}"
+            print_info "  Arch Linux: sudo pacman -S ${missing_deps[*]}"
         elif command_exists brew; then
-            install_cmd="brew install"
-            print_info "  macOS: $install_cmd ${missing_deps[*]}"
-        elif command_exists apk; then
-            install_cmd="sudo apk add"
-            print_info "  Alpine: $install_cmd ${missing_deps[*]}"
-        fi
-        
-        # 特别处理关键缺失依赖
-        if [[ ${#critical_missing[@]} -gt 0 ]]; then
-            print_error "🚨 Critical dependencies missing: ${critical_missing[*]}"
-            print_info "These are essential for CCS to function properly"
+            print_info "  macOS: brew install ${missing_deps[*]}"
         fi
         
         exit 1
     fi
     
-    # 显示依赖状态摘要
-    echo ""
     print_success "✅ All required dependencies are available"
-    if [[ ${#available_optional[@]} -gt 0 ]]; then
-        print_info "🎯 Optional features enabled: ${available_optional[*]}"
-    fi
-    if [[ ${#network_tools[@]} -gt 0 ]]; then
-        print_info "🌐 Network tools available: ${network_tools[*]}"
-    fi
-    
-    local end_time=$(date +%s)
-    print_performance_metric "Dependency Analysis" "$start_time" "$end_time"
-    log_message "INFO" "Dependency check completed successfully"
+    log_message "INFO" "Dependency check completed"
 }
 
 # 网络连接测试
@@ -1284,6 +1081,7 @@ main() {
             
             # 系统信息检测
             detect_system_info
+            check_system_compatibility
             local current_shell=$(detect_shell)
             echo ""
             

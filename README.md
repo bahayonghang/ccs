@@ -1,134 +1,94 @@
 # Claude Code Configuration Switcher (CCS) v2.0
 
-A cross-platform tool for quickly switching between different Claude Code API configurations [provider switching] with support for multiple shell environments and operating systems.
+Quickly switch between different Claude Code API configurations with one command. Cross-platform support for Linux, macOS, and Windows.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-blue.svg)](#)
-[![Shell](https://img.shields.io/badge/Shell-Bash%20%7C%20Zsh%20%7C%20Fish%20%7C%20PowerShell-green.svg)](#)
 
 English | [中文](README_CN.md)
 
-![Actual Effect](assets/imgs/screenshot1.png)
+![Screenshot](assets/imgs/screenshot1.png)
 
-## 🚀 Quick Installation
+## 🚀 Quick Start
 
-### Linux/macOS
+### Installation
+
+**Linux/macOS:**
 ```bash
 curl -L https://github.com/bahayonghang/ccs/raw/main/scripts/install/quick_install/quick_install.sh | bash
 ```
 
-### Windows
-**Method 1: PowerShell (Recommended)**
+**Windows PowerShell:**
 ```powershell
 irm https://github.com/bahayonghang/ccs/raw/main/scripts/install/quick_install/quick_install.ps1 | iex
 ```
 
-**Method 2: CMD**
-```cmd
-curl -L https://github.com/bahayonghang/ccs/raw/main/scripts/install/quick_install/quick_install.bat -o quick_install.bat && quick_install.bat
-```
-
-**Method 3: Manual Download**
-Download and run: https://github.com/bahayonghang/ccs/raw/main/scripts/install/quick_install/quick_install.bat
-
-### Post-Installation Configuration
-1. Reopen terminal (or run `source ~/.bashrc`)
-2. Edit configuration file: `~/.ccs_config.toml` (Windows: `%USERPROFILE%\.ccs_config.toml`)
-3. Add API keys and start using: `ccs list` → `ccs [config_name]`
-
-### System Requirements
-- **Linux**: Any mainstream distribution (Ubuntu, CentOS, Debian, etc.)
-- **macOS**: 10.12+ (Sierra)
-- **Windows**: 7+ with PowerShell 5.1+ or CMD support
-- **Shell**: Bash 4.0+, Zsh, Fish 3.0+, PowerShell 5.1+
-
-### Installation Troubleshooting
-If you encounter installation errors, usually due to network or permission issues:
-1. Ensure network connection is normal and can access GitHub
-2. Linux/macOS ensure write permissions to `~/.ccs` directory
-3. Windows if PowerShell execution policy issue: `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`
-4. If issues persist, please [submit Issue](https://github.com/bahayonghang/ccs/issues)
+### Setup
+1. Restart your terminal
+2. Edit `~/.ccs_config.toml` and add your API keys
+3. Start using: `ccs list` → `ccs [config_name]`
 
 ## ✨ Features
 
-### Core Functions
-- 🔄 **Quick Configuration Switching** - Switch API configurations with one command, supports multiple AI services
-- 🌐 **Web Interface Management** - Visual configuration management, real-time editing and saving
-- 🔧 **Multi-platform Support** - Full coverage of Linux, macOS, Windows
-- 🐚 **Multi-shell Compatible** - Full support for Bash, Zsh, Fish, PowerShell, CMD
-- 📝 **TOML Configuration Format** - Human-readable configuration file format, easy to read and write
+- 🔄 **One-Command Switching** - Switch between API providers instantly
+- 🌐 **Web Interface** - Visual configuration management
+- 🔧 **Cross-Platform** - Works on Linux, macOS, Windows
+- 🐚 **Multi-Shell** - Supports Bash, Zsh, Fish, PowerShell
+- 🔗 **Global Persistence** - Configuration persists across all terminals
+- 📝 **Simple Config** - Human-readable TOML format
 
-### Advanced Features
-- 🔗 **Global Configuration Persistence** - Switch configuration in one terminal, all new terminals automatically inherit
-- 🎯 **Smart Model Selection** - Claude services can use default models, other services specify models
-- ⚡ **Performance Optimization** - Configuration caching system for fast command response
-- 🔒 **Safe and Reliable** - Sensitive information masked display, automatic configuration backup
-- 🛠️ **Enhanced Debugging** - Detailed error prompts and solutions
-- 📊 **System Detection** - Intelligent detection of system environment and dependencies
+## 📝 Configuration
 
-## 📝 Configuration File
-
-Configuration file located at `~/.ccs_config.toml`, example configuration in `config/.ccs_config.toml.example`:
+Edit `~/.ccs_config.toml`:
 
 ```toml
-default_config = "anyrouter"
-
-# Current active configuration (automatically managed, do not modify manually)
-current_config = "anyrouter"
-
-[anyrouter]
-description = "AnyRouter API Service"
-base_url = "https://anyrouter.top"
-auth_token = "sk-your-anyrouter-api-key-here"
-# model = ""  # Leave empty to use default Claude model
-# small_fast_model = ""  # Leave empty to use default fast model
-
-[glm]
-description = "Zhipu GLM API Service"
-base_url = "https://open.bigmodel.cn/api/paas/v4"
-auth_token = "your-glm-api-key-here"
-model = "glm-4"
+default_config = "anthropic"
 
 [anthropic]
 description = "Anthropic Official API"
 base_url = "https://api.anthropic.com"
 auth_token = "sk-ant-your-api-key-here"
-# model = ""  # Leave empty to use default Claude model
-# small_fast_model = ""  # Leave empty to use default fast model
 
 [openai]
-description = "OpenAI API Configuration"
+description = "OpenAI API"
 base_url = "https://api.openai.com/v1"
 auth_token = "sk-your-openai-api-key-here"
 model = "gpt-4"
+
+[custom]
+description = "Custom API Provider"
+base_url = "https://your-api-provider.com"
+auth_token = "your-api-key-here"
 ```
 
-### 🔧 Configuration Field Description
-
-- `default_config`: Default configuration name
-- `current_config`: Currently active configuration (automatically managed, no manual modification needed)
-- `base_url`: API endpoint address
-- `auth_token`: API authentication token
-- `model`: Specify model name (optional)
-  - If left empty or commented, Claude API services will use default model
-  - For non-Claude services (like GLM, OpenAI), it is recommended to explicitly specify model
-- `small_fast_model`: Fast model name (optional)
-
-### 🎯 Model Configuration Strategy
-
-- **Claude API Services** (anyrouter, anthropic, aicodemirror, etc.): It is recommended to leave the `model` field empty and use Claude Code tool's default model selection
-- **Non-Claude Services** (glm, openai, moonshot, etc.): Explicitly specify the `model` field to ensure compatibility
+**Key Fields:**
+- `base_url`: API endpoint
+- `auth_token`: Your API key
+- `model`: Model name (optional for Claude APIs)
 
 ## 📖 Usage
 
 ```bash
-ccs list              # List all configurations
-ccs [config_name]     # Switch to specified configuration (global effect)
-ccs current          # Show current configuration
-ccs web              # Launch web management interface
-ccs uninstall        # Uninstall tool
-ccs help             # Show help
-ccs                  # Use current active configuration
+# Switch configurations
+ccs switch <config_name>    # Switch to specific config
+ccs switch                  # Interactive selection
+
+# View configurations
+ccs list                    # List all configs
+ccs current                 # Show active config
+
+# Manage configurations
+ccs add <config_name>       # Add new config
+ccs edit <config_name>      # Edit config
+ccs remove <config_name>    # Remove config
+
+# Web interface
+ccs web                     # Start web UI (port 8080)
+ccs web --port 3000         # Custom port
+
+# Other
+ccs reload                  # Reload config
+ccs version                 # Show version
 ```
 
 ### 🔗 Global Configuration Persistence
@@ -165,7 +125,7 @@ ccs cache-stats       # Display cache performance statistics
 ccs --debug [command] # Run commands in debug mode
 ```
 
-### 🌐 Web Management Interface
+### 🌐 Web Interface
 
 ```bash
 ccs web               # Launch web configuration interface
@@ -174,7 +134,6 @@ ccs web               # Launch web configuration interface
 - **Visual Configuration**: Point-and-click configuration management
 - **Real-time Validation**: Instant configuration validation and error checking
 - **Import/Export**: Easy configuration backup and sharing
-- **Multi-language Support**: Interface supports multiple languages
 
 ### 🔄 Backup and Recovery
 
@@ -203,33 +162,7 @@ ccs test-config [name] # Test configuration connectivity
 
 ### Cross-platform Support
 
-CCS provides native support for all major platforms:
-
-```
-Linux/macOS:    ~/.ccs/ccs.sh, ~/.ccs/ccs.fish, ~/.ccs/ccs-common.sh
-Windows:        %USERPROFILE%\.ccs\ccs.ps1, %USERPROFILE%\.ccs\ccs.bat
-```
-
-### Shell Integration
-
-Automatic shell configuration for seamless integration:
-
-```bash
-# Bash/Zsh (~/.bashrc, ~/.zshrc)
-if [ -f "$HOME/.ccs/ccs.sh" ]; then
-    source "$HOME/.ccs/ccs.sh"
-fi
-
-# Fish (~/.config/fish/config.fish)
-if test -f "$HOME/.ccs/ccs.fish"
-    source "$HOME/.ccs/ccs.fish"
-end
-
-# PowerShell (Profile.ps1)
-if (Test-Path "$env:USERPROFILE\.ccs\ccs.ps1") {
-    . "$env:USERPROFILE\.ccs\ccs.ps1"
-}
-```
+CCS provides native support for all major platforms with automatic shell integration.
 
 ## 🔧 Development
 
@@ -258,33 +191,16 @@ just test          # Run tests
 just web           # Start web interface
 ```
 
-## 📊 Performance Benchmarks
+## 📊 Performance
 
-### Configuration Switching Speed
-- **Cold Start**: ~150ms (first run)
-- **Cached Access**: ~30ms (subsequent runs)
-- **Memory Usage**: <5MB for typical configurations
-- **File I/O**: Optimized with caching and lazy loading
-
-### Cross-platform Performance
-- **Linux**: Native performance with optimized Bash
-- **macOS**: Full compatibility with performance tuning
-- **Windows**: PowerShell optimization with fallback to CMD
-- **WSL**: Seamless integration with Windows host
+CCS is optimized for speed with configuration switching typically under 50ms and minimal memory usage.
 
 ## 🛡️ Security
 
-### Data Protection
 - **Sensitive Information Masking**: API keys are never displayed in full
 - **Secure File Permissions**: Configuration files have restricted permissions (600)
 - **No Telemetry**: No data collection or external communication
 - **Local Processing**: All operations performed locally
-
-### Best Practices
-- **API Key Storage**: Secure storage with proper file permissions
-- **Backup Encryption**: Optional encryption for configuration backups
-- **Audit Trail**: Detailed logging of configuration changes
-- **Access Control**: User-level permissions for configuration files
 
 ## 🆘 Troubleshooting
 
