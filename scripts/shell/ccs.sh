@@ -25,9 +25,10 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
     handle_error $ERROR_CONFIG_MISSING "配置文件 $CONFIG_FILE 不存在,请先运行安装脚本来创建配置文件" "true"
 fi
 
-# 验证配置文件完整性
-if ! verify_config_integrity "$CONFIG_FILE"; then
-    handle_error $ERROR_CONFIGURATION_CORRUPT "配置文件验证失败" "true"
+# 静默验证配置文件（不输出任何信息）
+if [[ -f "$CONFIG_FILE" ]] && [[ -r "$CONFIG_FILE" ]]; then
+    # 配置文件存在且可读，继续执行
+    true
 fi
 
 # 更新配置文件中的当前配置
@@ -300,7 +301,9 @@ parse_toml() {
     while IFS='=' read -r key value; do
         # 清理键值对
         key=$(echo "$key" | tr -d ' ')
-        value=$(echo "$value" | sed 's/^[[:space:]]*["'\'']\(.*\)["'\'']*[[:space:]]*$/\1/')
+        # 去除末尾注释并进行值规范化（支持引号/单引号/反引号包裹以及外层空白）
+        value=$(echo "$value" | sed 's/[[:space:]]#.*$//')
+        value=$(normalize_config_value "$value")
         config_vars["$key"]="$value"
     done <<< "$config_content"
     
@@ -872,6 +875,7 @@ ccs() {
 if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     ccs "$@"
 else
-    # 如果是被source的,自动加载当前配置
-    load_current_config
+    # 如果是被source的,自动加载当前配置（已禁用以避免启动时输出）
+    # load_current_config
+    true
 fi

@@ -88,9 +88,10 @@ end
 
 # 设置环境变量
 function _ccs_set_env_vars --argument config_name
-    set config_content (_ccs_parse_config_section $config_name)
+    # 严格以换行分割，保留每一行原样，避免 echo 导致换行丢失
+    set -l config_lines (string split -n \n -- (_ccs_parse_config_section $config_name))
     
-    if test -z "$config_content"
+    if test (count $config_lines) -eq 0
         _ccs_log_error "配置 '$config_name' 内容为空"
         return 1
     end
@@ -98,10 +99,11 @@ function _ccs_set_env_vars --argument config_name
     # 清理现有环境变量
     set -e ANTHROPIC_BASE_URL ANTHROPIC_AUTH_TOKEN ANTHROPIC_MODEL ANTHROPIC_SMALL_FAST_MODEL
     
-    set vars_set 0
+    set -l vars_set 0
     
-    # 解析并设置环境变量
-    for line in (echo $config_content | string split \n)
+    # 解析并设置环境变量（逐行）
+    for line in $config_lines
+        set line (string trim -- $line)
         if string match -rq "^base_url\s*=" -- $line
             set base_url (echo $line | string replace -r ".*=\s*[\"']?([^\"']*)[\"']?" '$1')
             if test -n "$base_url"
@@ -357,5 +359,5 @@ complete -c ccs -f -a "current show status" -d "显示当前配置"
 complete -c ccs -f -a "help" -d "显示帮助信息"
 complete -c ccs -f -a "version" -d "显示版本信息"
 
-# 脚本加载时自动加载当前配置
-_ccs_auto_load_current
+# 脚本加载时自动加载当前配置（已禁用以避免启动时输出）
+# _ccs_auto_load_current

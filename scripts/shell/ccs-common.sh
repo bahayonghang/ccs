@@ -273,14 +273,14 @@ validate_required_fields() {
             config_content=$(sed -n "/^\\[$config\\]/,/^\\[/p" "$config_file" | tail -n +2 | head -n -1)
         fi
         
-        # 检查必需字段
+        # 检查必需字段（允许缩进与空白，并要求包含等号）
         local missing_fields=()
         
-        if ! echo "$config_content" | grep -q "^base_url"; then
+        if ! echo "$config_content" | grep -Eq "^[[:space:]]*base_url[[:space:]]*="; then
             missing_fields+=("base_url")
         fi
         
-        if ! echo "$config_content" | grep -q "^auth_token"; then
+        if ! echo "$config_content" | grep -Eq "^[[:space:]]*auth_token[[:space:]]*="; then
             missing_fields+=("auth_token")
         fi
         
@@ -615,8 +615,9 @@ clear_all_cache() {
     log_debug "清理所有配置缓存"
 }
 
-# 高效的TOML解析器（改进版）
+# 高效的TOML解析器（增强版）
 # 用法: parse_toml_fast <config_file> <section_name>
+# 改进：更强大的格式支持、更好的空行和注释处理、错误处理优化
 parse_toml_fast() {
     local config_file="$1"
     local section_name="$2"
@@ -630,33 +631,58 @@ parse_toml_fast() {
         return 0
     fi
     
-    # 解析配置文件（优化的单次读取）
+    # 解析配置文件（增强版AWK脚本）
     local result
     result=$(awk -v section="$section_name" '
-        BEGIN { in_section = 0; found = 0 }
-        /^\[.*\]/ { 
-            if ($0 == "[" section "]") { 
-                in_section = 1; found = 1 
+        BEGIN { 
+            in_section = 0; 
+            found = 0;
+            gsub(/[[\]]/, "\\\\&", section);  # 转义特殊字符
+        }
+        # 匹配配置节标题，支持前后空白
+        /^[[:space:]]*\[.*\][[:space:]]*$/ { 
+            # 提取节名称，去除方括号和空白
+            gsub(/^[[:space:]]*\[/, "");
+            gsub(/\][[:space:]]*$/, "");
+            if ($0 == section) { 
+                in_section = 1; 
+                found = 1;
             } else { 
-                in_section = 0 
+                in_section = 0;
             }
-            next
+            next;
         }
-        in_section && /^[^#]/ && NF > 0 { 
-            gsub(/^[ \t]+|[ \t]+$/, ""); 
-            print 
+        # 在目标节内且不是注释行或空行
+        in_section && !/^[[:space:]]*#/ && !/^[[:space:]]*$/ {
+            # 检查是否包含等号（有效的键值对）
+            if (match($0, /=/)) {
+                # 保留原始格式，只去除首尾空白
+                gsub(/^[[:space:]]+|[[:space:]]+$/, "");
+                print;
+            }
         }
-        END { if (!found) exit 1 }
+        END { 
+            if (!found) {
+                exit 1;
+            }
+        }
     ' "$config_file")
     
-    if [[ $? -eq 0 ]] && [[ -n "$result" ]]; then
+    local awk_status=$?
+    
+    if [[ $awk_status -eq 0 ]] && [[ -n "$result" ]]; then
         # 缓存结果
         cache_config "$cache_key" "$result"
         echo "$result"
+        log_debug "解析配置节成功: $section_name (行数: $(echo "$result" | wc -l))"
         return 0
+    elif [[ $awk_status -eq 1 ]]; then
+        log_debug "配置节不存在: $section_name"
+        return 1
+    else
+        log_error "解析配置文件时发生错误: $config_file"
+        return 1
     fi
-    
-    return 1
 }
 
 # 批量操作支持
@@ -727,7 +753,7 @@ verify_config_integrity() {
     local config_file="$1"
     local errors=()
     
-    log_info "检查配置文件完整性: $config_file"
+    # 静默检查配置文件完整性
     
     # 检查文件存在性和权限
     if [[ ! -f "$config_file" ]]; then
@@ -759,7 +785,7 @@ verify_config_integrity() {
     
     # 输出检查结果
     if [[ ${#errors[@]} -eq 0 ]]; then
-        log_info "配置文件完整性检查通过"
+        # 配置文件完整性检查通过（静默）
         return 0
     else
         log_error "配置文件完整性检查失败:"
@@ -956,6 +982,67 @@ print_debug() {
         printf "%b🐛%b %s\n" "${MAGENTA:-\033[0;35m}" "$NC" "$1"
         simple_log "DEBUG" "$1"
     fi
+}
+
+# 规范化配置值：去除外围空白与成对引号/反引号（支持多层包装和混合格式）
+# 增强版：更好的空值处理、更准确的引号匹配、更强的鲁棒性
+normalize_config_value() {
+    local v="$1"
+    
+    # 处理完全空值的情况
+    if [[ -z "$v" ]]; then
+        echo ""
+        return 0
+    fi
+    
+    # 去除首尾空白
+    v="${v#"${v%%[![:space:]]*}"}"
+    v="${v%"${v##*[![:space:]]}"}"
+    
+    # 如果处理后为空，直接返回
+    if [[ -z "$v" ]]; then
+        echo ""
+        return 0
+    fi
+    
+    # 反复去除成对包裹符（双引号/单引号/反引号）并再次修剪空白
+    local max_iterations=10  # 防止无限循环
+    local iteration=0
+    
+    while [[ -n "$v" ]] && [[ $iteration -lt $max_iterations ]]; do
+        local original_v="$v"
+        local first_char="${v:0:1}"
+        local last_char="${v: -1}"
+        
+        # 检查是否为成对的包裹符
+        if [[ ${#v} -gt 1 ]] && [[ "$first_char" == "$last_char" ]]; then
+            case "$first_char" in
+                '"'|"'"|\`)
+                    # 去除外层包裹符
+                    v="${v:1:${#v}-2}"
+                    # 重新修剪空白
+                    v="${v#"${v%%[![:space:]]*}"}"
+                    v="${v%"${v##*[![:space:]]}"}"
+                    ;;
+                *)
+                    # 不是包裹符，退出循环
+                    break
+                    ;;
+            esac
+        else
+            # 没有更多可去除的包裹符，退出循环
+            break
+        fi
+        
+        # 检查是否没有变化（防止无限循环）
+        if [[ "$v" == "$original_v" ]]; then
+            break
+        fi
+        
+        iteration=$((iteration + 1))
+    done
+    
+    echo "$v"
 }
 
 # 加载工具库完成
