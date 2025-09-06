@@ -35,7 +35,7 @@ small_fast_model = "快速模型"  # 可选
 # 默认配置（首次启动时使用）
 default_config = "anyrouter"
 
-# 当前活跃配置（由CCS自动管理,请勿手动修改）
+# 当前激活配置（由CCS自动管理,请勿手动修改）
 current_config = "anyrouter"
 
 # ==================== Claude API服务 ====================
@@ -116,7 +116,7 @@ model = "premium-model"
 | 字段 | 类型 | 必需 | 说明 |
 |------|------|------|------|
 | `default_config` | String | ✅ | 默认配置名称,首次启动时使用 |
-| `current_config` | String | ✅ | 当前活跃配置,由CCS自动管理 |
+| `current_config` | String | ✅ | 当前激活配置,由CCS自动管理 |
 
 ### 配置节字段
 

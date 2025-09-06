@@ -76,7 +76,7 @@ function _ccs_update_current_config --argument config_name
     if grep -q "^current_config" $CONFIG_FILE
         sed "s/^current_config\s*=.*/current_config = \"$config_name\"/" $CONFIG_FILE > $temp_file
     else
-        echo "# 当前活跃配置" > $temp_file
+        echo "# 当前激活配置" > $temp_file
         echo "current_config = \"$config_name\"" >> $temp_file
         echo "" >> $temp_file
         cat $CONFIG_FILE >> $temp_file

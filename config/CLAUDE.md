@@ -53,7 +53,7 @@
 
 #### 字段规范
 - **default_config**: 字符串，指定默认配置名称
-- **current_config**: 字符串，当前活跃配置（自动管理）
+- **current_config**: 字符串，当前激活配置（自动管理）
 - **description**: 字符串，配置描述信息
 - **base_url**: 字符串，API 端点 URL
 - **auth_token**: 字符串，API 认证令牌

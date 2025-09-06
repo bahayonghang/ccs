@@ -12,38 +12,96 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 50%, #9333EA 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #8B5CF6 50%, #A855F7 75%, #9333EA 100%);
+            background-attachment: fixed;
             min-height: 100vh;
             padding: 20px;
             color: #333;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 20%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(255, 118, 117, 0.3) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 40%, rgba(139, 92, 246, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15),
+                        0 0 0 1px rgba(255, 255, 255, 0.2) inset;
             overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+        
+        .container:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.2),
+                        0 0 0 1px rgba(255, 255, 255, 0.25) inset;
         }
 
         .header {
-            background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 50%, #9333EA 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #8B5CF6 50%, #A855F7 75%, #9333EA 100%);
             color: white;
-            padding: 30px;
+            padding: 40px 30px;
             text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -50%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: skewX(-45deg);
+            animation: headerShimmer 3s infinite;
+        }
+        
+        @keyframes headerShimmer {
+            0% { left: -50%; }
+            100% { left: 150%; }
         }
 
         .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            font-weight: 300;
+            font-size: 2.8rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+            background: linear-gradient(45deg, #ffffff, #e0e7ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 1;
         }
 
         .header p {
-            opacity: 0.9;
-            font-size: 1.1rem;
+            opacity: 0.95;
+            font-size: 1.2rem;
+            font-weight: 400;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 1;
         }
 
         .content {
@@ -54,16 +112,39 @@
 
         .sidebar {
             width: 250px;
-            background: #f8f9fa;
-            border-right: 1px solid #e9ecef;
-            padding: 20px;
+            background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+            border-right: 1px solid rgba(226, 232, 240, 0.8);
+            padding: 25px 20px;
             overflow-y: auto;
+            position: relative;
+        }
+        
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 1px;
+            height: 100%;
+            background: linear-gradient(180deg, transparent, rgba(139, 92, 246, 0.3), transparent);
         }
 
         .sidebar h3 {
-            margin-bottom: 15px;
-            color: #333;
-            font-size: 1.1rem;
+            margin-bottom: 20px;
+            color: #1e293b;
+            font-size: 1.2rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .sidebar h3::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            border-radius: 2px;
         }
 
         .sidebar-nav {
@@ -77,22 +158,50 @@
 
         .sidebar-nav a {
             display: block;
-            padding: 8px 12px;
-            color: #666;
+            padding: 12px 16px;
+            color: #64748b;
             text-decoration: none;
-            border-radius: 4px;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
+            border-radius: 12px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.95rem;
+            font-weight: 500;
+            position: relative;
+            margin-bottom: 4px;
+        }
+        
+        .sidebar-nav a::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            border-radius: 1px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(-50%);
         }
 
         .sidebar-nav a:hover {
-            background: #e9ecef;
-            color: #333;
+            background: rgba(139, 92, 246, 0.08);
+            color: #4c1d95;
+            transform: translateX(6px);
+        }
+        
+        .sidebar-nav a:hover::before {
+            width: 4px;
         }
 
         .sidebar-nav a.active {
-            background: #8B5CF6;
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
             color: white;
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+            transform: translateX(6px);
+        }
+        
+        .sidebar-nav a.active::before {
+            width: 4px;
+            background: rgba(255, 255, 255, 0.8);
         }
 
         .main-content {
@@ -106,16 +215,39 @@
         }
 
         .config-item {
-            background: #f8f9fa;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.6);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .config-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #8B5CF6, #A855F7);
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
         .config-item:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1),
+                        0 0 0 1px rgba(139, 92, 246, 0.1) inset;
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+        
+        .config-item:hover::before {
+            opacity: 1;
         }
 
         .config-header {
@@ -126,9 +258,13 @@
         }
 
         .config-name {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: #333;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1e293b;
+            background: linear-gradient(135deg, #1e293b, #475569);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .config-actions {
@@ -137,50 +273,85 @@
         }
 
         .btn {
-            padding: 8px 16px;
+            padding: 10px 20px;
             border: none;
-            border-radius: 6px;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 0.9rem;
-            transition: all 0.3s ease;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             text-decoration: none;
             display: inline-block;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            transform: translate(-50%, -50%);
+        }
+        
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
         }
 
         .btn-primary {
-            background: #8B5CF6;
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
             color: white;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
         }
 
         .btn-primary:hover {
-            background: #7C3AED;
+            background: linear-gradient(135deg, #7C3AED, #9333EA);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
         }
 
         .btn-secondary {
-            background: #6c757d;
+            background: linear-gradient(135deg, #64748b, #475569);
             color: white;
+            box-shadow: 0 4px 15px rgba(100, 116, 139, 0.3);
         }
 
         .btn-secondary:hover {
-            background: #5a6268;
+            background: linear-gradient(135deg, #475569, #334155);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(100, 116, 139, 0.4);
         }
 
         .btn-danger {
-            background: #dc3545;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
             color: white;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
         }
 
         .btn-danger:hover {
-            background: #c82333;
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
         }
 
         .btn-success {
-            background: #28a745;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
             color: white;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
         }
 
         .btn-success:hover {
-            background: #218838;
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(34, 197, 94, 0.4);
         }
 
         .config-fields {
@@ -202,23 +373,33 @@
         }
 
         .field label {
-            font-weight: 500;
-            margin-bottom: 5px;
-            color: #555;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #374151;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .field input, .field textarea {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            transition: border-color 0.3s ease;
+            padding: 14px 16px;
+            border: 2px solid rgba(226, 232, 240, 0.8);
+            border-radius: 12px;
+            font-size: 0.95rem;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 500;
         }
 
         .field input:focus, .field textarea:focus {
             outline: none;
             border-color: #8B5CF6;
-            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15),
+                        0 4px 20px rgba(139, 92, 246, 0.1);
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.95);
         }
 
         .field textarea {
@@ -234,18 +415,43 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            animation: modalFadeIn 0.3s ease;
+        }
+        
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .modal-content {
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             margin: 5% auto;
-            padding: 30px;
-            border-radius: 12px;
+            padding: 40px;
+            border-radius: 20px;
             width: 90%;
-            max-width: 600px;
+            max-width: 650px;
             max-height: 80vh;
             overflow-y: auto;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.15),
+                        0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
 
         .modal-header {
@@ -256,14 +462,24 @@
         }
 
         .close {
-            font-size: 28px;
+            font-size: 32px;
             font-weight: bold;
             cursor: pointer;
-            color: #aaa;
+            color: #94a3b8;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(248, 250, 252, 0.8);
         }
 
         .close:hover {
-            color: #333;
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+            transform: rotate(90deg) scale(1.1);
         }
 
         .form-actions {
@@ -274,16 +490,33 @@
         }
 
         .status-bar {
-            background: #f8f9fa;
-            border-top: 1px solid #e9ecef;
-            padding: 15px 30px;
+            background: linear-gradient(180deg, rgba(248, 250, 252, 0.8) 0%, rgba(241, 245, 249, 0.9) 100%);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(226, 232, 240, 0.6);
+            padding: 20px 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
         .status-text {
-            color: #666;
+            color: #64748b;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+        
+        .status-text.loading {
+            color: #8B5CF6;
+        }
+        
+        .status-text.success {
+            color: #22c55e;
+        }
+        
+        .status-text.error {
+            color: #ef4444;
         }
 
         .hidden {
@@ -291,31 +524,77 @@
         }
 
         .default-config-badge {
-            background: #28a745;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
             color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 10px rgba(34, 197, 94, 0.3);
+            margin-left: 10px;
+            display: inline-flex;
+            align-items: center;
+        }
+        
+        .default-config-badge::before {
+            content: '⭐';
+            margin-right: 4px;
             font-size: 0.8rem;
-            font-weight: 500;
         }
 
         /* 科技风格当前配置展示 - 独立区域 */
         .current-config-section {
             background: rgba(255, 255, 255, 0.95);
-            border-radius: 16px;
-            padding: 25px;
-            margin-bottom: 30px;
-            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 35px;
+            box-shadow: 0 15px 50px rgba(139, 92, 246, 0.15),
+                        0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .current-config-section::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(135deg, #667eea, #764ba2, #8B5CF6, #A855F7);
+            border-radius: 22px;
+            z-index: -1;
+            opacity: 0.1;
         }
         
         .current-config-tech {
-            background: linear-gradient(135deg, #2D1B69 0%, #3730A3 50%, #4C1D95 100%);
-            border: 1px solid #A855F7;
-            border-radius: 12px;
-            padding: 25px;
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 25%, #3730a3 50%, #4338ca 75%, #4c1d95 100%);
+            border: 2px solid transparent;
+            background-clip: padding-box;
+            border-radius: 16px;
+            padding: 30px;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 8px 32px rgba(168, 85, 247, 0.25);
+            box-shadow: 0 20px 60px rgba(168, 85, 247, 0.3),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        
+        .current-config-tech::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 16px;
+            border: 2px solid;
+            border-image: linear-gradient(135deg, #A855F7, #8B5CF6, #667eea) 1;
+            pointer-events: none;
         }
 
         .current-config-tech::before {
@@ -410,27 +689,182 @@
             0%, 50% { opacity: 1; }
             51%, 100% { opacity: 0.3; }
         }
+        
+        /* 加载动画 */
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(139, 92, 246, 0.3);
+            border-top: 2px solid #8B5CF6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 成功指示 */
+        .success-indicator {
+            color: #22c55e;
+            animation: successPulse 0.6s ease;
+        }
+        
+        @keyframes successPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        /* 错误指示 */
+        .error-indicator {
+            color: #ef4444;
+            animation: errorShake 0.6s ease;
+        }
+        
+        @keyframes errorShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        /* 悬浮提示 */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .tooltip:hover::after {
+            opacity: 1;
+        }
+        
+        /* 状态指示灯 */
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            animation: statusPulse 2s infinite;
+        }
+        
+        .status-indicator.active {
+            background: #22c55e;
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+        }
+        
+        .status-indicator.inactive {
+            background: #64748b;
+        }
+        
+        .status-indicator.error {
+            background: #ef4444;
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+        }
+        
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(241, 245, 249, 0.8);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #7C3AED, #9333EA);
+        }
 
+        @media (max-width: 1024px) {
+            .container {
+                margin: 10px;
+                border-radius: 16px;
+            }
+            
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .header h1 {
+                font-size: 2.4rem;
+            }
+        }
+        
         @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                margin: 0;
+                border-radius: 12px;
+            }
+            
             .content {
                 flex-direction: column;
+            }
+            
+            .header {
+                padding: 25px 15px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+                margin-bottom: 10px;
+            }
+            
+            .header p {
+                font-size: 1rem;
             }
             
             .sidebar {
                 width: 100%;
                 border-right: none;
-                border-bottom: 1px solid #e9ecef;
-                padding: 15px 20px;
+                border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+                padding: 20px 15px;
             }
             
             .sidebar h3 {
-                margin-bottom: 10px;
+                margin-bottom: 15px;
+                font-size: 1.1rem;
             }
             
             .sidebar-nav {
                 display: flex;
                 flex-wrap: wrap;
-                gap: 5px;
+                gap: 8px;
             }
             
             .sidebar-nav li {
@@ -438,21 +872,28 @@
             }
             
             .sidebar-nav a {
-                padding: 6px 10px;
-                font-size: 0.8rem;
+                padding: 8px 12px;
+                font-size: 0.85rem;
+                border-radius: 10px;
+            }
+            
+            .main-content {
+                padding: 20px 15px;
             }
             
             .config-fields {
                 grid-template-columns: 1fr;
+                gap: 20px;
             }
             
             .config-list {
                 grid-template-columns: 1fr;
+                gap: 15px;
             }
             
             .current-config-section {
-                margin-bottom: 20px;
-                padding: 20px;
+                margin-bottom: 25px;
+                padding: 20px 15px;
             }
             
             .current-config-section h2 {
@@ -460,15 +901,83 @@
                 margin-bottom: 15px;
             }
             
+            .current-config-tech {
+                padding: 20px 15px;
+            }
+            
+            .config-name-display {
+                font-size: 1.4rem;
+                letter-spacing: 2px;
+            }
+            
             .config-header {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 10px;
+                gap: 15px;
             }
             
             .config-actions {
                 width: 100%;
-                justify-content: flex-end;
+                justify-content: flex-start;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            
+            .btn {
+                flex: 1;
+                min-width: 80px;
+                padding: 12px 16px;
+                font-size: 0.85rem;
+            }
+            
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+                padding: 25px 20px;
+                border-radius: 16px;
+            }
+            
+            .status-bar {
+                padding: 15px;
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.6rem;
+            }
+            
+            .header p {
+                font-size: 0.9rem;
+            }
+            
+            .config-item {
+                padding: 20px 15px;
+            }
+            
+            .config-name {
+                font-size: 1.1rem;
+            }
+            
+            .modal-content {
+                width: 100%;
+                margin: 5% 0;
+                border-radius: 12px;
+                padding: 20px 15px;
+            }
+            
+            .tech-content {
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+            }
+            
+            .config-name-display {
+                font-size: 1.2rem;
+                text-align: center;
             }
         }
     </style>
@@ -490,7 +999,7 @@
             <div class="main-content">
                 <!-- 独立的当前配置展示区域 -->
                 <div class="current-config-section">
-                    <h2 style="margin-bottom: 20px; color: #333; font-size: 1.3rem;">🔧 当前活跃配置</h2>
+                    <h2 style="margin-bottom: 20px; color: #1e293b; font-size: 1.4rem; font-weight: 700; display: flex; align-items: center; gap: 10px;"><span style="background: linear-gradient(135deg, #8B5CF6, #A855F7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">🔧</span> 当前激活配置</h2>
                     <div id="current-config-display" class="current-config-tech">
                         <div class="tech-header">
                             <div class="tech-title">CURRENT_CONFIG</div>
@@ -509,8 +1018,8 @@
                 
                 <!-- 配置列表区域 -->
                 <div class="config-list" id="configList">
-                    <div id="overview" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                        <h2>📋 配置列表</h2>
+                    <div id="overview" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                        <h2 style="color: #1e293b; font-weight: 700; font-size: 1.5rem; display: flex; align-items: center; gap: 10px;"><span style="background: linear-gradient(135deg, #8B5CF6, #A855F7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">📋</span> 配置列表</h2>
                         <div>
                             <button class="btn btn-primary" onclick="openAddModal()">添加配置</button>
                             <button class="btn btn-success" onclick="saveFile()">保存文件</button>
@@ -650,7 +1159,7 @@
         });
 
         function loadLocalConfig() {
-            updateStatus('正在加载本地配置...');
+            updateStatus('正在加载本地配置...', 'loading');
             
             // 尝试通过 HTTP 请求加载默认配置文件
             const configPaths = [
@@ -672,12 +1181,12 @@
                         try {
                             currentConfig = TomlParser.parse(content);
                             displayConfigs();
-                            updateStatus(`已加载配置文件: ${path}`);
+                            updateStatus(`已加载配置文件: ${path}`, 'success');
                             // 缓存到 localStorage
                             localStorage.setItem('ccs_config', JSON.stringify(currentConfig));
                         } catch (error) {
                             console.error('Failed to parse config file:', error);
-                            updateStatus('配置文件解析失败');
+                            updateStatus('配置文件解析失败', 'error');
                         }
                     })
                     .catch(() => {
@@ -693,13 +1202,13 @@
                         try {
                             currentConfig = JSON.parse(cachedConfig);
                             displayConfigs();
-                            updateStatus('已加载缓存的配置');
+                            updateStatus('已加载缓存的配置', 'success');
                         } catch (error) {
                             console.error('Failed to parse cached config:', error);
-                            updateStatus('无法加载配置文件');
+                            updateStatus('无法加载配置文件', 'error');
                         }
                     } else {
-                        updateStatus('无法找到配置文件');
+                        updateStatus('无法找到配置文件', 'error');
                     }
                 }
             }, 1000);
@@ -796,14 +1305,23 @@
             }
             
             configList.style.display = 'block';
+            
+            // 重新添加工具提示（因为 DOM 已更新）
+            setTimeout(() => {
+                addTooltips();
+            }, 100);
         }
 
         function setDefaultConfig(configName) {
             currentConfig.default_config = configName;
             // 同时更新当前配置
             currentConfig.current_config = configName;
+            
+            // 添加动画效果
+            animateConfigChange(configName);
+            
             displayConfigs();
-            updateStatus(`已设置默认配置: ${configName}`);
+            updateStatus(`已设置默认配置: ${configName}`, 'success');
         }
         
         function updateCurrentConfigDisplay(configName) {
@@ -840,7 +1358,14 @@
             document.getElementById('configModel').value = config.model || '';
             document.getElementById('configSmallModel').value = config.small_fast_model || '';
             
-            document.getElementById('editModal').style.display = 'block';
+            const modal = document.getElementById('editModal');
+            modal.style.display = 'block';
+            
+            // 聚焦到配置名称输入框
+            setTimeout(() => {
+                document.getElementById('configName').focus();
+                document.getElementById('configName').select();
+            }, 100);
         }
 
         function openAddModal() {
@@ -849,11 +1374,25 @@
             document.getElementById('modalTitle').textContent = '添加配置';
             document.getElementById('configForm').reset();
             
-            document.getElementById('editModal').style.display = 'block';
+            const modal = document.getElementById('editModal');
+            modal.style.display = 'block';
+            
+            // 聚焦到第一个输入框
+            setTimeout(() => {
+                const firstInput = modal.querySelector('input');
+                if (firstInput) {
+                    firstInput.focus();
+                }
+            }, 100);
         }
 
         function closeModal() {
-            document.getElementById('editModal').style.display = 'none';
+            const modal = document.getElementById('editModal');
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.display = 'none';
+                modal.style.opacity = '1';
+            }, 200);
         }
 
         function deleteConfig(configName) {
@@ -866,7 +1405,7 @@
                 }
                 
                 displayConfigs();
-                updateStatus(`已删除配置: ${configName}`);
+                updateStatus(`已删除配置: ${configName}`, 'success');
             }
         }
 
@@ -888,11 +1427,43 @@
             // 同时保存到 localStorage
             localStorage.setItem('ccs_config', JSON.stringify(currentConfig));
             
-            updateStatus('配置文件已保存,请将下载的文件替换 ~/.ccs_config.toml');
+            updateStatus('配置文件已保存,请将下载的文件替换 ~/.ccs_config.toml', 'success');
         }
 
-        function updateStatus(message) {
-            document.getElementById('statusText').textContent = message;
+        function updateStatus(message, type = 'info') {
+            const statusElement = document.getElementById('statusText');
+            statusElement.innerHTML = '';
+            
+            // 清除之前的状态类
+            statusElement.className = 'status-text';
+            
+            // 根据类型添加相应的指示器和样式
+            let indicator = '';
+            switch(type) {
+                case 'loading':
+                    indicator = '<span class="loading-spinner"></span>';
+                    statusElement.classList.add('loading');
+                    break;
+                case 'success':
+                    indicator = '<span class="status-indicator active"></span>';
+                    statusElement.classList.add('success');
+                    break;
+                case 'error':
+                    indicator = '<span class="status-indicator error"></span>';
+                    statusElement.classList.add('error');
+                    break;
+                default:
+                    indicator = '<span class="status-indicator inactive"></span>';
+            }
+            
+            statusElement.innerHTML = indicator + message;
+            
+            // 成功或错误消息自动消失
+            if (type === 'success' || type === 'error') {
+                setTimeout(() => {
+                    updateStatus('就绪', 'info');
+                }, 3000);
+            }
         }
 
   
@@ -929,7 +1500,7 @@
             currentConfig[configName] = config;
             displayConfigs();
             closeModal();
-            updateStatus(`配置 "${configName}" 已保存`);
+            updateStatus(`配置 "${configName}" 已保存`, 'success');
         });
 
         // 滚动到指定区域的函数
@@ -976,15 +1547,92 @@
         // 页面加载完成后设置默认活动导航
          document.addEventListener('DOMContentLoaded', function() {
              updateActiveNavItem('overview');
+             // 重新添加工具提示（因为 DOM 已更新）
+             setTimeout(() => {
+                 addTooltips();
+             }, 500);
          });
 
-        // 点击模态框外部关闭
+        // 增强的模态框交互
         window.addEventListener('click', function(e) {
             const modal = document.getElementById('editModal');
             if (e.target === modal) {
                 closeModal();
             }
         });
+        
+        // 键盘快捷键支持
+        document.addEventListener('keydown', function(e) {
+            // ESC 键关闭模态框
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('editModal');
+                if (modal.style.display === 'block') {
+                    closeModal();
+                }
+            }
+            
+            // Ctrl/Cmd + S 保存文件
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveFile();
+            }
+            
+            // Ctrl/Cmd + N 添加新配置
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                e.preventDefault();
+                openAddModal();
+            }
+            
+            // F5 重新加载配置
+            if (e.key === 'F5') {
+                e.preventDefault();
+                reloadConfig();
+            }
+        });
+        
+        // 添加工具提示功能
+        function addTooltips() {
+            // 为按钮添加工具提示
+            const buttons = {
+                '.btn-primary': '主要操作按钮',
+                '.btn-secondary': '次要操作按钮',
+                '.btn-success': '保存操作',
+                '.btn-danger': '危险操作 - 请谨慎'
+            };
+            
+            Object.entries(buttons).forEach(([selector, tooltip]) => {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(el => {
+                    if (!el.hasAttribute('data-tooltip')) {
+                        el.classList.add('tooltip');
+                        el.setAttribute('data-tooltip', tooltip);
+                    }
+                });
+            });
+        }
+        
+        // 添加平滑滚动到元素功能
+        function smoothScrollToElement(element) {
+            element.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+        }
+        
+        // 增强的配置切换动画
+        function animateConfigChange(configName) {
+            const currentConfigElement = document.getElementById('currentConfigName');
+            if (currentConfigElement) {
+                currentConfigElement.style.transform = 'scale(0.8)';
+                currentConfigElement.style.opacity = '0.5';
+                
+                setTimeout(() => {
+                    currentConfigElement.textContent = configName;
+                    currentConfigElement.style.transform = 'scale(1)';
+                    currentConfigElement.style.opacity = '1';
+                }, 150);
+            }
+        }
     </script>
 </body>
 </html>

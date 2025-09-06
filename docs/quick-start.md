@@ -63,7 +63,7 @@ code ~/.ccs_config.toml
 # 默认配置
 default_config = "anyrouter"
 
-# 当前活跃配置（自动管理）
+# 当前激活配置（自动管理）
 current_config = "anyrouter"
 
 # AnyRouter配置（推荐用于Claude API）
