@@ -84,11 +84,21 @@ main() {
         "scripts/shell/ccs.fish"
         "scripts/shell/ccs-common.sh"
         "package.json"
+        "web/index.html"
+        "web/CLAUDE.md"
     )
     
     for file in "${files[@]}"; do
         print_message "$BLUE" "下载 $file..."
-        if ! download_file "$repo_url/$file" "$temp_dir/$(basename $file)"; then
+        
+        # 为web文件创建子目录
+        local target_path="$temp_dir/$(basename $file)"
+        if [[ "$file" == web/* ]]; then
+            mkdir -p "$temp_dir/web"
+            target_path="$temp_dir/$file"
+        fi
+        
+        if ! download_file "$repo_url/$file" "$target_path"; then
             print_error "下载 $file 失败"
             rm -rf "$temp_dir"
             exit 1
