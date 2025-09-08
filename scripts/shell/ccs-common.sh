@@ -58,9 +58,25 @@ readonly LOG_LEVEL_ERROR=3
 readonly LOG_LEVEL_OFF=4
 
 # 当前日志级别（默认为INFO）
-CCS_LOG_LEVEL=${CCS_LOG_LEVEL:-$LOG_LEVEL_INFO}
+if [[ -z "$CCS_LOG_LEVEL" ]]; then
+    if [[ "$SHELL" == *"fish"* ]]; then
+        set -g CCS_LOG_LEVEL $LOG_LEVEL_INFO
+    else
+        CCS_LOG_LEVEL=$LOG_LEVEL_INFO
+    fi
+fi
 
-# 统一错误处理函数（增强版）
+# 检测是否在被source的环境中
+_is_sourced() {
+    # 检查调用栈，如果脚本被source则BASH_SOURCE[0]不等于$0
+    [[ "${BASH_SOURCE[0]}" != "${0}" ]] 2>/dev/null || 
+    # 检查是否在函数调用栈中
+    [[ "${FUNCNAME[1]}" != "main" ]] 2>/dev/null ||
+    # 检查$0是否包含bash或shell
+    [[ "$0" =~ (bash|shell|fish|zsh)$ ]] 2>/dev/null
+}
+
+# 统一错误处理函数（增强版 - 支持安全退出）
 # 用法: handle_error <错误码> <错误信息> [是否显示帮助]
 handle_error() {
     local error_code="$1"
@@ -98,6 +114,10 @@ handle_error() {
             log_info "解决方案: 恢复或重新创建配置文件"
             log_info "  备份: 检查 ~/.ccs/backups/ 目录中的备份文件"
             ;;
+        $ERROR_FILE_NOT_FOUND)
+            log_info "解决方案: 检查文件路径是否正确或重新安装"
+            log_info "  检查: 确认文件是否存在，路径是否正确"
+            ;;
         $ERROR_RESOURCE_BUSY)
             log_info "解决方案: 等待资源释放或终止占用的进程"
             log_info "  检查: ps aux | grep ccs 查找相关进程"
@@ -118,7 +138,13 @@ handle_error() {
         echo "使用 'ccs --debug' 启用调试模式获取更多信息"
     fi
     
-    exit "$error_code"
+    # 安全退出机制：在被source的环境中使用return而非exit
+    if _is_sourced; then
+        log_warn "检测到在Shell环境中运行，使用安全退出模式"
+        return "$error_code" 2>/dev/null || true
+    else
+        exit "$error_code"
+    fi
 }
 
 # 日志函数

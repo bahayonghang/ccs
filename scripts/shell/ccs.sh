@@ -673,8 +673,34 @@ open_web() {
     local web_dir="$HOME/.ccs/web"
     local web_path="$web_dir/index.html"
     
+    # 容错回退功能：如果~/.ccs/web不存在，尝试使用项目web目录
     if [[ ! -f "$web_path" ]]; then
-        handle_error $ERROR_FILE_NOT_FOUND "web界面文件不存在,请重新运行安装脚本"
+        print_warning "用户web目录不存在: $web_path"
+        print_info "正在尝试回退到项目web目录..."
+        
+        # 多路径检测项目web目录
+        local project_web_paths=(
+            "./web/index.html"                    # 当前目录的web子目录
+            "../web/index.html"                   # 上级目录的web子目录
+            "../../web/index.html"                # 上上级目录的web子目录
+            "$HOME/Documents/Github/ccs/web/index.html"  # 默认项目路径
+        )
+        
+        local fallback_found=false
+        for project_path in "${project_web_paths[@]}"; do
+            if [[ -f "$project_path" ]]; then
+                web_dir="$(dirname "$project_path")"
+                web_path="$project_path"
+                print_success "找到项目web目录: $web_dir"
+                print_info "建议运行安装脚本将web文件复制到用户目录: ~/.ccs/web"
+                fallback_found=true
+                break
+            fi
+        done
+        
+        if [[ "$fallback_found" == "false" ]]; then
+            handle_error $ERROR_FILE_NOT_FOUND "web界面文件不存在，请重新运行安装脚本或确保在CCS项目目录中"
+        fi
     fi
     
     # 检查是否在远程环境（WSL/SSH）
