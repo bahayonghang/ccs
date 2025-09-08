@@ -69,26 +69,25 @@ auth_token = "your-api-key-here"
 ## 📖 Usage
 
 ```bash
-# Switch configurations
-ccs switch <config_name>    # Switch to specific config
-ccs switch                  # Interactive selection
+# Basic usage
+ccs [config_name]           # Switch to specific configuration
+ccs list                    # List all available configurations
+ccs current                 # Show current configuration status
 
-# View configurations
-ccs list                    # List all configs
-ccs current                 # Show active config
+# Management commands
+ccs web                     # Launch Web configuration interface
+ccs update                  # Auto-update CCS to latest version
+ccs backup                  # Backup current configuration file
+ccs verify                  # Verify configuration file integrity
+ccs clear-cache             # Clear configuration cache
+ccs uninstall               # Uninstall CCS tool
 
-# Manage configurations
-ccs add <config_name>       # Add new config
-ccs edit <config_name>      # Edit config
-ccs remove <config_name>    # Remove config
+# Information commands
+ccs version                 # Show version information
+ccs help                    # Show help information
 
-# Web interface
-ccs web                     # Start web UI (port 8080)
-ccs web --port 3000         # Custom port
-
-# Other
-ccs reload                  # Reload config
-ccs version                 # Show version
+# Debug commands
+ccs --debug [command]       # Run command with debug mode enabled
 ```
 
 ### 🔗 Global Configuration Persistence
@@ -106,6 +105,40 @@ echo $ANTHROPIC_MODEL # Automatically displays: glm-4
 - ✅ Switch configuration in any terminal, other new terminals automatically inherit
 - ✅ Configuration remains unchanged after computer restart
 - ✅ Support for multiple shells like Bash, Zsh, Fish
+
+## 🔄 Auto-Update
+
+CCS provides convenient auto-update functionality, eliminating the need to manually execute complex installation commands:
+
+```bash
+ccs update                  # Auto-update to latest version
+```
+
+### Update Features
+
+- ✅ **Smart Path Detection** - Automatically searches for installation script locations
+- ✅ **Configuration Protection** - Automatically backs up existing configuration files
+- ✅ **Complete Update** - Updates all script files and web interface
+- ✅ **Environment Refresh** - Automatically refreshes shell environment configuration
+- ✅ **Error Handling** - Detailed error messages and solution suggestions
+
+### Update Process
+
+1. **Search Installation Script** - Looks for `install.sh` in multiple possible locations
+2. **Backup Configuration** - Automatically backs up current configuration to `~/.ccs/backups/`
+3. **Execute Update** - Runs installation script to update all components
+4. **Verify Completion** - Confirms successful update and provides follow-up instructions
+
+### Important Notes
+
+⚠️ **Post-Update Actions**:
+- Restart terminal, or run `source ~/.bashrc` (Bash) / `source ~/.config/fish/config.fish` (Fish)
+- Run `ccs version` to confirm version update success
+
+⚠️ **Troubleshooting**:
+- Ensure running in CCS project directory, or ensure default installation path exists
+- Check network connection and disk space
+- If update fails, manually run: `cd /path/to/ccs && ./scripts/install/install.sh`
 
 ## 🛠️ Advanced Features
 

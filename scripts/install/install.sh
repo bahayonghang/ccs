@@ -737,23 +737,77 @@ copy_script() {
         fi
     fi
     
-    # 复制web文件
-    if [[ -d "$source_web" ]]; then
-        local web_path="$HOME/.ccs/web"
-        if [[ -d "$web_path" ]] && [[ "$reinstall" == true ]]; then
-            rm -rf "$web_path"
-        fi
-        if cp -r "$source_web" "$web_path"; then
-            if [[ "$reinstall" == true ]]; then
-                print_success "Updated web interface files"
-            else
-                print_success "Installed web interface files"
+    # 复制web文件 - 增强版，支持多种路径检测
+    local web_copied=false
+    local web_path="$HOME/.ccs/web"
+    
+    # 多路径检测web源文件
+    local web_sources=(
+        "$source_web"                    # 标准相对路径
+        "$script_dir/../../web"          # 直接相对路径
+        "$script_dir/../../../web"       # 上级目录
+        "$script_dir/web"                # 当前目录
+    )
+    
+    for web_source in "${web_sources[@]}"; do
+        if [[ -d "$web_source" ]] && [[ -f "$web_source/index.html" ]]; then
+            print_step "Found web files at: $web_source"
+            
+            # 如果是重新安装，先删除旧的web目录
+            if [[ -d "$web_path" ]] && [[ "$reinstall" == true ]]; then
+                rm -rf "$web_path"
+                print_info "Removed old web directory for update"
             fi
-        else
-            print_warning "Failed to copy web interface files"
+            
+            # 确保父目录存在
+            mkdir -p "$(dirname "$web_path")"
+            
+            # 复制web文件
+            if cp -r "$web_source" "$web_path"; then
+                # 验证关键文件是否存在
+                if [[ -f "$web_path/index.html" ]]; then
+                    chmod -R 644 "$web_path"/*
+                    chmod 755 "$web_path"
+                    web_copied=true
+                    
+                    if [[ "$reinstall" == true ]]; then
+                        print_success "Updated web interface files"
+                    else
+                        print_success "Installed web interface files"
+                    fi
+                    
+                    # 显示web文件统计
+                    local web_file_count=$(find "$web_path" -type f | wc -l)
+                    print_info "Web interface: $web_file_count files installed"
+                    break
+                else
+                    print_error "Web files copied but index.html not found"
+                    rm -rf "$web_path"
+                fi
+            else
+                print_warning "Failed to copy web files from $web_source"
+            fi
         fi
-    else
-        print_info "Web interface files not found, skipping"
+    done
+    
+    # 如果所有路径都失败，提供详细的错误信息
+    if [[ "$web_copied" == false ]]; then
+        print_error "❌ Web interface installation failed!"
+        print_info "Searched paths:"
+        for web_source in "${web_sources[@]}"; do
+            if [[ -d "$web_source" ]]; then
+                print_info "  ✓ Directory exists: $web_source"
+                if [[ -f "$web_source/index.html" ]]; then
+                    print_info "    ✓ index.html found"
+                else
+                    print_info "    ❌ index.html missing"
+                fi
+            else
+                print_info "  ❌ Directory missing: $web_source"
+            fi
+        done
+        print_warning "Web interface will not be available. You can manually copy web files later."
+        print_info "Manual fix: cp -r /path/to/ccs/web ~/.ccs/"
     fi
     
     # 复制package.json文件

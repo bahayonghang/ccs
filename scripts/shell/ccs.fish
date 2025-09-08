@@ -237,6 +237,8 @@ function _ccs_show_help
     echo "  ccs current            - 显示当前配置状态"
     echo ""
     echo -e "\033[0;32m🔧 管理命令:\033[0m"
+    echo "  ccs web                - 启动Web配置界面"
+    echo "  ccs update             - 自动更新CCS到最新版本"
     echo "  ccs help               - 显示此帮助信息"
     echo "  ccs version            - 显示版本信息"
     echo ""
@@ -313,6 +315,12 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell v2
             _ccs_list_configs
         case "current" "show" "status"
             _ccs_show_current
+        case "web"
+            # 启动Web配置界面
+            _ccs_open_web
+        case "update"
+            # 自动更新CCS
+            _ccs_update
         case ""
             # 无参数时使用当前或默认配置
             set target_config (grep "^current_config" $CONFIG_FILE | string replace -r ".*=\s*[\"']?([^\"']*)[\"']?" '$1')
@@ -346,6 +354,154 @@ function ccs --description "Claude Code Configuration Switcher for Fish shell v2
     return 0
 end
 
+# 打开Web配置界面
+function _ccs_open_web
+    set web_dir "$HOME/.ccs/web"
+    set web_path "$web_dir/index.html"
+    
+    if not test -f "$web_path"
+        _ccs_log_error "Web界面文件不存在，请重新运行安装脚本"
+        return 1
+    end
+    
+    # 检查是否在远程环境（WSL/SSH）
+    if test -n "$WSL_DISTRO_NAME"; or test -n "$SSH_CLIENT"; or test -n "$SSH_TTY"
+        # 远程环境，启动HTTP服务器
+        set port 8888
+        _ccs_print_step "检测到远程环境，启动HTTP服务器..."
+        
+        # 检查端口是否被占用
+        while netstat -ln 2>/dev/null | grep -q ":$port "
+            set port (math $port + 1)
+        end
+        
+        # 复制用户配置文件到web目录
+        set user_config "$HOME/.ccs_config.toml"
+        if test -f "$user_config"
+            if cp "$user_config" "$web_dir/.ccs_config.toml"
+                echo "✅ 已复制用户配置文件到web目录"
+            else
+                _ccs_log_warn "无法复制配置文件到web目录"
+            end
+        else
+            _ccs_log_warn "未找到用户配置文件 $user_config"
+        end
+        
+        _ccs_log_info "启动web服务器在端口 $port"
+        _ccs_log_info "请在浏览器中访问: http://localhost:$port"
+        
+        # 启动Python HTTP服务器
+        if command -v python3 >/dev/null
+            cd "$web_dir" && python3 -m http.server "$port"
+        else if command -v python >/dev/null
+            cd "$web_dir" && python -m SimpleHTTPServer "$port"
+        else
+            _ccs_log_error "需要Python来启动HTTP服务器，请手动打开 $web_path"
+            return 1
+        end
+    else
+        # 本地环境，直接打开浏览器
+        set browser_found false
+        
+        if command -v xdg-open >/dev/null
+            xdg-open "$web_path"
+            set browser_found true
+        else if command -v open >/dev/null
+            open "$web_path"
+            set browser_found true
+        else if command -v google-chrome >/dev/null
+            google-chrome "$web_path"
+            set browser_found true
+        else if command -v firefox >/dev/null
+            firefox "$web_path"
+            set browser_found true
+        else if command -v safari >/dev/null
+            safari "$web_path"
+            set browser_found true
+        end
+        
+        if test "$browser_found" = "true"
+            echo "✅ 正在打开web配置界面..."
+        else
+            _ccs_log_error "无法找到可用的浏览器，请手动打开 $web_path"
+            return 1
+        end
+    end
+end
+
+# CCS自更新功能
+function _ccs_update
+    _ccs_print_step "🔄 开始CCS自更新..."
+    
+    # 检查是否在CCS项目目录中
+    set current_dir (pwd)
+    set install_script ""
+    
+    # 多路径检测安装脚本
+    set possible_paths \
+        "./scripts/install/install.sh" \
+        "../scripts/install/install.sh" \
+        "../../scripts/install/install.sh" \
+        "$HOME/Documents/Github/ccs/scripts/install/install.sh" \
+        "$HOME/.ccs/install.sh"
+    
+    _ccs_log_info "正在搜索安装脚本..."
+    
+    for path in $possible_paths
+        if test -f "$path"
+            set install_script "$path"
+            echo "✅ 找到安装脚本: $install_script"
+            break
+        end
+    end
+    
+    if test -z "$install_script"
+        _ccs_log_error "❌ 未找到安装脚本！"
+        _ccs_log_info "请确保您在CCS项目目录中，或者手动运行安装脚本："
+        _ccs_log_info "  cd /path/to/ccs && ./scripts/install/install.sh"
+        return 1
+    end
+    
+    # 备份当前配置
+    _ccs_print_step "📦 备份当前配置..."
+    set backup_file (date +"%Y%m%d_%H%M%S")
+    set backup_path "$HOME/.ccs/backups/.ccs_config.toml.$backup_file.bak"
+    
+    if test -f "$CONFIG_FILE"
+        if cp "$CONFIG_FILE" "$backup_path"
+            echo "✅ 配置已备份: $backup_path"
+        else
+            _ccs_log_warn "配置备份失败，但继续更新"
+        end
+    end
+    
+    # 执行安装脚本
+    _ccs_print_step "🚀 执行更新安装..."
+    _ccs_log_info "运行命令: $install_script"
+    
+    if bash "$install_script"
+        echo "✅ CCS更新完成！"
+        _ccs_log_info "更新内容："
+        _ccs_log_info "  • 脚本文件已更新到最新版本"
+        _ccs_log_info "  • Web界面文件已更新"
+        _ccs_log_info "  • 配置文件已保留"
+        _ccs_log_info "  • Shell环境配置已刷新"
+        echo ""
+        _ccs_log_warn "⚠️  请重新启动终端或运行以下命令来应用更新："
+        _ccs_log_info "  source ~/.config/fish/config.fish"
+        echo ""
+        _ccs_print_step "🎉 感谢使用CCS！更新后请运行 'ccs version' 查看版本信息。"
+    else
+        _ccs_log_error "❌ 更新失败！"
+        _ccs_log_info "如果问题持续存在，请："
+        _ccs_log_info "  1. 检查网络连接"
+        _ccs_log_info "  2. 确保有足够的磁盘空间"
+        _ccs_log_info "  3. 手动运行安装脚本"
+        _ccs_log_info "  4. 查看项目文档获取帮助"
+        return 1
+    end
+end
+
 # Fish 自动补全
 function __ccs_complete
     if test -f $CONFIG_FILE
@@ -356,6 +512,8 @@ end
 complete -c ccs -f -a "(__ccs_complete)" -d "配置名称"
 complete -c ccs -f -a "list ls" -d "列出所有配置"
 complete -c ccs -f -a "current show status" -d "显示当前配置"
+complete -c ccs -f -a "web" -d "启动Web配置界面"
+complete -c ccs -f -a "update" -d "自动更新CCS到最新版本"
 complete -c ccs -f -a "help" -d "显示帮助信息"
 complete -c ccs -f -a "version" -d "显示版本信息"
 

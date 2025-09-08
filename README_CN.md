@@ -73,26 +73,25 @@ auth_token = "your-api-key-here"
 ## 📖 使用方法
 
 ```bash
-# 切换配置
-ccs switch <配置名>         # 切换到指定配置
-ccs switch                  # 交互式选择
-
-# 查看配置
+# 基本用法
+ccs [配置名]                # 切换到指定配置
 ccs list                    # 列出所有配置
-ccs current                 # 显示当前配置
+ccs current                 # 显示当前配置状态
 
-# 管理配置
-ccs add <配置名>            # 添加新配置
-ccs edit <配置名>           # 编辑配置
-ccs remove <配置名>         # 删除配置
+# 管理命令
+ccs web                     # 启动Web配置界面
+ccs update                  # 自动更新CCS到最新版本
+ccs backup                  # 备份当前配置文件
+ccs verify                  # 验证配置文件完整性
+ccs clear-cache             # 清理配置缓存
+ccs uninstall               # 卸载CCS工具
 
-# Web 界面
-ccs web                     # 启动 Web UI（端口 8080）
-ccs web --port 3000         # 自定义端口
+# 信息命令
+ccs version                 # 显示版本信息
+ccs help                    # 显示帮助信息
 
-# 其他
-ccs reload                  # 重新加载配置
-ccs version                 # 显示版本
+# 调试命令
+ccs --debug [命令]          # 启用调试模式运行命令
 ```
 
 ### 🔗 全局配置持久化
@@ -111,19 +110,52 @@ echo $ANTHROPIC_MODEL # 自动显示: glm-4
 - ✅ 重启电脑后配置保持不变
 - ✅ 支持Bash、Zsh、Fish等多种Shell
 
+## 🔄 自动更新
+
+CCS 提供便捷的自动更新功能，无需手动执行复杂的安装命令：
+
+```bash
+ccs update                  # 自动更新到最新版本
+```
+
+### 更新功能特性
+
+- ✅ **智能路径检测** - 自动搜索安装脚本位置
+- ✅ **配置保护** - 自动备份现有配置文件
+- ✅ **完整更新** - 更新所有脚本文件和Web界面
+- ✅ **环境刷新** - 自动刷新Shell环境配置
+- ✅ **错误处理** - 详细的错误信息和解决建议
+
+### 更新过程
+
+1. **搜索安装脚本** - 在多个可能位置查找 `install.sh`
+2. **备份配置** - 自动备份当前配置到 `~/.ccs/backups/`
+3. **执行更新** - 运行安装脚本更新所有组件
+4. **验证完成** - 确认更新成功并提供后续操作指导
+
+### 注意事项
+
+⚠️ **更新后操作**：
+- 重新启动终端，或运行 `source ~/.bashrc`（Bash）/ `source ~/.config/fish/config.fish`（Fish）
+- 运行 `ccs version` 确认版本更新成功
+
+⚠️ **故障排除**：
+- 确保在CCS项目目录中运行，或确保默认安装路径存在
+- 检查网络连接和磁盘空间
+- 如更新失败，可手动运行：`cd /path/to/ccs && ./scripts/install/install.sh`
+
 ## 🌐 Web 界面
 
 启动 Web 界面进行可视化配置管理：
 
 ```bash
-ccs web                     # 在端口 8080 启动
-ccs web --port 3000         # 自定义端口
+ccs web                     # 启动Web界面（自动检测端口）
 ```
 
-访问 `http://localhost:8080` 来：
+访问显示的URL来：
 - 可视化编辑配置
 - 一键切换配置
-- 导入/导出配置
+- 实时查看配置状态
 
 ## 🗑️ 卸载
 

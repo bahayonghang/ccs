@@ -158,6 +158,7 @@ ccs_help() {
     echo ""
     echo -e "${GREEN}🔧 管理命令:${NC}"
     echo "  ccs web                - 启动Web配置界面"
+    echo "  ccs update             - 自动更新CCS到最新版本"
     echo "  ccs backup             - 备份当前配置文件"
     echo "  ccs verify             - 验证配置文件完整性"
     echo "  ccs clear-cache        - 清理配置缓存"
@@ -739,6 +740,83 @@ open_web() {
     fi
 }
 
+# CCS自更新功能
+ccs_update() {
+    print_step "🔄 开始CCS自更新..."
+    
+    # 检查是否在CCS项目目录中
+    local current_dir="$(pwd)"
+    local install_script=""
+    
+    # 多路径检测安装脚本
+    local possible_paths=(
+        "./scripts/install/install.sh"          # 在项目根目录
+        "../scripts/install/install.sh"         # 在子目录中
+        "../../scripts/install/install.sh"      # 在更深的子目录中
+        "$HOME/Documents/Github/ccs/scripts/install/install.sh"  # 默认路径
+        "$HOME/.ccs/install.sh"                 # 备用路径
+    )
+    
+    print_info "正在搜索安装脚本..."
+    
+    for path in "${possible_paths[@]}"; do
+        if [[ -f "$path" ]]; then
+            install_script="$path"
+            print_success "找到安装脚本: $install_script"
+            break
+        fi
+    done
+    
+    if [[ -z "$install_script" ]]; then
+        print_error "❌ 未找到安装脚本！"
+        print_info "请确保您在CCS项目目录中，或者手动运行安装脚本："
+        print_info "  cd /path/to/ccs && ./scripts/install/install.sh"
+        return 1
+    fi
+    
+    # 备份当前配置
+    print_step "📦 备份当前配置..."
+    local backup_file
+    backup_file=$(auto_backup "$CONFIG_FILE")
+    if [[ $? -eq 0 ]]; then
+        print_success "配置已备份: $backup_file"
+    else
+        print_warning "配置备份失败，但继续更新"
+    fi
+    
+    # 执行安装脚本
+    print_step "🚀 执行更新安装..."
+    print_info "运行命令: $install_script"
+    
+    if bash "$install_script"; then
+        print_success "✅ CCS更新完成！"
+        print_info "更新内容："
+        print_info "  • 脚本文件已更新到最新版本"
+        print_info "  • Web界面文件已更新"
+        print_info "  • 配置文件已保留"
+        print_info "  • Shell环境配置已刷新"
+        echo ""
+        print_warning "⚠️  请重新启动终端或运行以下命令来应用更新："
+        if [[ "$SHELL" == *"fish"* ]]; then
+            print_info "  source ~/.config/fish/config.fish"
+        elif [[ "$SHELL" == *"zsh"* ]]; then
+            print_info "  source ~/.zshrc"
+        else
+            print_info "  source ~/.bashrc"
+        fi
+        echo ""
+        print_step "🎉 感谢使用CCS！更新后请运行 'ccs version' 查看版本信息。"
+    else
+        print_error "❌ 更新失败！"
+        print_info "如果问题持续存在，请："
+        print_info "  1. 检查网络连接"
+        print_info "  2. 确保有足够的磁盘空间"
+        print_info "  3. 手动运行安装脚本"
+        print_info "  4. 查看项目文档获取帮助"
+        return 1
+    fi
+}
+
 # 主函数（优化版）
 ccs() {
     # 参数验证
@@ -810,6 +888,9 @@ ccs() {
             else
                 handle_error $ERROR_UNKNOWN "备份失败"
             fi
+            ;;
+        "update")
+            profile_function ccs_update
             ;;
         "")
             # 如果没有参数,使用默认配置或当前配置
