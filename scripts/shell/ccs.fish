@@ -263,12 +263,12 @@ end
 
 # 显示版本信息
 function _ccs_show_version
-    echo "🔄 Claude Code Configuration Switcher (CCS) - Fish Shell Edition"
-    echo "版本: $CCS_VERSION"
-    echo "Shell: Fish "(fish --version | string replace 'fish, version ' '')
+    echo "🔄 Claude Code Configuration Switcher (CCS)"
+    # Version information removed from display
+    # Shell information removed from display
     echo "配置文件: $CONFIG_FILE"
     echo ""
-    echo "🚀 感谢使用 CCS Fish版！"
+    echo "🚀 感谢使用 CCS！"
 end
 
 # 自动加载当前配置（静默模式）
@@ -289,7 +289,7 @@ function _ccs_auto_load_current
 end
 
 # 主函数
-function ccs --description "Claude Code Configuration Switcher for Fish shell v2.0"
+function ccs --description "Claude Code Configuration Switcher for Fish shell"
     set command $argv[1]
     
     # 处理帮助命令（无需检查配置文件）

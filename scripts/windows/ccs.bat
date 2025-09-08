@@ -259,8 +259,8 @@ exit /b 0
 REM 显示帮助信息（增强版）
 :ccs_help
 echo ═══════════════════════════════════════════════════════════════════
-echo 🔄 Claude Code Configuration Switcher (CCS) v%CCS_VERSION% (CMD)
-echo 🏗️  构建版本: %CCS_BUILD% | 📅 发布日期: 2025-09-05
+echo 🔄 Claude Code Configuration Switcher (CCS)
+
 echo ═══════════════════════════════════════════════════════════════════
 echo.
 echo 📋 基本用法:
@@ -309,7 +309,7 @@ echo   📦 缓存: %CACHE_DIR%
 echo   📋 日志: %LOG_DIR%
 echo   💾 备份: %BACKUP_DIR%
 echo.
-echo 🚀 新功能 (v2.0 增强版):
+echo 🚀 新功能:
 echo   • 🏎️  高性能缓存系统 - 5倍速度提升
 echo   • 🌐 Web管理界面支持 - 可视化配置管理
 echo   • 🔍 智能诊断系统 - 自动问题检测

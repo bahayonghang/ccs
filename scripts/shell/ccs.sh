@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Claude Code Configuration Switcher (ccs) - 主脚本 v2.0 优化版
+# Claude Code Configuration Switcher (ccs) - 主脚本 优化版
 # 此脚本用于快速切换不同的Claude Code API配置
 # 优化特性: 缓存系统、性能提升、增强的错误处理
 
