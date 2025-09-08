@@ -58,8 +58,8 @@ readonly LOG_LEVEL_ERROR=3
 readonly LOG_LEVEL_OFF=4
 
 # 当前日志级别（默认为INFO）
-if [[ -z "$CCS_LOG_LEVEL" ]]; then
-    if [[ "$SHELL" == *"fish"* ]]; then
+if [[ -z "${CCS_LOG_LEVEL:-}" ]]; then
+    if [[ "${SHELL:-}" == *"fish"* ]]; then
         set -g CCS_LOG_LEVEL $LOG_LEVEL_INFO
     else
         CCS_LOG_LEVEL=$LOG_LEVEL_INFO
