@@ -28,6 +28,38 @@ irm https://github.com/bahayonghang/ccs/raw/main/scripts/install/quick_install/q
 2. Edit `~/.ccs_config.toml` and add your API keys
 3. Start using: `ccs list` → `ccs [config_name]`
 
+## 🍎 macOS Special Handling
+
+**Fish Shell Only Strategy**: On macOS systems, CCS implements a fish-only installation strategy to ensure optimal compatibility:
+
+- **Automatic Detection**: Installation script automatically detects macOS environment
+- **Fish-Only Configuration**: Only configures Fish shell, skipping Bash and Zsh integration
+- **Bash 3.2 Compatibility**: Handles macOS default Bash 3.2 limitations (no associative arrays)
+- **Clean Installation**: Removes any existing Bash scripts to maintain clean fish-only setup
+- **Zero Impact**: Leaves existing Bash/Zsh configurations completely untouched
+
+**Why Fish-Only on macOS?**
+- macOS ships with outdated Bash 3.2 (lacks modern features)
+- Fish provides superior user experience and modern shell features
+- Avoids compatibility issues with legacy shell versions
+- Maintains clean separation between different shell environments
+
+**Installation Behavior on macOS:**
+```bash
+# During installation, you'll see:
+"🍎 macOS detected - configuring Fish shell only"
+"⚠️  Skipping Bash/Zsh configuration (Fish-only strategy)"
+"✅ Fish shell configured successfully"
+```
+
+**Verification:**
+```bash
+# Check installation result
+ls ~/.ccs/          # Should only show ccs.fish (no ccs.sh)
+grep ccs ~/.zshrc   # Should return "No CCS configuration found"
+fish -c "ccs version"  # Should work perfectly
+```
+
 ## ✨ Features
 
 - 🔄 **One-Command Switching** - Switch between API providers instantly

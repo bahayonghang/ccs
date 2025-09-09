@@ -32,6 +32,38 @@ irm https://github.com/bahayonghang/ccs/raw/main/scripts/install/quick_install/q
 2. 编辑配置文件：`~/.ccs_config.toml`
 3. 填入API密钥并开始使用：`ccs list` → `ccs [配置名]`
 
+## 🍎 macOS 特殊处理策略
+
+**Fish Shell 专用策略**：在 macOS 系统上，CCS 实施 fish-only 安装策略以确保最佳兼容性：
+
+- **自动检测**：安装脚本自动检测 macOS 环境
+- **Fish 专用配置**：仅配置 Fish shell，跳过 Bash 和 Zsh 集成
+- **Bash 3.2 兼容性**：处理 macOS 默认 Bash 3.2 的限制（不支持关联数组）
+- **清洁安装**：移除任何现有的 Bash 脚本以保持纯净的 fish-only 设置
+- **零影响**：完全不触碰现有的 Bash/Zsh 配置
+
+**为什么在 macOS 上只用 Fish？**
+- macOS 自带过时的 Bash 3.2（缺乏现代功能）
+- Fish 提供卓越的用户体验和现代 shell 特性
+- 避免与旧版 shell 的兼容性问题
+- 保持不同 shell 环境间的清洁分离
+
+**macOS 上的安装行为：**
+```bash
+# 安装过程中，您会看到：
+"🍎 检测到 macOS - 仅配置 Fish shell"
+"⚠️  跳过 Bash/Zsh 配置（Fish 专用策略）"
+"✅ Fish shell 配置成功"
+```
+
+**验证安装：**
+```bash
+# 检查安装结果
+ls ~/.ccs/          # 应该只显示 ccs.fish（没有 ccs.sh）
+grep ccs ~/.zshrc   # 应该返回 "No CCS configuration found"
+fish -c "ccs version"  # 应该完美工作
+```
+
 ## ✨ 功能特性
 
 - 🔄 **一键切换** - 快速切换 API 提供商

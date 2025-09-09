@@ -103,12 +103,17 @@ check_security_requirements() {
 
 # 加载通用工具库并增强功能
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-if [[ -f "$SCRIPT_DIR/../shell/ccs-common.sh" ]]; then
+# Detect whether current shell supports associative arrays to safely source ccs-common.sh
+ASSOC_SUPPORTED=0
+if eval 'declare -A __tmp_assoc' 2>/dev/null; then
+    ASSOC_SUPPORTED=1
+fi
+if [[ "$ASSOC_SUPPORTED" -eq 1 && -f "$SCRIPT_DIR/../shell/ccs-common.sh" ]]; then
     source "$SCRIPT_DIR/../shell/ccs-common.sh"
-elif [[ -f "$SCRIPT_DIR/ccs-common.sh" ]]; then
+elif [[ "$ASSOC_SUPPORTED" -eq 1 && -f "$SCRIPT_DIR/ccs-common.sh" ]]; then
     source "$SCRIPT_DIR/ccs-common.sh"
 else
-    # 增强的错误处理,如果工具库不存在
+    # 增强的错误处理,如果工具库不存在 或 当前 bash 不支持关联数组（macOS Bash 3.2）
     handle_error() {
         local message="$1"
         local code="${2:-1}"
@@ -193,6 +198,21 @@ else
     command_exists() {
         command -v "$1" >/dev/null 2>&1
     }
+    
+    # 初始化必要的变量，避免 unbound variable 错误
+    CCS_DIR="$HOME/.ccs"
+    CCS_BACKUP_DIR="$CCS_DIR/backups"
+    CCS_CACHE_DIR="$CCS_DIR/cache"
+    CCS_LOG_DIR="$CCS_DIR/logs"
+    CCS_TEMP_DIR="$CCS_DIR/temp"
+    CCS_WEB_DIR="$CCS_DIR/web"
+    INSTALLATION_LOG="$CCS_LOG_DIR/install_$(date +%Y%m%d_%H%M%S).log"
+    PERFORMANCE_METRICS=()
+    
+    if [[ "$ASSOC_SUPPORTED" -ne 1 ]]; then
+        # 提示在 macOS 旧版 bash 下进入"最小安装模式"，避免关联数组导致的报错
+        print_warning "Detected legacy Bash without associative arrays (e.g., macOS Bash 3.2). Using minimal installer utilities instead of ccs-common.sh."
+    fi
 fi
 
 # 配置文件路径
@@ -709,17 +729,42 @@ copy_script() {
         fi
     fi
     
-    # 复制bash脚本
-    if cp "$source_sh" "$CCS_SCRIPT_PATH"; then
-        chmod 755 "$CCS_SCRIPT_PATH"
-        if [[ "$reinstall" == true ]]; then
-            print_success "Updated bash script"
-        else
-            print_success "Installed bash script"
+    # 平台与 fish 检测
+    local is_macos=false
+    if [[ "${DISTRO_NAME:-}" == "macOS" || "${OS_NAME:-}" == "Darwin" ]]; then
+        is_macos=true
+    fi
+    local has_fish=false
+    if command_exists fish; then
+        has_fish=true
+    fi
+    
+    # macOS 策略：不复制 bash 脚本，并删除现有的 bash 脚本
+    if [[ "$is_macos" == true ]]; then
+        print_info "macOS detected; skipping bash script installation per policy"
+        # 删除现有的 bash 脚本（如果存在）
+        if [[ -f "$CCS_SCRIPT_PATH" ]]; then
+            rm -f "$CCS_SCRIPT_PATH"
+            print_info "Removed existing bash script to enforce fish-only policy on macOS"
         fi
     else
-        print_error "Failed to copy bash script to $CCS_SCRIPT_PATH"
-        exit 1
+        # 复制bash脚本（非 macOS 平台）
+        if cp "$source_sh" "$CCS_SCRIPT_PATH"; then
+            chmod 755 "$CCS_SCRIPT_PATH"
+            if [[ "$reinstall" == true ]]; then
+                print_success "Updated bash script"
+            else
+                print_success "Installed bash script"
+            fi
+        else
+            print_error "Failed to copy bash script to $CCS_SCRIPT_PATH"
+            exit 1
+        fi
+    fi
+
+    # macOS 且未安装 fish 的提示
+    if [[ "$is_macos" == true && "$has_fish" != true ]]; then
+        print_warning "fish is not installed on macOS. Fish script will be installed, but no shell will be configured. Please install fish and rerun the installer."
     fi
     
     # 复制fish脚本（如果存在）
@@ -891,25 +936,50 @@ configure_shell() {
     while IFS= read -r shell; do
         [[ -n "$shell" ]] && available_shells+=("$shell")
     done < <(detect_available_shells)
+
+    # macOS 策略：fish 优先，禁用 zsh；若未安装 fish，则不配置任何 shell
+    local is_macos=false
+    if [[ "${DISTRO_NAME:-}" == "macOS" || "${OS_NAME:-}" == "Darwin" ]]; then
+        is_macos=true
+    fi
+    local has_fish=false
+    if command_exists fish; then
+        has_fish=true
+    fi
+
+    if [[ "$is_macos" == true ]]; then
+        if [[ "$has_fish" == true ]]; then
+            print_info "macOS detected and fish available: configuring fish only"
+            available_shells=("fish")
+        else
+            print_warning "macOS detected but fish is not installed: skipping all shell configuration as requested"
+            available_shells=()
+        fi
+    fi
+
     local configured_count=0
     
     echo ""
     print_step "Configuring shell environments..."
     print_info "Current shell: $current_shell"
     
-    # 为所有支持的shell配置
+    # 为筛选后的 shell 列表配置
     for shell in "${available_shells[@]}"; do
         if configure_shell_for_type "$shell"; then
             configured_count=$((configured_count + 1))
         fi
     done
     
-    # 如果没有找到任何shell配置文件,至少为当前shell创建配置
+    # 如果没有找到任何shell配置文件,至少为当前shell创建配置（但在 macOS 下不为 zsh 配置）
     if [[ $configured_count -eq 0 ]]; then
         print_warning "No shell configuration files found, creating for current shell"
         if [[ "$current_shell" != "unknown" ]]; then
-            if configure_shell_for_type "$current_shell"; then
-                configured_count=$((configured_count + 1))
+            if [[ "$is_macos" == true && "$current_shell" == "zsh" ]]; then
+                print_warning "macOS detected: skipping zsh configuration as requested"
+            else
+                if configure_shell_for_type "$current_shell"; then
+                    configured_count=$((configured_count + 1))
+                fi
             fi
         else
             print_error "Cannot identify shell type, please configure manually"
