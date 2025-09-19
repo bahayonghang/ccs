@@ -240,7 +240,7 @@
         }
 
         .config-item:hover {
-            transform: translateY(-4px) scale(1.02);
+            transform: translateY(-4px);
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1),
                         0 0 0 1px rgba(139, 92, 246, 0.1) inset;
             border-color: rgba(139, 92, 246, 0.3);
@@ -536,15 +536,43 @@
             margin-left: 10px;
             display: inline-flex;
             align-items: center;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+            transform: translateZ(0);
+            backface-visibility: hidden;
         }
         
         .default-config-badge::before {
             content: '⭐';
             margin-right: 4px;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
+            line-height: 1;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
         }
 
-        /* 科技风格当前配置展示 - 独立区域 */
+        /* Crisp rendering fix for default badge: avoid GPU compositing blur */
+        .default-config-badge {
+            /* neutralize 3D transform layer to keep text crisp */
+            transform: none !important;
+            backface-visibility: visible !important;
+            /* inline will-change may degrade text clarity on some browsers */
+            will-change: auto !important;
+            /* ensure default image rendering (the badge is text, not bitmap) */
+            image-rendering: auto !important;
+            /* keep text crisp */
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+            /* explicitly reset parent gradient text effects */
+            -webkit-text-fill-color: #ffffff !important;
+            -webkit-background-clip: border-box !important;
+            background-clip: border-box !important;
+            /* create its own stacking/painting context to isolate from parent */
+            isolation: isolate;
+            position: relative;
+            z-index: 1;
+        }
+        
         .current-config-section {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
@@ -1080,6 +1108,22 @@
         </div>
     </div>
 
+    <div id="duplicateModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>检测到重复配置名</h2>
+                <span class="close" onclick="closeDuplicateModal()">&times;</span>
+            </div>
+            <div>
+                <p style="margin-bottom:12px;color:#374151;font-weight:600">以下配置名称重复，可能导致加载异常：</p>
+                <ul id="duplicateList" style="padding-left:18px;color:#1f2937"></ul>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeDuplicateModal()">知道了</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // TOML 解析和序列化
         class TomlParser {
@@ -1094,7 +1138,13 @@
                     
                     // 处理配置节 [section]
                     if (line.startsWith('[') && line.endsWith(']')) {
-                        currentSection = line.slice(1, -1);
+                        const section = line.slice(1, -1);
+                        if (result[section]) {
+                            if (!duplicateSections.includes(section)) duplicateSections.push(section);
+                            currentSection = section;
+                            continue;
+                        }
+                        currentSection = section;
                         result[currentSection] = {};
                         continue;
                     }
@@ -1149,6 +1199,8 @@
         // 全局变量
         let currentConfig = null;
         let editingConfigName = null;
+        let duplicateSections = [];
+        let duplicateModalShown = false;
 
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
@@ -1179,7 +1231,11 @@
                     })
                     .then(content => {
                         try {
+                            duplicateSections = [];
                             currentConfig = TomlParser.parse(content);
+                            if (duplicateSections.length && !duplicateModalShown) {
+                                showDuplicateWarning(duplicateSections);
+                            }
                             displayConfigs();
                             updateStatus(`已加载配置文件: ${path}`, 'success');
                             // 缓存到 localStorage
@@ -1267,7 +1323,7 @@
                         <div>
                             <div class="config-name">
                                 ${section}
-                                ${isDefault ? '<span class="default-config-badge">默认</span>' : ''}
+                                ${isDefault ? '<span class="default-config-badge" style="image-rendering: -webkit-optimize-contrast; will-change: transform;">默认</span>' : ''}
                             </div>
                             <div style="color: #666; margin-top: 5px;">${config.description || '无描述'}</div>
                         </div>
@@ -1388,6 +1444,28 @@
 
         function closeModal() {
             const modal = document.getElementById('editModal');
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.style.display = 'none';
+                modal.style.opacity = '1';
+            }, 200);
+        }
+
+        function showDuplicateWarning(dups) {
+            const list = document.getElementById('duplicateList');
+            list.innerHTML = '';
+            dups.forEach(name => {
+                const li = document.createElement('li');
+                li.textContent = name;
+                list.appendChild(li);
+            });
+            const modal = document.getElementById('duplicateModal');
+            modal.style.display = 'block';
+            duplicateModalShown = true;
+        }
+
+        function closeDuplicateModal() {
+            const modal = document.getElementById('duplicateModal');
             modal.style.opacity = '0';
             setTimeout(() => {
                 modal.style.display = 'none';
