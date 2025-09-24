@@ -396,7 +396,7 @@ list_configs() {
             color="$GREEN"
         fi
         
-        printf "${color}%s %-*s${NC}" "$marker" "$max_length" "$config"
+        printf "%b%s %-*s%b" "$color" "$marker" "$max_length" "$config" "$NC"
         if [[ -n "$description" ]]; then
             echo " - $description"
         else
@@ -418,9 +418,9 @@ list_configs() {
     
     # 显示当前配置
     if [[ -n "$current_config" ]]; then
-        echo "当前配置: ${GREEN}$current_config${NC}"
+        printf "当前配置: %b%s%b\n" "$GREEN" "$current_config" "$NC"
     else
-        echo "当前配置: ${YELLOW}未设置${NC}"
+        printf "当前配置: %b未设置%b\n" "$YELLOW" "$NC"
     fi
 }
 
@@ -450,12 +450,12 @@ show_current() {
         if [[ -n "$var_value" ]]; then
             ((vars_set++))
             if [[ "$var_name" == "ANTHROPIC_AUTH_TOKEN" ]]; then
-                echo "${GREEN}$(mask_sensitive_info "$var_value")${NC}"
+                printf "%b%s%b\n" "$GREEN" "$(mask_sensitive_info "$var_value")" "$NC"
             else
-                echo "${GREEN}$var_value${NC}"
+                printf "%b%s%b\n" "$GREEN" "$var_value" "$NC"
             fi
         else
-            echo "${YELLOW}(未设置)${NC}"
+            printf "%b(未设置)%b\n" "$YELLOW" "$NC"
         fi
     done
     
@@ -466,7 +466,7 @@ show_current() {
     current_config=$(grep "^current_config" "$CONFIG_FILE" | cut -d'"' -f2 | cut -d"'" -f2)
     
     if [[ -n "$current_config" ]]; then
-        print_step "配置文件中的活跃配置: ${GREEN}$current_config${NC}"
+        printf "%b🔧%b 配置文件中的活跃配置: %b%s%b\n" "$BLUE" "$NC" "$GREEN" "$current_config" "$NC"
     else
         print_warning "配置文件中未找到 current_config 字段"
     fi
