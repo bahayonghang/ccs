@@ -8,6 +8,17 @@ REM 作者: CCS 开发团队
 REM 许可证: MIT
 REM 版本: 2.0.0 增强版 (2025-09-05)
 
+REM 加载通用工具库
+set SCRIPT_DIR=%~dp0
+if exist "%SCRIPT_DIR%ccs-common.bat" (
+    call "%SCRIPT_DIR%ccs-common.bat"
+    call :print_debug "已加载通用工具库"
+) else (
+    echo [WARNING] 通用工具库不存在: %SCRIPT_DIR%ccs-common.bat
+    echo [WARNING] 请确保 ccs-common.bat 文件存在，或重新安装CCS
+    echo [WARNING] 将使用内置函数，功能可能受限
+)
+
 REM 全局变量和配置
 set CONFIG_FILE=%USERPROFILE%\.ccs_config.toml
 set CCS_VERSION=2.0.0
@@ -185,15 +196,62 @@ call :get_cache_key "%config_name%"
 if not exist "%cache_file%" exit /b 1
 if not exist "%cache_meta%" exit /b 1
 
-REM 检查缓存时间
-for /f "tokens=*" %%a in ('%cache_meta%') do set cache_time=%%a
-set current_time=%date% %time%
-REM 简化版时间检查 - 实际应用中可以实现更精确的时间差计算
-if "%ENABLE_CACHE%"=="1" (
-    exit /b 0
-) else (
+REM 检查缓存时间 - 改进版时间差计算
+for /f "tokens=*" %%a in ('type "%cache_meta%"') do set cache_timestamp=%%a
+if not defined cache_timestamp exit /b 1
+
+REM 获取当前时间戳（秒）
+call :get_current_timestamp current_timestamp
+call :parse_timestamp "%cache_timestamp%" cache_seconds
+
+REM 计算时间差
+set /a time_diff=%current_timestamp%-%cache_seconds%
+if %time_diff% lss 0 set /a time_diff=-%time_diff%
+
+REM 检查是否超过缓存TTL
+if %time_diff% gtr %CACHE_TTL% (
+    call :print_debug "缓存过期: %config_name% (age: %time_diff%s)"
     exit /b 1
+) else (
+    call :print_debug "缓存有效: %config_name% (age: %time_diff%s)"
+    exit /b 0
 )
+
+REM 获取当前时间戳（秒）
+:get_current_timestamp
+setlocal enabledelayedexpansion
+for /f "tokens=1-6 delims=/:. " %%a in ('echo %date% %time%') do (
+    set year=%%c
+    set month=%%a
+    set day=%%b
+    set hour=%%d
+    set minute=%%e
+    set second=%%f
+)
+REM 简化的时间戳计算（基于天数）
+set /a days_since_epoch=(%year%-1970)*365+(%month%-1)*30+%day%
+set /a timestamp=%days_since_epoch%*86400+%hour%*3600+%minute%*60+%second%
+endlocal & set %~1=%timestamp%
+exit /b 0
+
+REM 解析时间戳字符串
+:parse_timestamp
+setlocal enabledelayedexpansion
+set timestamp_str=%~1
+REM 从时间戳字符串中提取数字部分
+for /f "tokens=1-6 delims=/:. " %%a in ('echo %timestamp_str%') do (
+    set year=%%c
+    set month=%%a
+    set day=%%b
+    set hour=%%d
+    set minute=%%e
+    set second=%%f
+)
+REM 计算时间戳
+set /a days_since_epoch=(%year%-1970)*365+(%month%-1)*30+%day%
+set /a parsed_timestamp=%days_since_epoch%*86400+%hour%*3600+%minute%*60+%second%
+endlocal & set %~2=%parsed_timestamp%
+exit /b 0
 
 :save_to_cache
 set config_name=%~1
@@ -203,6 +261,8 @@ echo %config_auth_token% >> "%cache_file%"
 echo %config_model% >> "%cache_file%"
 echo %config_small_fast_model% >> "%cache_file%"
 echo %config_description% >> "%cache_file%"
+REM 保存当前时间戳到元数据文件
+call :get_current_timestamp current_timestamp
 echo %date% %time% > "%cache_meta%"
 call :print_debug "配置已缓存: %config_name%"
 exit /b 0

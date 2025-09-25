@@ -2,6 +2,25 @@
 # 此脚本用于在Windows环境中快速切换不同的Claude Code API配置
 # 优化特性: 缓存系统、性能提升、增强的错误处理
 
+# 加载通用工具库
+$Script:SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
+$Script:COMMON_LIB = Join-Path $Script:SCRIPT_DIR "ccs-common.ps1"
+
+if (Test-Path $Script:COMMON_LIB) {
+    try {
+        . $Script:COMMON_LIB
+        Write-Verbose "已加载通用工具库: $Script:COMMON_LIB"
+    }
+    catch {
+        Write-Warning "加载通用工具库失败: $($_.Exception.Message)"
+        Write-Warning "将使用内置函数，功能可能受限"
+    }
+}
+else {
+    Write-Warning "通用工具库不存在: $Script:COMMON_LIB"
+    Write-Warning "请确保 ccs-common.ps1 文件存在，或重新安装CCS"
+}
+
 # 全局变量和配置
 $Script:CONFIG_FILE = "$env:USERPROFILE\.ccs_config.toml"
 $Script:CCS_VERSION = "2.0.0"
@@ -147,10 +166,18 @@ function Set-CachedConfig {
     Write-Verbose "缓存配置: $ConfigName"
 }
 
+# 清理配置缓存
 function Clear-ConfigCache {
-    $Script:CONFIG_CACHE.Clear()
-    $Script:CACHE_TIMESTAMP.Clear()
-    Write-Verbose "清理所有配置缓存"
+    if (Get-Command "Clear-ConfigCache" -ErrorAction SilentlyContinue) {
+        # 使用通用库的缓存清理功能
+        Clear-ConfigCache
+    }
+    else {
+        # 回退到内存缓存清理
+        $Script:CONFIG_CACHE.Clear()
+        $Script:CACHE_TIMESTAMP.Clear()
+        Write-CcsSuccess "内存缓存已清理"
+    }
 }
 # 显示帮助信息（优化版）
 function Show-Help {
@@ -295,9 +322,92 @@ function Show-Version {
     Write-Host "🚀 感谢使用 CCS PowerShell版！如有问题请访问项目主页获取帮助。"
 }
 
-# 高效TOML解析器（优化版，支持缓存）
+# 高效TOML解析器（优化版，支持持久化缓存）
 function Parse-Toml {
     param(
+        [string]$ConfigName,
+        [string]$ConfigFilePath = $Script:CONFIG_FILE,
+        [switch]$Silent
+    )
+    
+    # 尝试从缓存加载
+    if (Get-Command "Get-ConfigFromCache" -ErrorAction SilentlyContinue) {
+        $cachedConfig = Get-ConfigFromCache $ConfigName
+        if ($cachedConfig) {
+            if (-not $Silent) {
+                Write-CcsDebug "使用缓存配置: $ConfigName"
+            }
+            return $cachedConfig
+        }
+    }
+    
+    if (-not (Test-Path $ConfigFilePath)) {
+        if (-not $Silent) {
+            Write-CcsError "配置文件不存在: $ConfigFilePath"
+        }
+        return $null
+    }
+    
+    try {
+        $content = Get-Content $ConfigFilePath -Encoding UTF8
+        $inSection = $false
+        $configData = @{}
+        
+        foreach ($line in $content) {
+            $line = $line.Trim()
+            
+            # 跳过空行和注释
+            if ([string]::IsNullOrWhiteSpace($line) -or $line.StartsWith('#')) {
+                continue
+            }
+            
+            # 检查是否是节标题
+            if ($line -match '^\[(.+)\]$') {
+                $sectionName = $matches[1].Trim()
+                $inSection = ($sectionName -eq $ConfigName)
+                continue
+            }
+            
+            # 如果在目标节中，解析键值对
+            if ($inSection -and $line -match '^([^=]+)=(.*)$') {
+                $key = $matches[1].Trim()
+                $value = $matches[2].Trim()
+                
+                # 移除引号
+                if (($value.StartsWith('"') -and $value.EndsWith('"')) -or 
+                    ($value.StartsWith("'") -and $value.EndsWith("'"))) {
+                    $value = $value.Substring(1, $value.Length - 2)
+                }
+                
+                $configData[$key] = $value
+            }
+        }
+        
+        if ($configData.Count -eq 0) {
+            if (-not $Silent) {
+                Write-CcsError "配置节 '$ConfigName' 不存在或为空"
+            }
+            return $null
+        }
+        
+        # 保存到缓存
+        if (Get-Command "Save-ConfigToCache" -ErrorAction SilentlyContinue) {
+            Save-ConfigToCache $ConfigName $configData
+        }
+        
+        if (-not $Silent) {
+            Write-CcsDebug "解析配置成功: $ConfigName ($($configData.Count) 个字段)"
+        }
+        
+        return $configData
+    }
+    catch {
+        if (-not $Silent) {
+            Write-CcsError "解析配置文件失败: $($_.Exception.Message)"
+        }
+        return $null
+    }
+}
         [string]$ConfigName,
         [string]$SilentMode = ""
     )
