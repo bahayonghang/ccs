@@ -774,20 +774,58 @@ ccs_update() {
     local current_dir="$(pwd)"
     local install_script=""
     
-    # 多路径检测安装脚本
+    # 智能检测项目根目录
+    local project_root=""
+    local search_dir="$current_dir"
+    
+    # 向上搜索项目根目录（最多搜索5级）
+    for i in {1..5}; do
+        if [[ -f "$search_dir/scripts/install/install.sh" ]]; then
+            project_root="$search_dir"
+            break
+        fi
+        # 如果已经到达根目录，停止搜索
+        if [[ "$search_dir" == "/" ]]; then
+            break
+        fi
+        search_dir="$(dirname "$search_dir")"
+    done
+    
+    # 增强的多路径检测安装脚本
     local possible_paths=(
-        "./scripts/install/install.sh"          # 在项目根目录
-        "../scripts/install/install.sh"         # 在子目录中
-        "../../scripts/install/install.sh"      # 在更深的子目录中
-        "$HOME/Documents/Github/ccs/scripts/install/install.sh"  # 默认路径
-        "$HOME/.ccs/install.sh"                 # 备用路径
+        # 优先搜索当前目录及其相对路径
+        "./scripts/install/install.sh"                    # 当前目录是项目根目录
+        "../scripts/install/install.sh"                   # 当前目录是项目子目录
+        "../../scripts/install/install.sh"                # 当前目录是项目深层子目录
+        "../../../scripts/install/install.sh"             # 更深层的子目录
+        "../../../../scripts/install/install.sh"          # 最深层的子目录
+        # 使用检测到的项目根目录
+        "$project_root/scripts/install/install.sh"        # 智能检测的项目根目录
+        # 常见的项目位置
+        "$HOME/Documents/Github/ccs/scripts/install/install.sh"  # 默认Github路径
+        "$HOME/ccs/scripts/install/install.sh"            # 用户主目录下的ccs
+        "$HOME/Downloads/ccs/scripts/install/install.sh"  # 下载目录
+        "$HOME/Desktop/ccs/scripts/install/install.sh"    # 桌面目录
+        # 系统安装位置
+        "/opt/ccs/scripts/install/install.sh"             # 系统安装路径
+        "/usr/local/ccs/scripts/install/install.sh"       # 本地安装路径
+        # 备用路径
+        "$HOME/.ccs/install.sh"                           # 用户配置目录
     )
     
     print_info "正在搜索安装脚本..."
+    log_debug "当前目录: $current_dir"
+    log_debug "检测到的项目根目录: ${project_root:-'未找到'}"
     
     for path in "${possible_paths[@]}"; do
+        # 跳过空路径（当project_root为空时）
+        if [[ -z "$path" || "$path" == "/scripts/install/install.sh" ]]; then
+            continue
+        fi
+        
+        log_debug "检查路径: $path"
         if [[ -f "$path" ]]; then
-            install_script="$path"
+            install_script="$(realpath "$path")"
             print_success "找到安装脚本: $install_script"
             break
         fi
@@ -795,8 +833,18 @@ ccs_update() {
     
     if [[ -z "$install_script" ]]; then
         print_error "❌ 未找到安装脚本！"
-        print_info "请确保您在CCS项目目录中，或者手动运行安装脚本："
-        print_info "  cd /path/to/ccs && ./scripts/install/install.sh"
+        print_info "已搜索的路径包括："
+        for path in "${possible_paths[@]}"; do
+            if [[ -n "$path" && "$path" != "/scripts/install/install.sh" ]]; then
+                print_info "  - $path"
+            fi
+        done
+        echo ""
+        print_info "解决方案："
+        print_info "  1. 确保您在CCS项目目录中执行命令"
+        print_info "  2. 或者手动运行安装脚本："
+        print_info "     cd /path/to/ccs && ./scripts/install/install.sh"
+        print_info "  3. 或者重新下载CCS项目到本地"
         return 1
     fi
     

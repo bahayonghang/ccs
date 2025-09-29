@@ -148,18 +148,32 @@ ccs update                  # Auto-update to latest version
 
 ### Update Features
 
-- ✅ **Smart Path Detection** - Automatically searches for installation script locations
+- ✅ **Smart Path Detection** - Automatically searches for installation script locations with enhanced path discovery
 - ✅ **Configuration Protection** - Automatically backs up existing configuration files
 - ✅ **Complete Update** - Updates all script files and web interface
 - ✅ **Environment Refresh** - Automatically refreshes shell environment configuration
 - ✅ **Error Handling** - Detailed error messages and solution suggestions
+- ✅ **Project Root Detection** - Intelligently finds project root directory from any subdirectory
 
 ### Update Process
 
-1. **Search Installation Script** - Looks for `install.sh` in multiple possible locations
+1. **Smart Path Discovery** - Uses enhanced algorithm to search for `install.sh` in multiple locations:
+   - Current directory and relative paths (up to 5 levels deep)
+   - Intelligent project root detection
+   - Common project locations (Documents/Github, Downloads, Desktop)
+   - System installation paths (/opt, /usr/local)
+   - User configuration directory (~/.ccs)
+
 2. **Backup Configuration** - Automatically backs up current configuration to `~/.ccs/backups/`
 3. **Execute Update** - Runs installation script to update all components
 4. **Verify Completion** - Confirms successful update and provides follow-up instructions
+
+### Usage Requirements
+
+✅ **Recommended Usage**:
+- Run `ccs update` from anywhere within the CCS project directory
+- The command will automatically find the installation script regardless of your current subdirectory
+- Works from project root, scripts/, docs/, web/, or any other subdirectory
 
 ### Important Notes
 
@@ -168,9 +182,17 @@ ccs update                  # Auto-update to latest version
 - Run `ccs version` to confirm version update success
 
 ⚠️ **Troubleshooting**:
-- Ensure running in CCS project directory, or ensure default installation path exists
+- If update fails, the command will show all searched paths for debugging
+- Ensure you have the CCS project downloaded locally
 - Check network connection and disk space
-- If update fails, manually run: `cd /path/to/ccs && ./scripts/install/install.sh`
+- Manual fallback: `cd /path/to/ccs && ./scripts/install/install.sh`
+
+### Enhanced Error Reporting
+
+If the installation script cannot be found, CCS will display:
+- All searched paths for easy debugging
+- Suggested solutions including manual installation steps
+- Guidance on proper project setup
 
 ## 🎨 Banner Display
 
