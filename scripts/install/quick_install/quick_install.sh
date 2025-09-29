@@ -85,7 +85,6 @@ main() {
         "scripts/shell/ccs-common.sh"
         "package.json"
         "web/index.html"
-        "web/CLAUDE.md"
     )
     
     for file in "${files[@]}"; do
