@@ -172,6 +172,55 @@ ccs update                  # Auto-update to latest version
 - Check network connection and disk space
 - If update fails, manually run: `cd /path/to/ccs && ./scripts/install/install.sh`
 
+## 🎨 Banner Display
+
+CCS includes a beautiful ASCII art banner that displays when you run commands. The banner shows the CCS logo and project information in a modern, clean style.
+
+```
+██████╗ ██████╗ ███████╗
+██╔════╝██╔════╝██╔════╝
+██║     ██║     ███████╗
+██║     ██║          ██║
+╚██████╗╚██████╗███████║
+ ╚═════╝ ╚═════╝╚══════╝
+
+Claude Code Configuration Switcher
+```
+
+### Banner Commands
+
+```bash
+# Display full banner
+just banner
+
+# Display mini banner (compact version)
+just banner-mini
+
+# Display plain text banner (no colors)
+just banner-plain
+```
+
+### Banner Integration
+
+The banner automatically appears when you run CCS commands:
+```bash
+ccs list                   # Shows banner + lists configurations
+ccs current               # Shows banner + current status
+ccs anyrouter            # Shows banner + switches config
+```
+
+### Disable Banner
+
+If you prefer to disable the banner display:
+```bash
+# Temporarily disable
+export CCS_DISABLE_BANNER=true
+export NO_BANNER=1
+
+# Or add to your shell profile for permanent disable
+echo 'export CCS_DISABLE_BANNER=true' >> ~/.bashrc
+```
+
 ## 🛠️ Advanced Features
 
 ### 🏎️ Performance Optimization (v2.0)

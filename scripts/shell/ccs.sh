@@ -843,8 +843,37 @@ ccs_update() {
     fi
 }
 
+# 显示CCS Banner
+show_ccs_banner() {
+    # 检查是否禁用banner显示
+    if [[ "$CCS_DISABLE_BANNER" == "true" ]] || [[ "$NO_BANNER" == "1" ]]; then
+        return 0
+    fi
+    
+    # 加载banner脚本
+    local banner_script="$SCRIPT_DIR/banner.sh"
+    if [[ -f "$banner_script" ]]; then
+        # 使用mini模式显示banner，避免占用太多空间
+        source "$banner_script"
+        show_mini_banner
+    else
+        # 如果banner脚本不存在，显示简单的文本banner
+        echo -e "\033[0;36m██████╗ ██████╗ ███████╗\033[0m"
+        echo -e "\033[0;36m██╔════╝██╔════╝██╔════╝\033[0m"
+        echo -e "\033[0;36m██║     ██║     ███████╗\033[0m"
+        echo -e "\033[0;36m██║     ██║          ██║\033[0m"
+        echo -e "\033[0;36m╚██████╗╚██████╗███████║\033[0m"
+        echo -e "\033[0;36m ╚═════╝ ╚═════╝╚══════╝\033[0m"
+        echo -e "\033[1;37mClaude Code Configuration Switcher v2.0.1\033[0m"
+        echo ""
+    fi
+}
+
 # 主函数（优化版）
 ccs() {
+    # 显示Banner（在命令执行前）
+    show_ccs_banner
+    
     # 参数验证
     local command="${1:-}"
     local start_time

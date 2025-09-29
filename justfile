@@ -47,6 +47,36 @@ uninstall:
     cd scripts/install && bash install.sh --uninstall
     @echo "✅ 卸载完成"
 
+# 🎨 Banner和界面
+# ================
+
+# 显示CCS Banner
+banner:
+    @echo "🎨 显示CCS Banner..."
+    @if [ -f scripts/shell/banner.sh ]; then \
+        bash scripts/shell/banner.sh --full; \
+    else \
+        echo "❌ Banner脚本不存在"; \
+    fi
+
+# 显示简化版Banner
+banner-mini:
+    @echo "🎨 显示简化版CCS Banner..."
+    @if [ -f scripts/shell/banner.sh ]; then \
+        bash scripts/shell/banner.sh --mini; \
+    else \
+        echo "❌ Banner脚本不存在"; \
+    fi
+
+# 显示纯文本Banner（无颜色）
+banner-plain:
+    @echo "🎨 显示纯文本CCS Banner..."
+    @if [ -f scripts/shell/banner.sh ]; then \
+        bash scripts/shell/banner.sh --plain; \
+    else \
+        echo "❌ Banner脚本不存在"; \
+    fi
+
 # 🧪 测试和验证
 # ================
 

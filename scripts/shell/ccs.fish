@@ -288,8 +288,38 @@ function _ccs_auto_load_current
     end
 end
 
+# 显示CCS Banner
+function _ccs_show_banner
+    # 检查是否禁用banner显示
+    if test "$CCS_DISABLE_BANNER" = "true"; or test "$NO_BANNER" = "1"
+        return 0
+    end
+    
+    # 获取脚本目录
+    set script_dir (dirname (status --current-filename))
+    set banner_script "$script_dir/banner.sh"
+    
+    if test -f "$banner_script"
+        # 使用mini模式显示banner，避免占用太多空间
+        bash "$banner_script" --mini
+    else
+        # 如果banner脚本不存在，显示简单的文本banner
+        echo -e "\033[0;36m██████╗ ██████╗ ███████╗\033[0m"
+        echo -e "\033[0;36m██╔════╝██╔════╝██╔════╝\033[0m"
+        echo -e "\033[0;36m██║     ██║     ███████╗\033[0m"
+        echo -e "\033[0;36m██║     ██║          ██║\033[0m"
+        echo -e "\033[0;36m╚██████╗╚██████╗███████║\033[0m"
+        echo -e "\033[0;36m ╚═════╝ ╚═════╝╚══════╝\033[0m"
+        echo -e "\033[1;37mClaude Code Configuration Switcher v2.0.1\033[0m"
+        echo ""
+    end
+end
+
 # 主函数
 function ccs --description "Claude Code Configuration Switcher for Fish shell"
+    # 显示Banner（在命令执行前）
+    _ccs_show_banner
+    
     set command $argv[1]
     
     # 处理帮助命令（无需检查配置文件）

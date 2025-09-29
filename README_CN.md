@@ -200,6 +200,55 @@ ccs uninstall  # 推荐方式
 ./scripts/install/install.sh --uninstall
 ```
 
+## 🎨 横幅显示
+
+CCS 包含一个精美的 ASCII 艺术横幅，在运行命令时显示。横幅以现代、简洁的风格展示了 CCS 标志和项目信息。
+
+```
+██████╗ ██████╗ ███████╗
+██╔════╝██╔════╝██╔════╝
+██║     ██║     ███████╗
+██║     ██║          ██║
+╚██████╗╚██████╗███████║
+ ╚═════╝ ╚═════╝╚══════╝
+
+Claude Code Configuration Switcher
+```
+
+### 横幅命令
+
+```bash
+# 显示完整横幅
+just banner
+
+# 显示简化版横幅（紧凑版本）
+just banner-mini
+
+# 显示纯文本横幅（无颜色）
+just banner-plain
+```
+
+### 横幅集成
+
+横幅会在您运行 CCS 命令时自动出现：
+```bash
+ccs list                   # 显示横幅 + 列出配置
+ccs current               # 显示横幅 + 当前状态
+ccs anyrouter            # 显示横幅 + 切换配置
+```
+
+### 禁用横幅
+
+如果您希望禁用横幅显示：
+```bash
+# 临时禁用
+export CCS_DISABLE_BANNER=true
+export NO_BANNER=1
+
+# 或添加到shell配置文件中永久禁用
+echo 'export CCS_DISABLE_BANNER=true' >> ~/.bashrc
+```
+
 ## 🔧 环境变量
 
 ccs会自动设置以下环境变量：

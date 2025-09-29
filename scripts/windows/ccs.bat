@@ -1261,7 +1261,35 @@ echo.
 call :print_warning "注意：当前命令提示符会话中的ccs命令仍然可用,直到重新打开"
 exit /b 0
 
+REM 显示CCS Banner
+:show_ccs_banner
+if "%CCS_DISABLE_BANNER%"=="true" goto :eof
+if "%NO_BANNER%"=="1" goto :eof
+
+REM 获取脚本目录
+set script_dir=%~dp0
+set banner_script=%script_dir%banner.bat
+
+if exist "%banner_script%" (
+    REM 使用mini模式显示banner，避免占用太多空间
+    call "%banner_script%" --mini
+) else (
+    REM 如果banner脚本不存在，显示简单的文本banner
+    echo [96m██████╗ ██████╗ ███████╗[0m
+    echo [96m██╔════╝██╔════╝██╔════╝[0m
+    echo [96m██║     ██║     ███████╗[0m
+    echo [96m██║     ██║          ██║[0m
+    echo [96m╚██████╗╚██████╗███████║[0m
+    echo [96m ╚═════╝ ╚═════╝╚══════╝[0m
+    echo [97mClaude Code Configuration Switcher v2.0.1[0m
+    echo.
+)
+goto :eof
+
 REM 主函数（优化版）
+REM 显示Banner（在命令执行前）
+call :show_ccs_banner
+
 if "%~1"=="" (
     REM 如果没有参数,使用默认配置或当前配置
     set target_config=
