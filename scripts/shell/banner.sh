@@ -13,7 +13,7 @@ readonly RESET='\033[0m'
 readonly BOLD='\033[1m'
 
 # 版本信息
-readonly CCS_VERSION="2.0.1"
+readonly CCS_VERSION="2.0.0"
 readonly PROJECT_URL="https://github.com/bahayonghang/ccs"
 
 # 显示CCS Banner

@@ -912,7 +912,7 @@ show_ccs_banner() {
         echo -e "\033[0;36m██║     ██║          ██║\033[0m"
         echo -e "\033[0;36m╚██████╗╚██████╗███████║\033[0m"
         echo -e "\033[0;36m ╚═════╝ ╚═════╝╚══════╝\033[0m"
-        echo -e "\033[1;37mClaude Code Configuration Switcher v2.0.1\033[0m"
+        echo -e "\033[1;37mClaude Code Configuration Switcher v2.0.0\033[0m"
         echo ""
     fi
 }

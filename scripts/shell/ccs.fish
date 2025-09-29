@@ -310,7 +310,7 @@ function _ccs_show_banner
         echo -e "\033[0;36m██║     ██║          ██║\033[0m"
         echo -e "\033[0;36m╚██████╗╚██████╗███████║\033[0m"
         echo -e "\033[0;36m ╚═════╝ ╚═════╝╚══════╝\033[0m"
-        echo -e "\033[1;37mClaude Code Configuration Switcher v2.0.1\033[0m"
+        echo -e "\033[1;37mClaude Code Configuration Switcher v$CCS_VERSION\033[0m"
         echo ""
     end
 end
