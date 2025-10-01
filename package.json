@@ -1,40 +1,30 @@
 {
   "name": "ccs",
   "version": "2.0.0",
-  "description": "🔄 Claude Code Configuration Switcher - 一个强大的多平台命令行工具,支持快速切换Claude Code API配置,提供全局配置持久化、Web界面管理、智能模型选择等功能,完美支持Bash/Zsh/Fish/PowerShell等多种Shell环境",
-  "main": "scripts/shell/ccs.sh",
+  "description": "Cross-platform CLI tool for managing and switching between multiple Claude Code API configurations",
+  "private": false,
+  "bin": {
+    "ccs": "scripts/shell/ccs.sh"
+  },
   "scripts": {
     "install": "cd scripts/install && bash install.sh",
     "install:windows": "cd scripts/install && cmd.exe /c install.bat",
     "uninstall": "cd scripts/install && bash install.sh --uninstall",
-    "test": "bash scripts/shell/ccs.sh list",
-    "quick-install": "curl -L https://github.com/bahayonghang/ccs/raw/main/scripts/install/quick_install/quick_install.sh | bash"
+    "test": "bash scripts/shell/ccs.sh list"
   },
   "keywords": [
-    "claude",
     "claude-code",
-    "api",
-    "configuration",
-    "switcher",
+    "api-configuration",
+    "cli-tool",
+    "config-management",
+    "anthropic",
+    "cross-platform",
     "bash",
-    "zsh",
     "fish",
     "powershell",
-    "windows",
-    "linux",
-    "macos",
-    "shell",
-    "cli",
     "toml",
     "environment-variables",
-    "anthropic",
-    "openai",
-    "ai",
-    "llm",
-    "developer-tools",
-    "cross-platform",
-    "web-interface",
-    "config-management"
+    "web-interface"
   ],
   "author": "bahayonghang",
   "license": "MIT",
@@ -51,7 +41,7 @@
     "config": "config",
     "script": "scripts"
   },
-  "engines": {
+  "shellEngines": {
     "bash": ">=4.0",
     "fish": ">=3.0",
     "powershell": ">=5.1"

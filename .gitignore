@@ -10,3 +10,4 @@ debug.log
 
 # BMad Method workflow files
 .bmad-core/
+.spec-workflow/
