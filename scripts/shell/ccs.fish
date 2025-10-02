@@ -463,39 +463,22 @@ end
 function _ccs_update
     _ccs_print_step "🔄 开始CCS自更新..."
     
-    # 检查是否在CCS项目目录中
-    set current_dir (pwd)
-    set install_script ""
-    
-    # 多路径检测安装脚本
-    set possible_paths \
-        "./scripts/install/install.sh" \
-        "../scripts/install/install.sh" \
-        "../../scripts/install/install.sh" \
-        "$HOME/Documents/Github/ccs/scripts/install/install.sh" \
-        "$HOME/.ccs/install.sh"
-    
-    _ccs_log_info "正在搜索安装脚本..."
-    
-    for path in $possible_paths
-        if test -f "$path"
-            set install_script "$path"
-            echo "✅ 找到安装脚本: $install_script"
-            break
-        end
-    end
-    
-    if test -z "$install_script"
-        _ccs_log_error "❌ 未找到安装脚本！"
-        _ccs_log_info "请确保您在CCS项目目录中，或者手动运行安装脚本："
-        _ccs_log_info "  cd /path/to/ccs && ./scripts/install/install.sh"
+    # 检查网络连接和必要工具
+    if not command -v curl >/dev/null
+        _ccs_log_error "❌ 需要curl工具进行在线更新"
+        _ccs_log_info "请安装curl: sudo apt install curl (Ubuntu/Debian) 或 brew install curl (macOS)"
         return 1
     end
     
     # 备份当前配置
     _ccs_print_step "📦 备份当前配置..."
+    set backup_dir "$HOME/.ccs/backups"
+    if not test -d "$backup_dir"
+        mkdir -p "$backup_dir"
+    end
+    
     set backup_file (date +"%Y%m%d_%H%M%S")
-    set backup_path "$HOME/.ccs/backups/.ccs_config.toml.$backup_file.bak"
+    set backup_path "$backup_dir/.ccs_config.toml.$backup_file.bak"
     
     if test -f "$CONFIG_FILE"
         if cp "$CONFIG_FILE" "$backup_path"
@@ -505,11 +488,14 @@ function _ccs_update
         end
     end
     
-    # 执行安装脚本
-    _ccs_print_step "🚀 执行更新安装..."
-    _ccs_log_info "运行命令: $install_script"
+    # 使用在线快速安装脚本进行更新
+    _ccs_print_step "🚀 从GitHub下载最新版本..."
+    set update_url "https://github.com/bahayonghang/ccs/raw/main/scripts/install/quick_install/quick_install.sh"
+    _ccs_log_info "下载地址: $update_url"
     
-    if bash "$install_script"
+    # 执行在线更新
+    if curl -fsSL "$update_url" | bash
+        echo ""
         echo "✅ CCS更新完成！"
         _ccs_log_info "更新内容："
         _ccs_log_info "  • 脚本文件已更新到最新版本"
@@ -522,11 +508,12 @@ function _ccs_update
         echo ""
         _ccs_print_step "🎉 感谢使用CCS！更新后请运行 'ccs version' 查看版本信息。"
     else
-        _ccs_log_error "❌ 更新失败！"
+        _ccs_log_error "❌ 在线更新失败！"
         _ccs_log_info "如果问题持续存在，请："
         _ccs_log_info "  1. 检查网络连接"
-        _ccs_log_info "  2. 确保有足够的磁盘空间"
-        _ccs_log_info "  3. 手动运行安装脚本"
+        _ccs_log_info "  2. 确保GitHub访问正常"
+        _ccs_log_info "  3. 手动运行更新命令："
+        _ccs_log_info "     curl -L https://github.com/bahayonghang/ccs/raw/main/scripts/install/quick_install/quick_install.sh | bash"
         _ccs_log_info "  4. 查看项目文档获取帮助"
         return 1
     end
