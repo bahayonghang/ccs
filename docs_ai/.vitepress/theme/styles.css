@@ -1,0 +1,151 @@
+/*
+  CCS 文档站点全局样式增强
+  - 保持所有既有功能不变（仅视觉与排版优化）
+  - 统一色彩、字体、间距与对齐规范
+*/
+
+:root {
+  /* 品牌色系统（保证明暗层次与可读性） */
+  --vp-c-brand: #3b82f6;            /* 蓝色主色 */
+  --vp-c-brand-darker: #1d4ed8;     /* 深色强调 */
+  --vp-c-brand-lighter: #60a5fa;    /* 浅色悬停 */
+
+  /* 辅助色与背景 */
+  --vp-c-bg-soft: #f7f9fc;          /* 柔和背景卡片色 */
+
+  /* 字体系统（优先中文兼容与跨平台一致性） */
+  --vp-font-family-base: Inter, "Noto Sans SC", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --vp-font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* 统一间距刻度 */
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2rem;
+  --space-5: 3rem;
+}
+
+/* 文档容器最大宽度与居中 */
+.VPDoc, .vp-doc {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* 首页 Hero 优化：层级清晰与对齐统一 */
+.VPHero {
+  padding-top: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--vp-c-divider);
+}
+.VPHero .name {
+  font-family: var(--vp-font-family-base);
+  font-size: 2.4rem;
+  letter-spacing: 0.5px;
+}
+.VPHero .text {
+  font-size: 1.25rem;
+  color: var(--vp-c-text-1);
+}
+.VPHero .tagline {
+  max-width: 56ch;
+  margin-top: 0.75rem;
+  color: var(--vp-c-text-2);
+}
+.VPHero .actions a {
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+}
+
+/* 默认 Features 区块视觉层次增强（不改变结构与内容） */
+.VPFeatures {
+  margin-top: var(--space-3);
+}
+.VPFeatures .items {
+  gap: 1.25rem !important;
+}
+.VPFeatures .item {
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  background: var(--vp-c-bg-soft);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.VPFeatures .item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+  border-color: var(--vp-c-brand);
+}
+
+/* Markdown 内容排版：统一间距与行高，提升阅读体验 */
+.vp-doc h2, .vp-doc h3 {
+  margin-top: var(--space-4);
+  margin-bottom: var(--space-2);
+}
+.vp-doc p {
+  line-height: 1.8;
+  margin: var(--space-2) 0;
+}
+.vp-doc ul {
+  padding-left: 1.1rem;
+}
+.vp-doc li {
+  margin: 0.4rem 0;
+}
+
+/* 自定义链接栅格（与首页 index.md 的 link-grid 对齐） */
+.link-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin: var(--space-4) 0;
+}
+.link-grid a {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--vp-c-text-1);
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+.link-grid a:hover {
+  background: var(--vp-c-brand);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 页脚提示卡片统一风格 */
+.footer-note {
+  text-align: center;
+  margin: 3rem 0 1rem;
+  padding: 1rem;
+  background: var(--vp-c-bg-soft);
+  border-radius: 8px;
+  border: 1px solid var(--vp-c-divider);
+}
+
+/* 响应式优化：移动端间距与栅格折行 */
+@media (max-width: 768px) {
+  .VPHero {
+    padding-top: var(--space-3);
+    padding-bottom: var(--space-2);
+  }
+  .VPFeatures .items {
+    gap: 1rem !important;
+  }
+  .link-grid {
+    flex-direction: column;
+    align-items: center;
+  }
+  .link-grid a {
+    width: 100%;
+    max-width: 300px;
+    justify-content: center;
+  }
+}
